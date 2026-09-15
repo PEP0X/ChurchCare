@@ -1,0 +1,5150 @@
+import { DocumentLayout } from "../types/layout";
+
+export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
+  "1": [
+    {
+      "id": "p1_church_study_id",
+      "page": 1,
+      "type": "text",
+      "label": "رقم البحث بالكنيسة",
+      "binding": "page1.church_study_id",
+      "placeholder": "784",
+      "rect": {
+        "left": 38.39,
+        "top": 12.8,
+        "width": 7.46,
+        "height": 2.17
+      },
+      "style": {
+        "textAlign": "center",
+        "isBold": true,
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p1_husband_id_front",
+      "page": 1,
+      "type": "image",
+      "label": "بطاقة الزوج (وجه)",
+      "binding": "husband_id_image",
+      "rect": {
+        "left": 55.36,
+        "top": 28.85,
+        "width": 33.83,
+        "height": 16.51
+      },
+      "placeholder": "بطاقة الزوج الوجه"
+    },
+    {
+      "id": "p1_wife_id_front",
+      "page": 1,
+      "type": "image",
+      "label": "بطاقة الزوجة (وجه)",
+      "binding": "wife_id_image",
+      "rect": {
+        "left": 10.85,
+        "top": 28.85,
+        "width": 33.79,
+        "height": 16.51
+      },
+      "placeholder": "بطاقة الزوجة الوجه"
+    },
+    {
+      "id": "p1_husband_id_back",
+      "page": 1,
+      "type": "image",
+      "label": "بطاقة الزوج (ظهر)",
+      "binding": "husband_id_back_image",
+      "rect": {
+        "left": 55.36,
+        "top": 46.86,
+        "width": 33.83,
+        "height": 16.48
+      },
+      "placeholder": "بطاقة الزوج الخلف"
+    },
+    {
+      "id": "p1_wife_id_back",
+      "page": 1,
+      "type": "image",
+      "label": "بطاقة الزوجة (ظهر)",
+      "binding": "wife_id_back_image",
+      "rect": {
+        "left": 10.85,
+        "top": 46.86,
+        "width": 33.79,
+        "height": 16.48
+      },
+      "placeholder": "بطاقة الزوجة الخلف"
+    },
+    {
+      "id": "p1_area",
+      "page": 1,
+      "type": "text",
+      "label": "المنطقة",
+      "binding": "page1.area",
+      "placeholder": "القلج - الخانكة",
+      "rect": {
+        "left": 8.5,
+        "top": 68.2,
+        "width": 78,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p1_responsible_priest",
+      "page": 1,
+      "type": "text",
+      "label": "اسم الكاهن المسؤول",
+      "binding": "page1.responsible_priest",
+      "placeholder": "القمص بيشوي حليم",
+      "rect": {
+        "left": 8.5,
+        "top": 74.3,
+        "width": 69.5,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p1_cathedral_care_id",
+      "page": 1,
+      "type": "text",
+      "label": "رقم بحث الكاتدرائية",
+      "binding": "page1.cathedral_care_id",
+      "placeholder": "CAT-9042",
+      "rect": {
+        "left": 8.5,
+        "top": 80.43,
+        "width": 51.33,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "isMono": true,
+        "isBold": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p1_church_membership_id",
+      "page": 1,
+      "type": "text",
+      "label": "رقم الأسرة بالعضوية الكنسية",
+      "binding": "page1.church_membership_id",
+      "placeholder": "MEM-1104",
+      "rect": {
+        "left": 8.8,
+        "top": 86.73,
+        "width": 49.5,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "isMono": true,
+        "isBold": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p1_select_1865",
+      "page": 1,
+      "type": "select",
+      "label": "اسم الكنيسة",
+      "binding": "page1.church_name",
+      "placeholder": "-- اختر --",
+      "options": [
+        "كنيسة السيدة العذراء والقديس يوسف النجار - الخصوص",
+        "كنيسة السيدة العذراء والرسولين بطرس وبولس - الخصوص",
+        "كنيسة البابا أثناسيوس الرسول والانبا بيشوى - الخصوص",
+        "كنيسة السيدة العذراء والقديس ابي سيفين - الخصوص",
+        "كنيسة الانبا كاراس والانبا ابرام - الخصوص",
+        "كنيسة السيدة العذراء والشهيد العظيم أبانوب - الخصوص",
+        "كنيسة السيدة العذراء والانبا موسي - الخصوص",
+        "كنيسة السيدة العذراء والملاك ميخائيل - الخصوص",
+        "كنيسة الشهيد العظيم مارمينا والبابا كيرلس السادس - الخصوص",
+        "كنيسة الشهيد العظيم مارجرجس والبابا ديسقوروس - الخصوص",
+        "كنيسة السيدة العذراء والقديس ماريوحنا الحبيب - الخصوص",
+        "مذبح الاميرين تادرس- ارض عيشة - الخصوص",
+        "كنيسة الشهيد العظيم مارجرجس - قها",
+        "كنيسة الشهيد العظيم مارجرجس - طوخ",
+        "كنيسة القديسة الشهيدة دميانه - ميت كنانة",
+        "كنيسة الشهيد العظيم مارجرجس - بلتان",
+        "كنيسة الشهيد العظيم مارمينا العجايبى - ساحل دجوى",
+        "كنيسة السيدة العذراء والقديس العظيم ابي سيفين - دجوى",
+        "كنيسة رئيس الملائكة الجليل ميخائيل - القلزم",
+        "كنيسة السيدة العذراء والقديس مارمرقس الرسول - كفر شبين",
+        "كنيسة الشهيد العظيم مارجرجس - منيه شبين",
+        "كنيسة البابا كيرلس السادس - الحصافة",
+        "كنيسة رئيس الملائكة الجليل ميخائيل - القشيش",
+        "كنيسة السيدة العذراء والقديس ابي سيفين - السلمانية",
+        "كنيسة الشهيد العظيم مارجرجس والانبا كاراس - نوى",
+        "كنيسة السيدة العذراء - مساكن ابو زعبل",
+        "كنيسة الشهيد العظيم مارجرجس - ابو زعبل",
+        "كنيسة السيدة العذراء ورئيس الملائكة الجليل ميخائيل - العكرشة",
+        "كنيسة السيدة العذراء والبابا بطرس خاتم الشهداء - الخانكة",
+        "كنيسة الشهيد العظيم مارمينا والبابا كيرلس السادس - الجبل الاصفر",
+        "كنيسة السيدة العذراء والقديس ابانوب - القلج",
+        "كنيسة الشهيد العظيم ابي سيفين والقديسة دميانة - القلج",
+        "كنيسة السيدة العذراء والامير تادرس - القلج",
+        "كنيسة السيدة العذراء والانبا بيشوى - المنية"
+      ],
+      "rect": {
+        "left": 36.38,
+        "top": 19.49,
+        "width": 50.12,
+        "height": 2.72
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p1_text_1594",
+      "page": 1,
+      "type": "text",
+      "label": "اليوم",
+      "binding": "page1.day",
+      "placeholder": "اليوم",
+      "rect": {
+        "left": 20.12,
+        "top": 19.84,
+        "width": 4.37,
+        "height": 1.98
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_8523_886",
+      "page": 1,
+      "type": "text",
+      "label": "الشهر",
+      "binding": "page1.month",
+      "placeholder": "الشهر",
+      "rect": {
+        "left": 15.08,
+        "top": 19.84,
+        "width": 4.15,
+        "height": 1.98
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_9152_270",
+      "page": 1,
+      "type": "text",
+      "label": "السنة",
+      "binding": "page1.year",
+      "placeholder": "السنة",
+      "rect": {
+        "left": 7.83,
+        "top": 19.84,
+        "width": 6.36,
+        "height": 1.98
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    }
+  ],
+  "2": [
+    {
+      "id": "p2_husband_name",
+      "page": 2,
+      "type": "text",
+      "label": "اسم الزوج",
+      "binding": "page2.husband.name",
+      "rect": {
+        "left": 49.88,
+        "top": 15.94,
+        "width": 28.63,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "right",
+        "isBold": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_husband_nickname",
+      "page": 2,
+      "type": "text",
+      "label": "اسم الشهرة (الزوج)",
+      "binding": "page2.husband.nickname",
+      "rect": {
+        "left": 49.88,
+        "top": 19.38,
+        "width": 28.63,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_husband_nid",
+      "page": 2,
+      "type": "number",
+      "label": "الرقم القومي (الزوج)",
+      "binding": "page2.husband.national_id",
+      "placeholder": "28501011400123",
+      "rect": {
+        "left": 49.88,
+        "top": 22.83,
+        "width": 28.63,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "isBold": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_husband_job",
+      "page": 2,
+      "type": "text",
+      "label": "وظيفة الزوج",
+      "binding": "page2.husband.job",
+      "rect": {
+        "left": 49.88,
+        "top": 26.28,
+        "width": 28.63,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_husband_salary",
+      "page": 2,
+      "type": "text",
+      "label": "مرتب الزوج",
+      "binding": "page2.husband.salary",
+      "rect": {
+        "left": 49.88,
+        "top": 29.73,
+        "width": 28.63,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_husband_phone",
+      "page": 2,
+      "type": "text",
+      "label": "تليفون الزوج",
+      "binding": "page2.husband.phone",
+      "rect": {
+        "left": 49.88,
+        "top": 33.18,
+        "width": 28.63,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_husband_confession",
+      "page": 2,
+      "type": "text",
+      "label": "أب اعتراف الزوج",
+      "binding": "page2.husband.confession_father",
+      "rect": {
+        "left": 49.88,
+        "top": 36.63,
+        "width": 28.63,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_husband_insurance",
+      "page": 2,
+      "type": "text",
+      "label": "الرقم التأميني للزوج",
+      "binding": "page2.husband.insurance_no",
+      "rect": {
+        "left": 49.88,
+        "top": 40.08,
+        "width": 28.63,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_wife_name",
+      "page": 2,
+      "type": "text",
+      "label": "اسم الزوجة",
+      "binding": "page2.wife.name",
+      "rect": {
+        "left": 9.5,
+        "top": 15.94,
+        "width": 28.19,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "right",
+        "isBold": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_wife_nickname",
+      "page": 2,
+      "type": "text",
+      "label": "اسم الشهرة (الزوجة)",
+      "binding": "page2.wife.nickname",
+      "rect": {
+        "left": 9.5,
+        "top": 19.38,
+        "width": 28.19,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_wife_nid",
+      "page": 2,
+      "type": "number",
+      "label": "الرقم القومي (الزوجة)",
+      "binding": "page2.wife.national_id",
+      "placeholder": "29005041400456",
+      "rect": {
+        "left": 9.5,
+        "top": 22.83,
+        "width": 28.19,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "isBold": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_wife_job",
+      "page": 2,
+      "type": "text",
+      "label": "وظيفة الزوجة",
+      "binding": "page2.wife.job",
+      "rect": {
+        "left": 9.56,
+        "top": 26.28,
+        "width": 28.19,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_wife_salary",
+      "page": 2,
+      "type": "text",
+      "label": "مرتب الزوجة",
+      "binding": "page2.wife.salary",
+      "rect": {
+        "left": 9.56,
+        "top": 29.73,
+        "width": 28.19,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_wife_phone",
+      "page": 2,
+      "type": "text",
+      "label": "تليفون الزوجة",
+      "binding": "page2.wife.phone",
+      "rect": {
+        "left": 9.56,
+        "top": 33.18,
+        "width": 28.19,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_wife_confession",
+      "page": 2,
+      "type": "text",
+      "label": "أب اعتراف الزوجة",
+      "binding": "page2.wife.confession_father",
+      "rect": {
+        "left": 9.56,
+        "top": 36.63,
+        "width": 28.19,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_wife_insurance",
+      "page": 2,
+      "type": "text",
+      "label": "الرقم التأميني للزوجة",
+      "binding": "page2.wife.insurance_no",
+      "rect": {
+        "left": 9.5,
+        "top": 40.08,
+        "width": 28.19,
+        "height": 3.45
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_building_no",
+      "page": 2,
+      "type": "text",
+      "label": "رقم العقار",
+      "binding": "page2.address.building_no",
+      "placeholder": "12",
+      "rect": {
+        "left": 70,
+        "top": 45.5,
+        "width": 12,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_street",
+      "page": 2,
+      "type": "text",
+      "label": "الشارع",
+      "binding": "page2.address.street",
+      "placeholder": "شارع الشهيد مارجرجس",
+      "rect": {
+        "left": 9.5,
+        "top": 45.5,
+        "width": 53.5,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_area",
+      "page": 2,
+      "type": "text",
+      "label": "المنطقة",
+      "binding": "page2.address.area",
+      "placeholder": "القلج",
+      "rect": {
+        "left": 60.5,
+        "top": 50.6,
+        "width": 21.5,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_governorate",
+      "page": 2,
+      "type": "text",
+      "label": "المحافظة",
+      "binding": "page2.address.governorate",
+      "placeholder": "القليوبية",
+      "rect": {
+        "left": 9.5,
+        "top": 50.6,
+        "width": 41.5,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_landmark",
+      "page": 2,
+      "type": "text",
+      "label": "علامة مميزة",
+      "binding": "page2.address.landmark",
+      "placeholder": "بجوار مدرسة الأورمان",
+      "rect": {
+        "left": 9.8,
+        "top": 56.03,
+        "width": 73,
+        "height": 3.12
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": 12
+      }
+    },
+    {
+      "id": "p2_housing_notes",
+      "page": 2,
+      "type": "text",
+      "label": "ملاحظات السكن",
+      "binding": "page2.address.notes",
+      "placeholder": "الشقة غير صحية رطوبة عالية",
+      "rect": {
+        "left": 9.5,
+        "top": 60.97,
+        "width": 43.5,
+        "height": 3.07
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": 12
+      }
+    },
+    {
+      "id": "p2_ration_count",
+      "page": 2,
+      "type": "text",
+      "label": "عدد الأفراد بالبطاقة التموينية",
+      "binding": "page2.gov_programs.ration_members_count",
+      "placeholder": "4",
+      "rect": {
+        "left": 9.7,
+        "top": 77.54,
+        "width": 16.5,
+        "height": 2.91
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "isBold": true,
+        "fontSize": 13
+      }
+    },
+    {
+      "id": "p2_gov_prog_1",
+      "page": 2,
+      "type": "select",
+      "label": "برنامج حكومي (1)",
+      "binding": "page2.gov_programs.program_1",
+      "placeholder": "",
+      "rect": {
+        "left": 9.5,
+        "top": 82,
+        "width": 65.5,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      },
+      "options": [
+        "بلا",
+        "معاش تكافل وكرامة",
+        "معاش تضامن اجتماعي",
+        "صندوق تحيا مصر",
+        "مصر بلا مرض",
+        "خدمات متكاملة"
+      ]
+    },
+    {
+      "id": "p2_select_3243",
+      "page": 2,
+      "type": "select",
+      "label": "نوع السكن",
+      "binding": "page2.housing_type",
+      "placeholder": "-- اختر --",
+      "options": [
+        "تمليك",
+        "إيجار قديم",
+        "إيجار جديد",
+        "يقيم مع الأسرة"
+      ],
+      "rect": {
+        "left": 61.83,
+        "top": 60.97,
+        "width": 20.99,
+        "height": 3.24
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_text_9836",
+      "page": 2,
+      "type": "text",
+      "label": "جهة اتصال 1 - الاسم",
+      "binding": "page2.emergency_contacts[0].name",
+      "placeholder": "الاسم",
+      "rect": {
+        "left": 72.51,
+        "top": 67.87,
+        "width": 17.44,
+        "height": 2.72
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_7392_379",
+      "page": 2,
+      "type": "text",
+      "label": "جهة اتصال 2 - الاسم",
+      "binding": "page2.emergency_contacts[1].name",
+      "placeholder": "الاسم",
+      "rect": {
+        "left": 51.77,
+        "top": 67.87,
+        "width": 17.44,
+        "height": 2.72
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_3102_695",
+      "page": 2,
+      "type": "text",
+      "label": "جهة اتصال 3 - الاسم",
+      "binding": "page2.emergency_contacts[2].name",
+      "placeholder": "الاسم",
+      "rect": {
+        "left": 31,
+        "top": 67.87,
+        "width": 17.44,
+        "height": 2.72
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_9586_748",
+      "page": 2,
+      "type": "text",
+      "label": "جهة اتصال 4 - الاسم",
+      "binding": "page2.emergency_contacts[3].name",
+      "placeholder": "الاسم",
+      "rect": {
+        "left": 9.8,
+        "top": 67.87,
+        "width": 17.44,
+        "height": 2.72
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_text_6257",
+      "page": 2,
+      "type": "text",
+      "label": "جهة اتصال 1 - الهاتف",
+      "binding": "page2.emergency_contacts[0].phone",
+      "placeholder": "الرقم",
+      "rect": {
+        "left": 72.51,
+        "top": 71.63,
+        "width": 17,
+        "height": 2.77
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_6266_770",
+      "page": 2,
+      "type": "text",
+      "label": "جهة اتصال 2 - الهاتف",
+      "binding": "page2.emergency_contacts[1].phone",
+      "placeholder": "الرقم",
+      "rect": {
+        "left": 51.77,
+        "top": 71.63,
+        "width": 17,
+        "height": 2.77
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_1338_757",
+      "page": 2,
+      "type": "text",
+      "label": "جهة اتصال 3 - الهاتف",
+      "binding": "page2.emergency_contacts[2].phone",
+      "placeholder": "الرقم",
+      "rect": {
+        "left": 31,
+        "top": 71.63,
+        "width": 17,
+        "height": 2.77
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_1395_305",
+      "page": 2,
+      "type": "text",
+      "label": "جهة اتصال 4 - الهاتف",
+      "binding": "page2.emergency_contacts[3].phone",
+      "placeholder": "الرقم",
+      "rect": {
+        "left": 9.8,
+        "top": 71.63,
+        "width": 17.3,
+        "height": 2.77
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p2_select_6228",
+      "page": 2,
+      "type": "select",
+      "label": "وجود بطاقة تموينية",
+      "binding": "page2.gov_programs.has_ration_card",
+      "placeholder": "-- اختر --",
+      "options": [
+        "نعم",
+        "لا"
+      ],
+      "rect": {
+        "left": 48.67,
+        "top": 77.54,
+        "width": 18.48,
+        "height": 2.71
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "select_6391_703",
+      "page": 2,
+      "type": "select",
+      "label": "برنامج حكومي (2)",
+      "binding": "page2.gov_programs.program_2",
+      "placeholder": "",
+      "rect": {
+        "left": 9.7,
+        "top": 87.2,
+        "width": 65.5,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      },
+      "options": [
+        "بلا",
+        "معاش تكافل وكرامة",
+        "معاش تضامن اجتماعي",
+        "صندوق تحيا مصر",
+        "مصر بلا مرض",
+        "خدمات متكاملة"
+      ]
+    }
+  ],
+  "3": [
+    {
+      "id": "p3_member_0_name",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 1 - الاسم",
+      "binding": "page3.family_members[0].name",
+      "rect": {
+        "left": 72.1,
+        "top": 12.12,
+        "width": 17.18,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_0_nid",
+      "page": 3,
+      "type": "number",
+      "label": "فرد 1 - الرقم القومي",
+      "binding": "page3.family_members[0].national_id",
+      "rect": {
+        "left": 55.81,
+        "top": 12.12,
+        "width": 16.21,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_0_status",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 1 - الحالة الاجتماعية",
+      "binding": "page3.family_members[0].social_status",
+      "rect": {
+        "left": 45.6,
+        "top": 12.12,
+        "width": 10.12,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_0_job",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 1 - السنة/الوظيفة",
+      "binding": "page3.family_members[0].education_job",
+      "rect": {
+        "left": 31.09,
+        "top": 12.12,
+        "width": 14.44,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_0_income",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 1 - الدخل",
+      "binding": "page3.family_members[0].income",
+      "rect": {
+        "left": 23.91,
+        "top": 12.12,
+        "width": 7.1,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_0_confession",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 1 - أب الاعتراف",
+      "binding": "page3.family_members[0].confession_father",
+      "rect": {
+        "left": 7.54,
+        "top": 12.12,
+        "width": 16.29,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_1_name",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 2 - الاسم",
+      "binding": "page3.family_members[1].name",
+      "rect": {
+        "left": 72.1,
+        "top": 15.08,
+        "width": 17.18,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_1_nid",
+      "page": 3,
+      "type": "number",
+      "label": "فرد 2 - الرقم القومي",
+      "binding": "page3.family_members[1].national_id",
+      "rect": {
+        "left": 55.81,
+        "top": 15.08,
+        "width": 16.21,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_1_status",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 2 - الحالة الاجتماعية",
+      "binding": "page3.family_members[1].social_status",
+      "rect": {
+        "left": 45.6,
+        "top": 15.08,
+        "width": 10.12,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_1_job",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 2 - السنة/الوظيفة",
+      "binding": "page3.family_members[1].education_job",
+      "rect": {
+        "left": 31.09,
+        "top": 15.08,
+        "width": 14.44,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_1_income",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 2 - الدخل",
+      "binding": "page3.family_members[1].income",
+      "rect": {
+        "left": 23.91,
+        "top": 15.08,
+        "width": 7.1,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_1_confession",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 2 - أب الاعتراف",
+      "binding": "page3.family_members[1].confession_father",
+      "rect": {
+        "left": 7.54,
+        "top": 15.08,
+        "width": 16.29,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_2_name",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 3 - الاسم",
+      "binding": "page3.family_members[2].name",
+      "rect": {
+        "left": 72.1,
+        "top": 17.84,
+        "width": 17.18,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_2_nid",
+      "page": 3,
+      "type": "number",
+      "label": "فرد 3 - الرقم القومي",
+      "binding": "page3.family_members[2].national_id",
+      "rect": {
+        "left": 55.81,
+        "top": 17.84,
+        "width": 16.21,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_2_status",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 3 - الحالة الاجتماعية",
+      "binding": "page3.family_members[2].social_status",
+      "rect": {
+        "left": 45.6,
+        "top": 17.84,
+        "width": 10.12,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_2_job",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 3 - السنة/الوظيفة",
+      "binding": "page3.family_members[2].education_job",
+      "rect": {
+        "left": 31.09,
+        "top": 17.84,
+        "width": 14.44,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_2_income",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 3 - الدخل",
+      "binding": "page3.family_members[2].income",
+      "rect": {
+        "left": 23.91,
+        "top": 17.84,
+        "width": 7.1,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_2_confession",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 3 - أب الاعتراف",
+      "binding": "page3.family_members[2].confession_father",
+      "rect": {
+        "left": 7.5,
+        "top": 17.84,
+        "width": 16.29,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_3_name",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 4 - الاسم",
+      "binding": "page3.family_members[3].name",
+      "rect": {
+        "left": 72.1,
+        "top": 20.64,
+        "width": 17.18,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_3_nid",
+      "page": 3,
+      "type": "number",
+      "label": "فرد 4 - الرقم القومي",
+      "binding": "page3.family_members[3].national_id",
+      "rect": {
+        "left": 55.81,
+        "top": 20.64,
+        "width": 16.21,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_3_status",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 4 - الحالة الاجتماعية",
+      "binding": "page3.family_members[3].social_status",
+      "rect": {
+        "left": 45.6,
+        "top": 20.64,
+        "width": 10.12,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_3_job",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 4 - السنة/الوظيفة",
+      "binding": "page3.family_members[3].education_job",
+      "rect": {
+        "left": 31.09,
+        "top": 20.64,
+        "width": 14.44,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_3_income",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 4 - الدخل",
+      "binding": "page3.family_members[3].income",
+      "rect": {
+        "left": 23.91,
+        "top": 20.64,
+        "width": 7.1,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_3_confession",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 4 - أب الاعتراف",
+      "binding": "page3.family_members[3].confession_father",
+      "rect": {
+        "left": 7.5,
+        "top": 20.64,
+        "width": 16.29,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_4_name",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 5 - الاسم",
+      "binding": "page3.family_members[4].name",
+      "rect": {
+        "left": 72.1,
+        "top": 23.4,
+        "width": 17.18,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_4_nid",
+      "page": 3,
+      "type": "number",
+      "label": "فرد 5 - الرقم القومي",
+      "binding": "page3.family_members[4].national_id",
+      "rect": {
+        "left": 55.81,
+        "top": 23.4,
+        "width": 16.21,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_4_status",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 5 - الحالة الاجتماعية",
+      "binding": "page3.family_members[4].social_status",
+      "rect": {
+        "left": 45.6,
+        "top": 23.4,
+        "width": 10.12,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_4_job",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 5 - السنة/الوظيفة",
+      "binding": "page3.family_members[4].education_job",
+      "rect": {
+        "left": 31.09,
+        "top": 23.4,
+        "width": 14.44,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_4_income",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 5 - الدخل",
+      "binding": "page3.family_members[4].income",
+      "rect": {
+        "left": 23.91,
+        "top": 23.4,
+        "width": 7.1,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_4_confession",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 5 - أب الاعتراف",
+      "binding": "page3.family_members[4].confession_father",
+      "rect": {
+        "left": 7.54,
+        "top": 23.4,
+        "width": 16.29,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_5_name",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 6 - الاسم",
+      "binding": "page3.family_members[5].name",
+      "rect": {
+        "left": 72.1,
+        "top": 26.2,
+        "width": 17.18,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_5_nid",
+      "page": 3,
+      "type": "number",
+      "label": "فرد 6 - الرقم القومي",
+      "binding": "page3.family_members[5].national_id",
+      "rect": {
+        "left": 55.81,
+        "top": 26.2,
+        "width": 16.21,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_5_status",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 6 - الحالة الاجتماعية",
+      "binding": "page3.family_members[5].social_status",
+      "rect": {
+        "left": 45.6,
+        "top": 26.2,
+        "width": 10.12,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_5_job",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 6 - السنة/الوظيفة",
+      "binding": "page3.family_members[5].education_job",
+      "rect": {
+        "left": 31.09,
+        "top": 26.2,
+        "width": 14.44,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_5_income",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 6 - الدخل",
+      "binding": "page3.family_members[5].income",
+      "rect": {
+        "left": 23.91,
+        "top": 26.2,
+        "width": 7.1,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_5_confession",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 6 - أب الاعتراف",
+      "binding": "page3.family_members[5].confession_father",
+      "rect": {
+        "left": 7.54,
+        "top": 26.2,
+        "width": 16.29,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_6_name",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 7 - الاسم",
+      "binding": "page3.family_members[6].name",
+      "rect": {
+        "left": 72.1,
+        "top": 28.96,
+        "width": 17.18,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_6_nid",
+      "page": 3,
+      "type": "number",
+      "label": "فرد 7 - الرقم القومي",
+      "binding": "page3.family_members[6].national_id",
+      "rect": {
+        "left": 55.81,
+        "top": 28.96,
+        "width": 16.21,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_6_status",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 7 - الحالة الاجتماعية",
+      "binding": "page3.family_members[6].social_status",
+      "rect": {
+        "left": 45.6,
+        "top": 28.96,
+        "width": 10.12,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_6_job",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 7 - السنة/الوظيفة",
+      "binding": "page3.family_members[6].education_job",
+      "rect": {
+        "left": 31.09,
+        "top": 28.96,
+        "width": 14.44,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_6_income",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 7 - الدخل",
+      "binding": "page3.family_members[6].income",
+      "rect": {
+        "left": 23.91,
+        "top": 28.96,
+        "width": 7.1,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_6_confession",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 7 - أب الاعتراف",
+      "binding": "page3.family_members[6].confession_father",
+      "rect": {
+        "left": 7.54,
+        "top": 28.96,
+        "width": 16.29,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_7_name",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 8 - الاسم",
+      "binding": "page3.family_members[7].name",
+      "rect": {
+        "left": 72.1,
+        "top": 31.76,
+        "width": 17.18,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_7_nid",
+      "page": 3,
+      "type": "number",
+      "label": "فرد 8 - الرقم القومي",
+      "binding": "page3.family_members[7].national_id",
+      "rect": {
+        "left": 55.81,
+        "top": 31.76,
+        "width": 16.21,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_7_status",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 8 - الحالة الاجتماعية",
+      "binding": "page3.family_members[7].social_status",
+      "rect": {
+        "left": 45.6,
+        "top": 31.76,
+        "width": 10.12,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_7_job",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 8 - السنة/الوظيفة",
+      "binding": "page3.family_members[7].education_job",
+      "rect": {
+        "left": 31.09,
+        "top": 31.76,
+        "width": 14.44,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_7_income",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 8 - الدخل",
+      "binding": "page3.family_members[7].income",
+      "rect": {
+        "left": 23.91,
+        "top": 31.76,
+        "width": 7.1,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_member_7_confession",
+      "page": 3,
+      "type": "text",
+      "label": "فرد 8 - أب الاعتراف",
+      "binding": "page3.family_members[7].confession_father",
+      "rect": {
+        "left": 7.5,
+        "top": 31.76,
+        "width": 16.29,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_housing_desc",
+      "page": 3,
+      "type": "textarea",
+      "label": "وصف السكن ومحتوياته",
+      "binding": "page3.housing_description",
+      "placeholder": "شقة غرفتين وصالة وحمام ومطبخ، غسالة عادية، ثلاجة 10 قدم...",
+      "rect": {
+        "left": 7.5,
+        "top": 65.73,
+        "width": 85.3,
+        "height": 7.15
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_med_diseases",
+      "page": 3,
+      "type": "text",
+      "label": "أمراض مزمنة",
+      "binding": "page3.medical_conditions.diseases",
+      "placeholder": "سكر وضغط وعجز في العمود الفقري",
+      "rect": {
+        "left": 36.95,
+        "top": 73.76,
+        "width": 47.59,
+        "height": 2.6
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_med_mental",
+      "page": 3,
+      "type": "text",
+      "label": "صحة نفسية (إدمان)",
+      "binding": "page3.medical_conditions.mental_addiction",
+      "rect": {
+        "left": 66.15,
+        "top": 78.11,
+        "width": 9.34,
+        "height": 2.6
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": 12
+      }
+    },
+    {
+      "id": "p3_med_disability",
+      "page": 3,
+      "type": "text",
+      "label": "إعاقة",
+      "binding": "page3.medical_conditions.disability",
+      "rect": {
+        "left": 48.97,
+        "top": 78.11,
+        "width": 9.59,
+        "height": 2.6
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_med_abandoned",
+      "page": 3,
+      "type": "text",
+      "label": "أم أو أب تارك المنزل",
+      "binding": "page3.medical_conditions.abandoned_parent",
+      "rect": {
+        "left": 36.73,
+        "top": 83.1,
+        "width": 43.18,
+        "height": 3.03
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_med_other",
+      "page": 3,
+      "type": "text",
+      "label": "ظروف أخرى",
+      "binding": "page3.medical_conditions.other_circumstances",
+      "rect": {
+        "left": 7.52,
+        "top": 87.16,
+        "width": 73,
+        "height": 3.29
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_textarea_7452",
+      "page": 3,
+      "type": "textarea",
+      "label": "ملاحظات أفراد الأسرة والأبناء",
+      "binding": "page3.family_members_notes",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 8.09,
+        "top": 35.05,
+        "width": 75.54,
+        "height": 3.19
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_text_6398",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (1) - الاسم",
+      "binding": "page3.family_other_members[1].name",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 74.88,
+        "top": 47.01,
+        "width": 14.4,
+        "height": 2.54
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_7001_272",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (2) - الاسم",
+      "binding": "page3.family_other_members[2].name",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 74.88,
+        "top": 49.82,
+        "width": 14.4,
+        "height": 2.54
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_0355_622",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (3) - الاسم",
+      "binding": "page3.family_other_members[3].name",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 74.88,
+        "top": 52.64,
+        "width": 14.4,
+        "height": 2.54
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_4286_145",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (4) - الاسم",
+      "binding": "page3.family_other_members[4].name",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 74.88,
+        "top": 55.45,
+        "width": 14.4,
+        "height": 2.54
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_number_5580",
+      "page": 3,
+      "type": "number",
+      "label": "مقيم (1) - الرقم القومي",
+      "binding": "page3.family_other_members[1].national_id",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 58.65,
+        "top": 47.01,
+        "width": 15.63,
+        "height": 2.59
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_6734_999",
+      "page": 3,
+      "type": "number",
+      "label": "مقيم (2) - الرقم القومي",
+      "binding": "page3.family_other_members[2].national_id",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 58.65,
+        "top": 49.82,
+        "width": 15.75,
+        "height": 2.59
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_7000_407",
+      "page": 3,
+      "type": "number",
+      "label": "مقيم (3) - الرقم القومي",
+      "binding": "page3.family_other_members[3].national_id",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 58.65,
+        "top": 52.64,
+        "width": 15.75,
+        "height": 2.59
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_0235_232",
+      "page": 3,
+      "type": "number",
+      "label": "مقيم (4) - الرقم القومي",
+      "binding": "page3.family_other_members[4].national_id",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 58.65,
+        "top": 55.45,
+        "width": 15.69,
+        "height": 2.59
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_text_5623",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (1) - صلة القرابة",
+      "binding": "page3.family_other_members[1].relavent",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 49.76,
+        "top": 47.14,
+        "width": 8.11,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_9311_956",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (2) - صلة القرابة",
+      "binding": "page3.family_other_members[2].relavent",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 49.76,
+        "top": 49.82,
+        "width": 8.11,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_2300_439",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (3) - صلة القرابة",
+      "binding": "page3.family_other_members[3].relavent",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 49.76,
+        "top": 52.64,
+        "width": 8.11,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_5193_371",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (4) - صلة القرابة",
+      "binding": "page3.family_other_members[4].relavent",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 49.76,
+        "top": 55.45,
+        "width": 8.11,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_1667_963",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (1) - الحالة الاجتماعية",
+      "binding": "page3.family_other_members[1].Status",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 39.73,
+        "top": 47.14,
+        "width": 9.27,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_1667_118",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (2) - الحالة الاجتماعية",
+      "binding": "page3.family_other_members[2].Status",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 39.73,
+        "top": 50.08,
+        "width": 9.09,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_1667_822",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (3) - الحالة الاجتماعية",
+      "binding": "page3.family_other_members[3].Status",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 39.73,
+        "top": 52.94,
+        "width": 8.96,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_1667_213",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (4) - الحالة الاجتماعية",
+      "binding": "page3.family_other_members[4].Status",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 39.73,
+        "top": 55.45,
+        "width": 9.21,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_6630_597",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (1) - السنة الدراسية",
+      "binding": "page3.family_other_members[1].sYear",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 27.21,
+        "top": 47.14,
+        "width": 11.03,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_6630_554",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (2) - السنة الدراسية",
+      "binding": "page3.family_other_members[2].sYear",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 27.08,
+        "top": 49.95,
+        "width": 11.23,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_6630_136",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (3) - السنة الدراسية",
+      "binding": "page3.family_other_members[3].sYear",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 27.33,
+        "top": 52.77,
+        "width": 10.97,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_6630_391",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (4) - السنة الدراسية",
+      "binding": "page3.family_other_members[4].sYear",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 27.33,
+        "top": 55.45,
+        "width": 10.86,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_0132_238",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (1) - الدخل",
+      "binding": "page3.other_members[1].income",
+      "rect": {
+        "left": 19.25,
+        "top": 47.36,
+        "width": 6.86,
+        "height": 2.44
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_3422_497",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (2) - الدخل",
+      "binding": "page3.other_members[2].income",
+      "rect": {
+        "left": 19.25,
+        "top": 49.82,
+        "width": 6.86,
+        "height": 2.44
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_2648_326",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (3) - الدخل",
+      "binding": "page3.other_members[3].income",
+      "rect": {
+        "left": 19.25,
+        "top": 52.94,
+        "width": 6.86,
+        "height": 2.44
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_2648_556",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (4) - الدخل",
+      "binding": "page3.other_members[4].income",
+      "rect": {
+        "left": 19.25,
+        "top": 55.45,
+        "width": 6.86,
+        "height": 2.44
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_3458_644",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (1) - أب الاعتراف",
+      "binding": "page3.family_other_members[1].confession_father",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 7.86,
+        "top": 47.36,
+        "width": 11.03,
+        "height": 2.28
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_3458_665",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (2) - أب الاعتراف",
+      "binding": "page3.family_other_members[2].confession_father",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 7.62,
+        "top": 49.82,
+        "width": 11.23,
+        "height": 2.33
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_3458_975",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (3) - أب الاعتراف",
+      "binding": "page3.family_other_members[3].confession_father",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 7.86,
+        "top": 52.94,
+        "width": 10.97,
+        "height": 2.29
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_3458_802",
+      "page": 3,
+      "type": "text",
+      "label": "مقيم (4) - أب الاعتراف",
+      "binding": "page3.family_other_members[4].confession_father",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 7.62,
+        "top": 55.45,
+        "width": 10.86,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_other_members_notes",
+      "page": 3,
+      "type": "textarea",
+      "label": "ملاحظات الأفراد الآخرين المقيمين مع الأسرة",
+      "binding": "page3.other_members_notes",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 7.62,
+        "top": 58.57,
+        "width": 75.67,
+        "height": 2.98
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_select_2455",
+      "page": 3,
+      "type": "select",
+      "label": "صرف علاج شهري مستمر",
+      "binding": "page3.medical_conditions.continuous_treatment",
+      "placeholder": "-- اختر --",
+      "options": [
+        "نعم",
+        "لا"
+      ],
+      "rect": {
+        "left": 7.52,
+        "top": 73.62,
+        "width": 12.26,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "center",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p3_text_7827",
+      "page": 3,
+      "type": "text",
+      "label": "ارتداد",
+      "binding": "page3.medical_conditions.farfromhome",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 31.56,
+        "top": 78.11,
+        "width": 9.52,
+        "height": 2.72
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_4664_466",
+      "page": 3,
+      "type": "text",
+      "label": "ام تاركة المنزل",
+      "binding": "page3.medical_conditions.mfarfromhome",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 7.52,
+        "top": 78.11,
+        "width": 12.39,
+        "height": 2.72
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    }
+  ],
+  "4": [
+    {
+      "id": "p4_aid_0_church",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 1 - اسم الكنيسة",
+      "binding": "page4.church_aid[0].church_name",
+      "rect": {
+        "left": 58.55,
+        "top": 12.8,
+        "width": 30.69,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_0_value",
+      "page": 4,
+      "type": "number",
+      "label": "مساعدة 1 - القيمة",
+      "binding": "page4.church_aid[0].value",
+      "rect": {
+        "left": 46.25,
+        "top": 12.8,
+        "width": 12.22,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_0_purpose",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 1 - الغرض",
+      "binding": "page4.church_aid[0].purpose",
+      "rect": {
+        "left": 7.68,
+        "top": 12.8,
+        "width": 38.43,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_1_church",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 2 - اسم الكنيسة",
+      "binding": "page4.church_aid[1].church_name",
+      "rect": {
+        "left": 58.55,
+        "top": 15.76,
+        "width": 30.69,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_1_value",
+      "page": 4,
+      "type": "number",
+      "label": "مساعدة 2 - القيمة",
+      "binding": "page4.church_aid[1].value",
+      "rect": {
+        "left": 46.29,
+        "top": 15.76,
+        "width": 12.22,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_1_purpose",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 2 - الغرض",
+      "binding": "page4.church_aid[1].purpose",
+      "rect": {
+        "left": 7.68,
+        "top": 15.76,
+        "width": 38.43,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_2_church",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 3 - اسم الكنيسة",
+      "binding": "page4.church_aid[2].church_name",
+      "rect": {
+        "left": 58.55,
+        "top": 18.53,
+        "width": 30.69,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_2_value",
+      "page": 4,
+      "type": "number",
+      "label": "مساعدة 3 - القيمة",
+      "binding": "page4.church_aid[2].value",
+      "rect": {
+        "left": 46.25,
+        "top": 18.53,
+        "width": 12.22,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_2_purpose",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 3 - الغرض",
+      "binding": "page4.church_aid[2].purpose",
+      "rect": {
+        "left": 7.74,
+        "top": 18.53,
+        "width": 38.43,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_3_church",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 4 - اسم الكنيسة",
+      "binding": "page4.church_aid[3].church_name",
+      "rect": {
+        "left": 58.55,
+        "top": 21.41,
+        "width": 30.69,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_3_value",
+      "page": 4,
+      "type": "number",
+      "label": "مساعدة 4 - القيمة",
+      "binding": "page4.church_aid[3].value",
+      "rect": {
+        "left": 46.25,
+        "top": 21.41,
+        "width": 12.22,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_3_purpose",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 4 - الغرض",
+      "binding": "page4.church_aid[3].purpose",
+      "rect": {
+        "left": 7.74,
+        "top": 21.41,
+        "width": 38.43,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_4_church",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 5 - اسم الكنيسة",
+      "binding": "page4.church_aid[4].church_name",
+      "rect": {
+        "left": 58.55,
+        "top": 24.2,
+        "width": 30.69,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_4_value",
+      "page": 4,
+      "type": "number",
+      "label": "مساعدة 5 - القيمة",
+      "binding": "page4.church_aid[4].value",
+      "rect": {
+        "left": 46.25,
+        "top": 24.2,
+        "width": 12.22,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_4_purpose",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 5 - الغرض",
+      "binding": "page4.church_aid[4].purpose",
+      "rect": {
+        "left": 7.74,
+        "top": 24.2,
+        "width": 38.43,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_5_church",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 6 - اسم الكنيسة",
+      "binding": "page4.church_aid[5].church_name",
+      "rect": {
+        "left": 58.55,
+        "top": 27,
+        "width": 30.69,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_5_value",
+      "page": 4,
+      "type": "number",
+      "label": "مساعدة 6 - القيمة",
+      "binding": "page4.church_aid[5].value",
+      "rect": {
+        "left": 46.29,
+        "top": 27,
+        "width": 12.22,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_5_purpose",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 6 - الغرض",
+      "binding": "page4.church_aid[5].purpose",
+      "rect": {
+        "left": 7.68,
+        "top": 27,
+        "width": 38.43,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_6_church",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 7 - اسم الكنيسة",
+      "binding": "page4.church_aid[6].church_name",
+      "rect": {
+        "left": 58.55,
+        "top": 29.79,
+        "width": 30.69,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_6_value",
+      "page": 4,
+      "type": "number",
+      "label": "مساعدة 7 - القيمة",
+      "binding": "page4.church_aid[6].value",
+      "rect": {
+        "left": 46.25,
+        "top": 29.79,
+        "width": 12.22,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_6_purpose",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 7 - الغرض",
+      "binding": "page4.church_aid[6].purpose",
+      "rect": {
+        "left": 7.68,
+        "top": 29.79,
+        "width": 38.43,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_7_church",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 8 - اسم الكنيسة",
+      "binding": "page4.church_aid[7].church_name",
+      "rect": {
+        "left": 58.55,
+        "top": 32.58,
+        "width": 30.69,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_7_value",
+      "page": 4,
+      "type": "number",
+      "label": "مساعدة 8 - القيمة",
+      "binding": "page4.church_aid[7].value",
+      "rect": {
+        "left": 46.25,
+        "top": 32.58,
+        "width": 12.22,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_aid_7_purpose",
+      "page": 4,
+      "type": "text",
+      "label": "مساعدة 8 - الغرض",
+      "binding": "page4.church_aid[7].purpose",
+      "rect": {
+        "left": 7.68,
+        "top": 32.58,
+        "width": 38.43,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_inc_church",
+      "page": 4,
+      "type": "number",
+      "label": "دخل - مساعدات كنائس",
+      "binding": "page4.income.church_aid",
+      "rect": {
+        "left": 45.86,
+        "top": 69.57,
+        "width": 20.94,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "isBold": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_inc_med",
+      "page": 4,
+      "type": "number",
+      "label": "دخل - مساعدات علاجية",
+      "binding": "page4.income.medical_aid",
+      "rect": {
+        "left": 45.98,
+        "top": 72.4,
+        "width": 20.82,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_inc_study",
+      "page": 4,
+      "type": "number",
+      "label": "دخل - مساعدات دراسة",
+      "binding": "page4.income.study_aid",
+      "rect": {
+        "left": 46.1,
+        "top": 75.22,
+        "width": 20.7,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_inc_salary",
+      "page": 4,
+      "type": "number",
+      "label": "دخل - مرتب أساسي",
+      "binding": "page4.income.base_salary",
+      "rect": {
+        "left": 46.1,
+        "top": 78.05,
+        "width": 20.7,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_inc_project",
+      "page": 4,
+      "type": "number",
+      "label": "دخل - مشروع",
+      "binding": "page4.income.side_project",
+      "rect": {
+        "left": 46.17,
+        "top": 80.76,
+        "width": 20.63,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_inc_relatives",
+      "page": 4,
+      "type": "number",
+      "label": "دخل - أقارب",
+      "binding": "page4.income.relatives_aid",
+      "rect": {
+        "left": 46.23,
+        "top": 83.78,
+        "width": 20.57,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_inc_total",
+      "page": 4,
+      "type": "number",
+      "label": "إجمالي الدخل",
+      "binding": "page4.income.total_income",
+      "rect": {
+        "left": 46.29,
+        "top": 86.47,
+        "width": 20.51,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "isBold": true,
+        "fontSize": 11,
+        "textColor": "#047857"
+      }
+    },
+    {
+      "id": "p4_exp_living",
+      "page": 4,
+      "type": "number",
+      "label": "مصروف - إعاشة أساسية",
+      "binding": "page4.expenses.living_basics",
+      "rect": {
+        "left": 7.68,
+        "top": 69.57,
+        "width": 17,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_exp_utilities",
+      "page": 4,
+      "type": "number",
+      "label": "مصروف - كهرباء ومياه وغاز",
+      "binding": "page4.expenses.utilities",
+      "rect": {
+        "left": 7.68,
+        "top": 72.4,
+        "width": 17,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_exp_phone",
+      "page": 4,
+      "type": "number",
+      "label": "مصروف - تليفون",
+      "binding": "page4.expenses.phone",
+      "rect": {
+        "left": 7.68,
+        "top": 75.22,
+        "width": 17,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_exp_rent",
+      "page": 4,
+      "type": "number",
+      "label": "مصروف - إيجار",
+      "binding": "page4.expenses.rent",
+      "rect": {
+        "left": 7.68,
+        "top": 78.05,
+        "width": 17,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_exp_med",
+      "page": 4,
+      "type": "number",
+      "label": "مصروف - علاج",
+      "binding": "page4.expenses.medical",
+      "rect": {
+        "left": 7.68,
+        "top": 80.76,
+        "width": 17,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_exp_edu",
+      "page": 4,
+      "type": "number",
+      "label": "مصروف - دراسة",
+      "binding": "page4.expenses.education",
+      "rect": {
+        "left": 7.68,
+        "top": 83.78,
+        "width": 17,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": 11
+      }
+    },
+    {
+      "id": "p4_exp_total",
+      "page": 4,
+      "type": "number",
+      "label": "إجمالي المصروفات",
+      "binding": "page4.expenses.total_expenses",
+      "rect": {
+        "left": 7.68,
+        "top": 86.47,
+        "width": 17,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "isBold": true,
+        "fontSize": 11,
+        "textColor": "#b91c1c"
+      }
+    },
+    {
+      "id": "p4_church_aid_total",
+      "page": 4,
+      "type": "number",
+      "label": "إجمالي المساعدات من الكنائس",
+      "binding": "page4.total_church_aid",
+      "rect": {
+        "left": 46.29,
+        "top": 35.24,
+        "width": 12.22,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_church_aid_total_notes",
+      "page": 4,
+      "type": "text",
+      "label": "ملاحظات / غرض إجمالي المساعدات",
+      "binding": "page4.church_aid_total_notes",
+      "rect": {
+        "left": 7.68,
+        "top": 35.24,
+        "width": 38.43,
+        "height": 2.74
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p4_number_1703",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - تاكسي",
+      "binding": "الدخل الشهري - تاكسي",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 63.9,
+        "top": 47.72,
+        "width": 14.51,
+        "height": 3.79
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_2997_233",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - كشك",
+      "binding": "الدخل الشهري - كشك",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 63.9,
+        "top": 51.81,
+        "width": 14.51,
+        "height": 2.93
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_4023_729",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - محل",
+      "binding": "الدخل الشهري - محل",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 63.9,
+        "top": 55.12,
+        "width": 14.51,
+        "height": 2.93
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_1766_474",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - تجارة",
+      "binding": "الدخل الشهري - تجارة",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 63.9,
+        "top": 58.3,
+        "width": 14.51,
+        "height": 2.93
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_3951_476",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - فرشة",
+      "binding": "الدخل الشهري - فرشة",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 36.01,
+        "top": 47.72,
+        "width": 14.51,
+        "height": 3.79
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_0357_447",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - تروسيكل",
+      "binding": "الدخل الشهري - تروسيكل",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 36.01,
+        "top": 51.81,
+        "width": 14.51,
+        "height": 2.93
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_1166_904",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - انابيب بوتوجاز",
+      "binding": "الدخل الشهري - انابيب بوتوجاز",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 36.01,
+        "top": 55.12,
+        "width": 14.51,
+        "height": 2.93
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_0353_896",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - معاش",
+      "binding": "الدخل الشهري - معاش",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 36.01,
+        "top": 58.3,
+        "width": 14.51,
+        "height": 2.93
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_6535_396",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - مكنة خياطة وتطريز",
+      "binding": "الدخل الشهري - مكنة خياطة وتطريز",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 7.68,
+        "top": 47.72,
+        "width": 14.51,
+        "height": 3.79
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_7873_518",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - ثلاجة مشروبات",
+      "binding": "الدخل الشهري - ثلاجة مشروبات",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 7.68,
+        "top": 51.81,
+        "width": 14.51,
+        "height": 2.93
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_7873_851",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - تربية طيور",
+      "binding": "الدخل الشهري - تربية طيور",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 7.68,
+        "top": 55.12,
+        "width": 14.51,
+        "height": 2.93
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "number_7873_872",
+      "page": 4,
+      "type": "number",
+      "label": "الدخل الشهري - مساعدات احد الافراد",
+      "binding": "الدخل الشهري - مساعدات احد الافراد",
+      "placeholder": "اكتب هنا...",
+      "rect": {
+        "left": 7.68,
+        "top": 58.3,
+        "width": 14.51,
+        "height": 2.93
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    }
+  ],
+  "5": [
+    {
+      "id": "p5_duration",
+      "page": 5,
+      "type": "text",
+      "label": "المدة المحددة لخدمة الأسرة",
+      "binding": "page5.duration",
+      "placeholder": "سنة كاملة تجدد في أول سبتمبر 2027",
+      "rect": {
+        "left": 8.4,
+        "top": 10.76,
+        "width": 63.8,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p5_entry_reason",
+      "page": 5,
+      "type": "textarea",
+      "label": "سبب دخول الأسرة الخدمة",
+      "binding": "page5.entry_reason",
+      "placeholder": "ضعف دخل الزوج بسبب العجز الصحي ووجود طالبين في مراحل الشهادات...",
+      "rect": {
+        "left": 7.31,
+        "top": 19.21,
+        "width": 84.46,
+        "height": 22.72
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p5_approved_amount",
+      "page": 5,
+      "type": "number",
+      "label": "المبلغ المعتمد شهرياً",
+      "binding": "page5.approved_amount",
+      "placeholder": "2000",
+      "rect": {
+        "left": 7.25,
+        "top": 44.49,
+        "width": 61.09,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "isBold": true,
+        "fontSize": "auto",
+        "textColor": "#b45309"
+      }
+    },
+    {
+      "id": "p5_other_notes",
+      "page": 5,
+      "type": "textarea",
+      "label": "ملاحظات أخرى",
+      "binding": "page5.notes",
+      "placeholder": "متابعة تقرير طبي للزوج بعد 6 أشهر...",
+      "rect": {
+        "left": 7.79,
+        "top": 51.61,
+        "width": 83.28,
+        "height": 25.57
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p5_member_1",
+      "page": 5,
+      "type": "text",
+      "label": "عضو اللجنة 1",
+      "binding": "page5.committee_members[0]",
+      "placeholder": "د. مجدي فرج",
+      "rect": {
+        "left": 44.81,
+        "top": 80.2,
+        "width": 39.09,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p5_member_2",
+      "page": 5,
+      "type": "text",
+      "label": "عضو اللجنة 2",
+      "binding": "page5.committee_members[1]",
+      "placeholder": "أ. سامي عوض",
+      "rect": {
+        "left": 44.62,
+        "top": 84.09,
+        "width": 39.09,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p5_member_3",
+      "page": 5,
+      "type": "text",
+      "label": "عضو اللجنة 3",
+      "binding": "page5.committee_members[2]",
+      "placeholder": "تاسوني مريم",
+      "rect": {
+        "left": 44.62,
+        "top": 87.8,
+        "width": 39.02,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    }
+  ],
+  "6": [
+    {
+      "id": "p6_head_name",
+      "page": 6,
+      "type": "text",
+      "label": "اسم رب الأسرة",
+      "binding": "page6.family_head",
+      "rect": {
+        "left": 49.19,
+        "top": 5.99,
+        "width": 31,
+        "height": 2.5
+      },
+      "style": {
+        "textAlign": "right",
+        "isBold": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_church_id",
+      "page": 6,
+      "type": "text",
+      "label": "رقم الأسرة بكشوف الكنيسة",
+      "binding": "page6.church_records_id",
+      "rect": {
+        "left": 8.66,
+        "top": 5.74,
+        "width": 12.87,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_care_id",
+      "page": 6,
+      "type": "text",
+      "label": "رقم بحث إدارة الرعاية",
+      "binding": "page6.cathedral_care_id",
+      "rect": {
+        "left": 49.19,
+        "top": 9.27,
+        "width": 27.54,
+        "height": 2.71
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_member_id",
+      "page": 6,
+      "type": "text",
+      "label": "رقم الأسرة بالعضوية الكنسية",
+      "binding": "page6.church_membership_id",
+      "rect": {
+        "left": 8.5,
+        "top": 9.2,
+        "width": 22.11,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_0_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 1 - نوع المساعدة",
+      "binding": "page6.aid_ledger[0].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 19.75,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_0_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 1 - المبلغ",
+      "binding": "page6.aid_ledger[0].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 19.75,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_0_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 1 - الجهة",
+      "binding": "page6.aid_ledger[0].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 19.75,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_0_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 1 - التاريخ",
+      "binding": "page6.aid_ledger[0].date",
+      "rect": {
+        "left": 8.51,
+        "top": 19.75,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_1_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 2 - نوع المساعدة",
+      "binding": "page6.aid_ledger[1].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 22.54,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_1_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 2 - المبلغ",
+      "binding": "page6.aid_ledger[1].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 22.54,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_1_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 2 - الجهة",
+      "binding": "page6.aid_ledger[1].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 22.54,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_1_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 2 - التاريخ",
+      "binding": "page6.aid_ledger[1].date",
+      "rect": {
+        "left": 8.51,
+        "top": 22.54,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_2_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 3 - نوع المساعدة",
+      "binding": "page6.aid_ledger[2].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 25.32,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_2_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 3 - المبلغ",
+      "binding": "page6.aid_ledger[2].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 25.32,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_2_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 3 - الجهة",
+      "binding": "page6.aid_ledger[2].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 25.32,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_2_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 3 - التاريخ",
+      "binding": "page6.aid_ledger[2].date",
+      "rect": {
+        "left": 8.51,
+        "top": 25.32,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_3_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 4 - نوع المساعدة",
+      "binding": "page6.aid_ledger[3].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 28.11,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_3_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 4 - المبلغ",
+      "binding": "page6.aid_ledger[3].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 28.11,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_3_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 4 - الجهة",
+      "binding": "page6.aid_ledger[3].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 28.11,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_3_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 4 - التاريخ",
+      "binding": "page6.aid_ledger[3].date",
+      "rect": {
+        "left": 8.51,
+        "top": 28.11,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_4_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 5 - نوع المساعدة",
+      "binding": "page6.aid_ledger[4].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 30.89,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_4_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 5 - المبلغ",
+      "binding": "page6.aid_ledger[4].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 30.89,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_4_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 5 - الجهة",
+      "binding": "page6.aid_ledger[4].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 30.89,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_4_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 5 - التاريخ",
+      "binding": "page6.aid_ledger[4].date",
+      "rect": {
+        "left": 8.51,
+        "top": 30.89,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_5_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 6 - نوع المساعدة",
+      "binding": "page6.aid_ledger[5].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 33.67,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_5_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 6 - المبلغ",
+      "binding": "page6.aid_ledger[5].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 33.67,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_5_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 6 - الجهة",
+      "binding": "page6.aid_ledger[5].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 33.67,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_5_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 6 - التاريخ",
+      "binding": "page6.aid_ledger[5].date",
+      "rect": {
+        "left": 8.51,
+        "top": 33.67,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_6_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 7 - نوع المساعدة",
+      "binding": "page6.aid_ledger[6].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 36.46,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_6_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 7 - المبلغ",
+      "binding": "page6.aid_ledger[6].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 36.46,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_6_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 7 - الجهة",
+      "binding": "page6.aid_ledger[6].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 36.46,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_6_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 7 - التاريخ",
+      "binding": "page6.aid_ledger[6].date",
+      "rect": {
+        "left": 8.51,
+        "top": 36.46,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_7_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 8 - نوع المساعدة",
+      "binding": "page6.aid_ledger[7].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 39.25,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_7_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 8 - المبلغ",
+      "binding": "page6.aid_ledger[7].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 39.25,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_7_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 8 - الجهة",
+      "binding": "page6.aid_ledger[7].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 39.25,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_7_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 8 - التاريخ",
+      "binding": "page6.aid_ledger[7].date",
+      "rect": {
+        "left": 8.51,
+        "top": 39.25,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_8_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 9 - نوع المساعدة",
+      "binding": "page6.aid_ledger[8].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 42.03,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_8_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 9 - المبلغ",
+      "binding": "page6.aid_ledger[8].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 42.03,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_8_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 9 - الجهة",
+      "binding": "page6.aid_ledger[8].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 42.03,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_8_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 9 - التاريخ",
+      "binding": "page6.aid_ledger[8].date",
+      "rect": {
+        "left": 8.51,
+        "top": 42.03,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_9_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 10 - نوع المساعدة",
+      "binding": "page6.aid_ledger[9].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 44.81,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_9_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 10 - المبلغ",
+      "binding": "page6.aid_ledger[9].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 44.81,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_9_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 10 - الجهة",
+      "binding": "page6.aid_ledger[9].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 44.81,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_9_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 10 - التاريخ",
+      "binding": "page6.aid_ledger[9].date",
+      "rect": {
+        "left": 8.51,
+        "top": 44.81,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_10_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 11 - نوع المساعدة",
+      "binding": "page6.aid_ledger[10].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 47.6,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_10_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 11 - المبلغ",
+      "binding": "page6.aid_ledger[10].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 47.6,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_10_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 11 - الجهة",
+      "binding": "page6.aid_ledger[10].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 47.6,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_10_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 11 - التاريخ",
+      "binding": "page6.aid_ledger[10].date",
+      "rect": {
+        "left": 8.51,
+        "top": 47.6,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_11_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 12 - نوع المساعدة",
+      "binding": "page6.aid_ledger[11].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 50.39,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_11_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 12 - المبلغ",
+      "binding": "page6.aid_ledger[11].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 50.39,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_11_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 12 - الجهة",
+      "binding": "page6.aid_ledger[11].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 50.39,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_11_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 12 - التاريخ",
+      "binding": "page6.aid_ledger[11].date",
+      "rect": {
+        "left": 8.51,
+        "top": 50.39,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_12_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 13 - نوع المساعدة",
+      "binding": "page6.aid_ledger[12].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 53.17,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_12_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 13 - المبلغ",
+      "binding": "page6.aid_ledger[12].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 53.17,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_12_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 13 - الجهة",
+      "binding": "page6.aid_ledger[12].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 53.17,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_12_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 13 - التاريخ",
+      "binding": "page6.aid_ledger[12].date",
+      "rect": {
+        "left": 8.51,
+        "top": 53.17,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_13_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 14 - نوع المساعدة",
+      "binding": "page6.aid_ledger[13].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 55.95,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_13_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 14 - المبلغ",
+      "binding": "page6.aid_ledger[13].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 55.95,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_13_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 14 - الجهة",
+      "binding": "page6.aid_ledger[13].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 55.95,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_13_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 14 - التاريخ",
+      "binding": "page6.aid_ledger[13].date",
+      "rect": {
+        "left": 8.51,
+        "top": 55.95,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_14_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 15 - نوع المساعدة",
+      "binding": "page6.aid_ledger[14].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 58.74,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_14_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 15 - المبلغ",
+      "binding": "page6.aid_ledger[14].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 58.74,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_14_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 15 - الجهة",
+      "binding": "page6.aid_ledger[14].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 58.74,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_14_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 15 - التاريخ",
+      "binding": "page6.aid_ledger[14].date",
+      "rect": {
+        "left": 8.51,
+        "top": 58.74,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_15_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 16 - نوع المساعدة",
+      "binding": "page6.aid_ledger[15].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 61.53,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_15_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 16 - المبلغ",
+      "binding": "page6.aid_ledger[15].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 61.53,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_15_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 16 - الجهة",
+      "binding": "page6.aid_ledger[15].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 61.53,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_15_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 16 - التاريخ",
+      "binding": "page6.aid_ledger[15].date",
+      "rect": {
+        "left": 8.51,
+        "top": 61.53,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_16_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 17 - نوع المساعدة",
+      "binding": "page6.aid_ledger[16].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 64.31,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_16_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 17 - المبلغ",
+      "binding": "page6.aid_ledger[16].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 64.31,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_16_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 17 - الجهة",
+      "binding": "page6.aid_ledger[16].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 64.31,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_16_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 17 - التاريخ",
+      "binding": "page6.aid_ledger[16].date",
+      "rect": {
+        "left": 8.51,
+        "top": 64.31,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_17_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 18 - نوع المساعدة",
+      "binding": "page6.aid_ledger[17].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 67.09,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_17_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 18 - المبلغ",
+      "binding": "page6.aid_ledger[17].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 67.09,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_17_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 18 - الجهة",
+      "binding": "page6.aid_ledger[17].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 67.09,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_17_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 18 - التاريخ",
+      "binding": "page6.aid_ledger[17].date",
+      "rect": {
+        "left": 8.51,
+        "top": 67.09,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_18_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 19 - نوع المساعدة",
+      "binding": "page6.aid_ledger[18].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 69.88,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_18_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 19 - المبلغ",
+      "binding": "page6.aid_ledger[18].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 69.88,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_18_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 19 - الجهة",
+      "binding": "page6.aid_ledger[18].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 69.88,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_18_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 19 - التاريخ",
+      "binding": "page6.aid_ledger[18].date",
+      "rect": {
+        "left": 8.51,
+        "top": 69.88,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_19_type",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 20 - نوع المساعدة",
+      "binding": "page6.aid_ledger[19].aid_type",
+      "rect": {
+        "left": 64.8,
+        "top": 72.67,
+        "width": 23.79,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_19_amount",
+      "page": 6,
+      "type": "number",
+      "label": "صرف 20 - المبلغ",
+      "binding": "page6.aid_ledger[19].amount",
+      "rect": {
+        "left": 49.19,
+        "top": 72.67,
+        "width": 15.48,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_19_entity",
+      "page": 6,
+      "type": "text",
+      "label": "صرف 20 - الجهة",
+      "binding": "page6.aid_ledger[19].entity",
+      "rect": {
+        "left": 20.28,
+        "top": 72.67,
+        "width": 28.83,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_aid_19_date",
+      "page": 6,
+      "type": "date",
+      "label": "صرف 20 - التاريخ",
+      "binding": "page6.aid_ledger[19].date",
+      "rect": {
+        "left": 8.51,
+        "top": 72.67,
+        "width": 11.69,
+        "height": 2.7
+      },
+      "style": {
+        "textAlign": "center",
+        "isMono": true,
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_sig_1",
+      "page": 6,
+      "type": "text",
+      "label": "توقيع اللجنة 1",
+      "binding": "page6.signatures[0]",
+      "rect": {
+        "left": 42.4,
+        "top": 80,
+        "width": 40.1,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_sig_2",
+      "page": 6,
+      "type": "text",
+      "label": "توقيع اللجنة 2",
+      "binding": "page6.signatures[1]",
+      "rect": {
+        "left": 42.65,
+        "top": 83.7,
+        "width": 39.85,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_sig_3",
+      "page": 6,
+      "type": "text",
+      "label": "توقيع اللجنة 3",
+      "binding": "page6.signatures[2]",
+      "rect": {
+        "left": 42.59,
+        "top": 87.54,
+        "width": 39.91,
+        "height": 2.8
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_text_1439",
+      "page": 6,
+      "type": "text",
+      "label": "من تاريخ - اليوم",
+      "binding": "page6.from_date_day",
+      "placeholder": "اليوم",
+      "rect": {
+        "left": 56.46,
+        "top": 12.89,
+        "width": 5.49,
+        "height": 2.2
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_text_6097",
+      "page": 6,
+      "type": "text",
+      "label": "من تاريخ - الشهر",
+      "binding": "page6.from_date_month",
+      "placeholder": "الشهر",
+      "rect": {
+        "left": 49.15,
+        "top": 12.82,
+        "width": 6.22,
+        "height": 2.33
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "p6_text_1364",
+      "page": 6,
+      "type": "text",
+      "label": "من تاريخ - السنة",
+      "binding": "page6.from_date_year",
+      "placeholder": "السنة",
+      "rect": {
+        "left": 42.2,
+        "top": 12.94,
+        "width": 5.49,
+        "height": 2.11
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_3603_244",
+      "page": 6,
+      "type": "text",
+      "label": "إلى تاريخ - اليوم",
+      "binding": "page6.to_date_day",
+      "placeholder": "اليوم",
+      "rect": {
+        "left": 25.58,
+        "top": 12.94,
+        "width": 5.49,
+        "height": 2.2
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_3603_946",
+      "page": 6,
+      "type": "text",
+      "label": "إلى تاريخ - الشهر",
+      "binding": "page6.to_date_month",
+      "placeholder": "الشهر",
+      "rect": {
+        "left": 18.21,
+        "top": 12.99,
+        "width": 6.22,
+        "height": 2.33
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    },
+    {
+      "id": "text_3603_639",
+      "page": 6,
+      "type": "text",
+      "label": "إلى تاريخ - السنة",
+      "binding": "page6.to_date_year",
+      "placeholder": "السنة",
+      "rect": {
+        "left": 11.2,
+        "top": 12.99,
+        "width": 5.61,
+        "height": 2.11
+      },
+      "style": {
+        "textAlign": "right",
+        "fontSize": "auto"
+      }
+    }
+  ]
+};

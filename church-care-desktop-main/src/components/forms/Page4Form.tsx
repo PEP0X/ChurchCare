@@ -1,0 +1,315 @@
+import React from "react";
+import { CaseStudyData, ChurchAidItem } from "../../types/schema";
+import { DollarSign, Plus, Trash2, Calculator } from "lucide-react";
+import { recalculatePage4Totals } from "../../utils/page4Calculations";
+
+interface Page4FormProps {
+  data: CaseStudyData;
+  onChange: (updated: Partial<CaseStudyData>) => void;
+}
+
+export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
+  const p4 = data.page4;
+
+  const addAid = () => {
+    if (p4.church_aid.length >= 8) return;
+    const item: ChurchAidItem = {
+      id: Date.now().toString(),
+      church_name: "",
+      value: 0,
+      purpose: ""
+    };
+    const updatedP4 = recalculatePage4Totals({
+      ...p4,
+      church_aid: [...p4.church_aid, item]
+    });
+    onChange({ page4: updatedP4 });
+  };
+
+  const updateAid = (index: number, field: keyof ChurchAidItem, val: any) => {
+    const updated = [...p4.church_aid];
+    updated[index] = { ...updated[index], [field]: val };
+    const updatedP4 = recalculatePage4Totals({
+      ...p4,
+      church_aid: updated
+    });
+    onChange({ page4: updatedP4 });
+  };
+
+  const removeAid = (index: number) => {
+    const updatedP4 = recalculatePage4Totals({
+      ...p4,
+      church_aid: p4.church_aid.filter((_, i) => i !== index)
+    });
+    onChange({ page4: updatedP4 });
+  };
+
+  const updateIncome = (field: string, val: any) => {
+    const updatedP4 = recalculatePage4Totals({
+      ...p4,
+      income: { ...p4.income, [field]: val }
+    });
+    onChange({ page4: updatedP4 });
+  };
+
+  const updateExpense = (field: string, val: any) => {
+    const updatedP4 = recalculatePage4Totals({
+      ...p4,
+      expenses: { ...p4.expenses, [field]: val }
+    });
+    onChange({ page4: updatedP4 });
+  };
+
+  return (
+    <div dir="rtl" className="space-y-6 font-['IBM_Plex_Sans_Arabic']">
+      <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+        <h2 className="text-base font-bold text-white flex items-center gap-2">
+          <DollarSign className="w-5 h-5 text-amber-400" />
+          الصفحة الرابعة: مساعدات الكنائس والهيئات، ومصفوفة الدخل والمصروفات
+        </h2>
+      </div>
+
+      {/* Church Assistance Table */}
+      <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <span className="text-sm font-bold text-amber-400">
+            مساعدات وشهريات الكنائس والهيئات الأخرى ({p4.church_aid.length} من 8)
+          </span>
+          <button
+            type="button"
+            onClick={addAid}
+            disabled={p4.church_aid.length >= 8}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs disabled:opacity-40"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            إضافة كنيسة / هيئة
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-right text-xs">
+            <thead>
+              <tr className="text-slate-400 border-b border-slate-800">
+                <th className="p-2">اسم الكنيسة أو الهيئة</th>
+                <th className="p-2 w-28">القيمة (ج.م)</th>
+                <th className="p-2">الغرض</th>
+                <th className="p-2 w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {p4.church_aid.map((a, idx) => (
+                <tr key={a.id || idx} className="border-b border-slate-800/60">
+                  <td className="p-1.5">
+                    <input
+                      type="text"
+                      placeholder="اسم الكنيسة..."
+                      value={a.church_name}
+                      onChange={(e) => updateAid(idx, "church_name", e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white"
+                    />
+                  </td>
+                  <td className="p-1.5">
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={a.value}
+                      onChange={(e) => updateAid(idx, "value", parseFloat(e.target.value) || 0)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white font-mono"
+                    />
+                  </td>
+                  <td className="p-1.5">
+                    <input
+                      type="text"
+                      placeholder="مساعدة إعاشة / علاج..."
+                      value={a.purpose}
+                      onChange={(e) => updateAid(idx, "purpose", e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white"
+                    />
+                  </td>
+                  <td className="p-1.5 text-center">
+                    <button
+                      type="button"
+                      onClick={() => removeAid(idx)}
+                      className="p-1 text-slate-400 hover:text-rose-400"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="text-amber-300 font-bold bg-slate-800/40">
+                <td className="p-2 flex items-center gap-1.5">
+                  <Calculator className="w-3.5 h-3.5" />
+                  <span>إجمالي قيمة المساعدات:</span>
+                </td>
+                <td className="p-2 font-mono text-sm">{p4.total_church_aid || 0} ج.م</td>
+                <td colSpan={2}></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      {/* Income vs Expense Matrix */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Income */}
+        <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+          <div className="text-sm font-bold text-emerald-400 pb-2 border-b border-slate-800 flex items-center justify-between">
+            <span>إجمالي الدخل الشهري للأسرة</span>
+          </div>
+
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">مساعدات وشهريات الكنائس:</span>
+              <input
+                type="text"
+                value={p4.income.church_aid}
+                onChange={(e) => updateIncome("church_aid", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">مساعدات علاجية:</span>
+              <input
+                type="text"
+                value={p4.income.medical_aid}
+                onChange={(e) => updateIncome("medical_aid", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">مساعدات خلال الدراسة:</span>
+              <input
+                type="text"
+                value={p4.income.study_aid}
+                onChange={(e) => updateIncome("study_aid", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">المرتب الأساسي:</span>
+              <input
+                type="text"
+                value={p4.income.base_salary}
+                onChange={(e) => updateIncome("base_salary", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">المصدر الإضافي (المشروع):</span>
+              <input
+                type="text"
+                value={p4.income.side_project}
+                onChange={(e) => updateIncome("side_project", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">المصدر الإضافي (أحد الأقارب):</span>
+              <input
+                type="text"
+                value={p4.income.relatives_aid}
+                onChange={(e) => updateIncome("relatives_aid", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-slate-700 font-bold">
+              <span className="text-emerald-400 flex items-center gap-1.5">
+                <Calculator className="w-3.5 h-3.5" />
+                <span>الإجمالي العام للدخل (تلقائي):</span>
+              </span>
+              <input
+                type="text"
+                readOnly
+                placeholder="0 ج.م"
+                value={p4.income.total_income}
+                className="w-32 bg-slate-800/90 border border-emerald-500/50 rounded px-2.5 py-1 text-emerald-300 text-left font-mono font-bold cursor-default"
+                title="محسوب تلقائياً من مجموع بنود الدخل"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Expenses */}
+        <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+          <div className="text-sm font-bold text-rose-400 pb-2 border-b border-slate-800 flex items-center justify-between">
+            <span>إجمالي المصروفات الشهرية</span>
+          </div>
+
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">مصروفات إعاشة أساسية:</span>
+              <input
+                type="text"
+                value={p4.expenses.living_basics}
+                onChange={(e) => updateExpense("living_basics", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">كهرباء ومياه وغاز:</span>
+              <input
+                type="text"
+                value={p4.expenses.utilities}
+                onChange={(e) => updateExpense("utilities", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">تليفون وموبايل:</span>
+              <input
+                type="text"
+                value={p4.expenses.phone}
+                onChange={(e) => updateExpense("phone", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">إيجار السكن:</span>
+              <input
+                type="text"
+                value={p4.expenses.rent}
+                onChange={(e) => updateExpense("rent", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">علاج وأدوية:</span>
+              <input
+                type="text"
+                value={p4.expenses.medical}
+                onChange={(e) => updateExpense("medical", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">دراسة ومصاريف تعليم:</span>
+              <input
+                type="text"
+                value={p4.expenses.education}
+                onChange={(e) => updateExpense("education", e.target.value)}
+                className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-slate-700 font-bold">
+              <span className="text-rose-400 flex items-center gap-1.5">
+                <Calculator className="w-3.5 h-3.5" />
+                <span>الإجمالي العام للمصروفات (تلقائي):</span>
+              </span>
+              <input
+                type="text"
+                readOnly
+                placeholder="0 ج.م"
+                value={p4.expenses.total_expenses}
+                className="w-32 bg-slate-800/90 border border-rose-500/50 rounded px-2.5 py-1 text-rose-300 text-left font-mono font-bold cursor-default"
+                title="محسوب تلقائياً من مجموع بنود المصروفات"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
