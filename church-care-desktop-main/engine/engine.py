@@ -394,8 +394,8 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
 
     # 3. Canonical Aliases Map
     aliases = {
-        "page6.head_name": ["page6.family_head", "family_head"],
-        "page6.family_head": ["page6.head_name", "head_name"],
+        "page6.head_name": ["page6.family_head", "family_head", "page2.husband.name", "page2.wife.name"],
+        "page6.family_head": ["page6.head_name", "head_name", "page2.husband.name", "page2.wife.name"],
         "page6.church_id": ["page6.church_records_id", "church_records_id"],
         "page6.church_records_id": ["page6.church_id", "church_id"],
         "page6.care_id": ["page6.cathedral_care_id", "cathedral_care_id"],
@@ -1035,7 +1035,14 @@ class PDFCareReportEngine:
     # -------------------------------------------------------------------------
     def _populate_page_6(self, page: pymupdf.Page, data: Dict[str, Any]):
         p6 = data.get("page6", {})
-        draw_arabic_text(page, pymupdf.Point(430, 54), p6.get("family_head", ""), fontsize=10)
+        p2 = data.get("page2", {})
+        head_name = (
+            p6.get("family_head")
+            or (p2.get("husband", {}).get("name") if isinstance(p2.get("husband"), dict) else "")
+            or (p2.get("wife", {}).get("name") if isinstance(p2.get("wife"), dict) else "")
+            or ""
+        )
+        draw_arabic_text(page, pymupdf.Point(430, 54), head_name, fontsize=10)
         draw_arabic_text(page, pymupdf.Point(210, 54), p6.get("church_records_id", ""), fontsize=10)
         draw_arabic_text(page, pymupdf.Point(430, 83), p6.get("cathedral_care_id", ""), fontsize=10)
         draw_arabic_text(page, pymupdf.Point(210, 83), p6.get("church_membership_id", ""), fontsize=10)
@@ -1172,9 +1179,9 @@ class PDFCareReportEngine:
                         inner_rect = pymupdf.Rect(box_rect.x0 + 4, box_rect.y0 + 17, box_rect.x1 - 4, box_rect.y1 - 4)
                         stamp_id_card(new_page, inner_rect, str(img_data), label=lbl)
 
-            # 3. BIRTH CERTIFICATES PAGE (Horizontal / Landscape A4 - 2 Halves)
+            # 3. BIRTH CERTIFICATES PAGE (Portrait A4 - 2 Stacked Halves for Seamless Printing)
             elif ep_type == "birth_certs":
-                new_page = doc.new_page(-1, 841.89, 595.28)
+                new_page = doc.new_page(-1, 595.28, 841.89)
                 new_page.draw_rect(new_page.rect, color=None, fill=(1, 1, 1))
 
                 if os.path.exists(REGULAR_FONT_PATH):
@@ -1184,10 +1191,10 @@ class PDFCareReportEngine:
                     new_page.insert_font(fontname="RubikBold", fontfile=BOLD_FONT_PATH)
                     new_page.insert_font(fontname="IBMPlexBold", fontfile=BOLD_FONT_PATH)
 
-                # Header
+                # Header (Standard A4 Portrait, perfectly matching pages 1-6 & ID cards)
                 church_title = f"{church_name} - خدمة أخوة الرب" if church_name else "خدمة أخوة الرب"
-                draw_arabic_text(new_page, pymupdf.Point(805.89, 30), church_title, fontsize=9.5, fontname="IBMPlexBold", color=(0.15, 0.4, 0.65), align=2)
-                draw_arabic_text(new_page, pymupdf.Point(805.89, 46), "خدمة أخوة الرب - شهادات الميلاد", fontsize=13, fontname="IBMPlexBold", color=(0.1, 0.1, 0.1), align=2)
+                draw_arabic_text(new_page, pymupdf.Point(559.28, 30), church_title, fontsize=9.5, fontname="IBMPlexBold", color=(0.15, 0.4, 0.65), align=2)
+                draw_arabic_text(new_page, pymupdf.Point(559.28, 46), "خدمة أخوة الرب - شهادات الميلاد", fontsize=13, fontname="IBMPlexBold", color=(0.1, 0.1, 0.1), align=2)
 
                 header_meta = f"رقم البحث: #{study_id}"
                 if family_head:
@@ -1195,32 +1202,29 @@ class PDFCareReportEngine:
                 draw_arabic_text(new_page, pymupdf.Point(36, 46), header_meta, fontsize=9.0, fontname="IBMPlexRegular", color=(0.35, 0.4, 0.45), align=0)
 
                 # Divider
-                new_page.draw_line(pymupdf.Point(36, 54), pymupdf.Point(805.89, 54), color=(0.82, 0.85, 0.88), width=0.8)
+                new_page.draw_line(pymupdf.Point(36, 54), pymupdf.Point(559.28, 54), color=(0.82, 0.85, 0.88), width=0.8)
 
-                # 2 Boxes (Right half and Left half)
+                # 2 Boxes (Top half and Bottom half for Portrait A4 printing)
                 margin_x = 36.0
                 margin_top = 64.0
-                gap_x = 24.0
-                box_w = (841.89 - 2 * margin_x - gap_x) / 2.0  # ~372.94 pt
-                box_h = 595.28 - margin_top - 28.0  # ~503.28 pt
+                gap_y = 18.0
+                box_w = 595.28 - 2 * margin_x  # 523.28 pt
+                box_h = (841.89 - margin_top - 28.0 - gap_y) / 2.0  # ~365.94 pt
 
                 images = ep.get("images", [])
                 labels = ep.get("labels", [])
 
                 for slot in range(2):
-                    is_right = (slot == 0)
-                    if is_right:
-                        x0 = 841.89 - margin_x - box_w
-                    else:
-                        x0 = margin_x
-                    y0 = margin_top
+                    is_top = (slot == 0)
+                    x0 = margin_x
+                    y0 = margin_top if is_top else (margin_top + box_h + gap_y)
                     box_rect = pymupdf.Rect(x0, y0, x0 + box_w, y0 + box_h)
 
                     # Frame
                     new_page.draw_rect(box_rect, color=(0.75, 0.82, 0.9), fill=(0.98, 0.99, 1.0), width=1, radius=None)
 
                     # Label
-                    default_label = "شهادة 1" if is_right else "شهادة 2"
+                    default_label = "شهادة 1 (النصف العلوي)" if is_top else "شهادة 2 (النصف السفلي)"
                     lbl = labels[slot] if (slot < len(labels) and labels[slot] and "يمين" not in labels[slot] and "شمال" not in labels[slot]) else default_label
                     draw_arabic_text(new_page, pymupdf.Point(box_rect.x1 - 12, box_rect.y0 + 16), lbl, fontsize=9.5, fontname="IBMPlexBold", color=(0.15, 0.3, 0.45), align=2)
 

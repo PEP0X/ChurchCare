@@ -21,21 +21,47 @@ export const Page2Form: React.FC<Page2FormProps> = ({ data, onChange }) => {
   const p2 = data.page2;
 
   const updateHusband = (field: string, val: any) => {
-    onChange({
+    const newHusband = { ...p2.husband, [field]: val };
+    const updates: Partial<CaseStudyData> = {
       page2: {
         ...p2,
-        husband: { ...p2.husband, [field]: val }
+        husband: newHusband
       }
-    });
+    };
+    if (field === "name") {
+      const currentHead = data.page6?.family_head?.trim();
+      const prevHusband = p2.husband?.name?.trim();
+      const prevWife = p2.wife?.name?.trim();
+      if (!currentHead || currentHead === prevHusband || currentHead === prevWife) {
+        updates.page6 = {
+          ...data.page6,
+          family_head: val ? String(val).trim() : (p2.wife?.name?.trim() || "")
+        };
+      }
+    }
+    onChange(updates);
   };
 
   const updateWife = (field: string, val: any) => {
-    onChange({
+    const newWife = { ...p2.wife, [field]: val };
+    const updates: Partial<CaseStudyData> = {
       page2: {
         ...p2,
-        wife: { ...p2.wife, [field]: val }
+        wife: newWife
       }
-    });
+    };
+    if (field === "name") {
+      const currentHead = data.page6?.family_head?.trim();
+      const husbandName = p2.husband?.name?.trim();
+      const prevWife = p2.wife?.name?.trim();
+      if (!husbandName && (!currentHead || currentHead === prevWife)) {
+        updates.page6 = {
+          ...data.page6,
+          family_head: val ? String(val).trim() : ""
+        };
+      }
+    }
+    onChange(updates);
   };
 
   const updateAddress = (field: string, val: any) => {
@@ -78,9 +104,15 @@ export const Page2Form: React.FC<Page2FormProps> = ({ data, onChange }) => {
           </div>
 
           <div>
-            <label className="text-xs text-slate-300 font-medium">الاسم رباعي:</label>
+            <label className="text-xs text-slate-300 font-medium flex items-center justify-between">
+              <span>الاسم رباعي:</span>
+              <span className="text-[10px] text-sky-400 font-medium">
+                يرتبط كرَب للأسرة برقم البحث (#{data.page1.church_study_id || "784/2026"})
+              </span>
+            </label>
             <input
               type="text"
+              placeholder="مثال: مينا حنا الله جرجس"
               value={p2.husband.name}
               onChange={(e) => updateHusband("name", e.target.value)}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-amber-500 mt-1"
@@ -183,9 +215,15 @@ export const Page2Form: React.FC<Page2FormProps> = ({ data, onChange }) => {
           </div>
 
           <div>
-            <label className="text-xs text-slate-300 font-medium">الاسم رباعي:</label>
+            <label className="text-xs text-slate-300 font-medium flex items-center justify-between">
+              <span>الاسم رباعي:</span>
+              <span className="text-[10px] text-purple-400 font-medium">
+                {p2.husband.name ? "الزوجة" : "يرتبط كرَب للأسرة (لعدم وجود زوج)"}
+              </span>
+            </label>
             <input
               type="text"
+              placeholder="مثال: مريم بطرس رزق الله"
               value={p2.wife.name}
               onChange={(e) => updateWife("name", e.target.value)}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-amber-500 mt-1"

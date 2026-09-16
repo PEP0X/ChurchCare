@@ -1,8 +1,9 @@
 import React from "react";
 import { CaseStudyData } from "../../types/schema";
 import { DropZone } from "../studio/DropZone";
-import { Calendar, Hash, MapPin, User, FileBadge, Lock, Building2 } from "lucide-react";
+import { Calendar, Hash, MapPin, User, FileBadge, Lock, Building2, Users } from "lucide-react";
 import { DIOCESAN_CHURCHES } from "../../utils/churchLicense";
+import { getHeadOfHouseholdName, getHeadOfHouseholdSource } from "../../utils/caseStudyUtils";
 
 interface Page1FormProps {
   data: CaseStudyData;
@@ -19,6 +20,9 @@ export const Page1Form: React.FC<Page1FormProps> = ({
   onOpenWifeCropper,
   lockedChurchName = null
 }) => {
+  const headName = getHeadOfHouseholdName(data);
+  const headSource = getHeadOfHouseholdSource(data);
+
   const updateP1 = (field: string, val: string) => {
     onChange({
       page1: {
@@ -153,9 +157,14 @@ export const Page1Form: React.FC<Page1FormProps> = ({
         </div>
 
         <div>
-          <label className="text-xs text-slate-300 font-medium flex items-center gap-1.5 mb-1.5">
-            <Hash className="w-3.5 h-3.5 text-amber-400" />
-            رقم البحث بالكنيسة:
+          <label className="text-xs text-slate-300 font-medium flex items-center justify-between mb-1.5">
+            <span className="flex items-center gap-1.5">
+              <Hash className="w-3.5 h-3.5 text-amber-400" />
+              <span>رقم البحث بالكنيسة:</span>
+            </span>
+            <span className="text-[10px] text-amber-400 font-medium">
+              مرتبط برب الأسرة
+            </span>
           </label>
           <input
             type="text"
@@ -164,6 +173,43 @@ export const Page1Form: React.FC<Page1FormProps> = ({
             onChange={(e) => updateP1("church_study_id", e.target.value)}
             className="w-full bg-slate-800 border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
           />
+        </div>
+
+        <div>
+          <label className="text-xs text-slate-300 font-medium flex items-center justify-between mb-1.5">
+            <span className="flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-amber-400" />
+              <span>رب الأسرة (اسم الزوج / الزوجة):</span>
+            </span>
+            {headSource === "husband" && (
+              <span className="text-[10px] bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded-full font-medium">
+                اسم الزوج (الصفحة 2)
+              </span>
+            )}
+            {headSource === "wife" && (
+              <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-medium">
+                اسم الزوجة (لعدم وجود زوج)
+              </span>
+            )}
+            {headSource === "manual" && (
+              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-medium">
+                مسجل بالصفحة 6
+              </span>
+            )}
+            {headSource === "none" && (
+              <span className="text-[10px] text-slate-400">
+                يرتبط تلقائياً من الصفحة 2
+              </span>
+            )}
+          </label>
+          <div className="w-full bg-slate-800/80 border border-slate-700/80 rounded-lg px-3 py-2 text-sm text-white flex items-center justify-between shadow-inner">
+            <span className={headName ? "font-bold text-amber-200 truncate" : "text-slate-500 text-xs italic"}>
+              {headName || "سيتم الربط باسم الزوج تلقائياً (أو الزوجة إن لم يوجد)"}
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono shrink-0 mr-2">
+              #{data.page1.church_study_id || "784/2026"}
+            </span>
+          </div>
         </div>
 
         <div>

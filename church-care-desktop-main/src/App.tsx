@@ -55,10 +55,11 @@ import {
   DuplicatedLedgerPage
 } from "./types/schema";
 import { isChurchNameLocked, getLockedChurchName } from "./utils/churchLicense";
+import { getHeadOfHouseholdName, getCaseStudyFileName, getCaseStudyDisplayName } from "./utils/caseStudyUtils";
 
 const BINDING_ALIASES: Record<string, string[]> = {
-  "page6.head_name": ["page6.family_head"],
-  "page6.family_head": ["page6.head_name"],
+  "page6.head_name": ["page6.family_head", "page2.husband.name", "page2.wife.name"],
+  "page6.family_head": ["page6.head_name", "page2.husband.name", "page2.wife.name"],
   "page6.church_id": ["page6.church_records_id"],
   "page6.church_records_id": ["page6.church_id"],
   "page6.care_id": ["page6.cathedral_care_id"],
@@ -573,7 +574,7 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   const rawP6 = raw.page6 || raw.Page6 || {};
   const rawSigs = Array.isArray(rawP6.signatures) ? rawP6.signatures : [];
   const page6: CaseStudyData["page6"] = {
-    family_head: String(rawP6.family_head || rawP6.head_name || rawHusband.name || ""),
+    family_head: String(rawP6.family_head || rawP6.head_name || rawHusband.name || rawWife.name || ""),
     church_records_id: String(rawP6.church_records_id || rawP6.church_id || ""),
     cathedral_care_id: String(rawP6.cathedral_care_id || rawP6.care_id || rawP1.cathedral_care_id || ""),
     church_membership_id: String(rawP6.church_membership_id || rawP6.member_id || rawP1.church_membership_id || ""),
@@ -1066,12 +1067,8 @@ export const App: React.FC = () => {
       typeof window !== "undefined" &&
       ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
 
-    const rawCaseId = data.page1.church_study_id || "784-2026";
-    const caseId = rawCaseId.replace(/[\/\\:*?"<>|]/g, "_");
-    const rawHusband = data.page6.family_head || data.page2.husband.name || "حالة";
-    const husbandName = rawHusband.replace(/[\/\\:*?"<>|]/g, "_");
     const ext = forceJson ? "json" : "care";
-    const defaultFileName = `بحث_اخوة_الرب_${caseId}_${husbandName}.${ext}`;
+    const defaultFileName = getCaseStudyFileName(data, ext);
     const jsonStr = JSON.stringify(data, null, 2);
 
     if (isTauri) {
@@ -1151,9 +1148,7 @@ export const App: React.FC = () => {
       typeof window !== "undefined" &&
       ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
 
-    const caseId = (data.page1.church_study_id || "784-2026").replace(/[\/\\:]/g, "_");
-    const husbandName = (data.page2.husband.name || "حالة").replace(/[\/\\:]/g, "_");
-    const defaultFileName = `بحث_أخوة_الرب_${caseId}_${husbandName}.pdf`;
+    const defaultFileName = getCaseStudyFileName(data, "pdf");
 
     let chosenPath = `/Users/saitama/Downloads/${defaultFileName}`;
 
@@ -1281,7 +1276,7 @@ export const App: React.FC = () => {
         setActivePage(1);
 
         const fileName = filePath.split(/[\/\\]/).pop() || filePath;
-        const headName = sanitized.page6.family_head || sanitized.page2.husband.name || "الحالة";
+        const headName = getHeadOfHouseholdName(sanitized) || "الحالة";
         const imgCount = countEmbeddedImages(sanitized);
         showToast(`تم فتح ملف الحالة بنجاح (${headName}): ${fileName} [مضمن به ${imgCount} صورة]`, "success");
         return;
@@ -1313,7 +1308,7 @@ export const App: React.FC = () => {
           setHasUnsavedChanges(false);
           setActivePage(1);
 
-          const headName = sanitized.page6.family_head || sanitized.page2.husband.name || "الحالة";
+          const headName = getHeadOfHouseholdName(sanitized) || "الحالة";
           showToast(`تم استيراد ملف الحالة بنجاح (${headName})`, "success");
         } catch (err) {
           showToast("تعذر قراءة ملف JSON، يرجى التأكد من صحة الملف", "error");
@@ -1480,21 +1475,21 @@ export const App: React.FC = () => {
     showToast(`تمت إضافة صفحة البطايق (8 بطاقات - رأسي) برقم ${nextTotal}!`, "success");
   };
 
-  // Add Birth Certificates Page (Horizontal, 2 boxes)
+  // Add Birth Certificates Page (Portrait A4, 2 stacked boxes)
   const handleAddBirthCertsPage = () => {
     const nextTotal = 6 + (data.extra_pages?.length || 0) + 1;
     const newPage: ExtraBirthCertsPage = {
       id: `birth_certs_${Date.now()}`,
       type: "birth_certs",
-      title: "شهادات الميلاد",
+      title: "شهادات الميلاد (رأسي)",
       images: [undefined, undefined],
-      labels: ["شهادة 1", "شهادة 2"]
+      labels: ["شهادة 1 (النصف العلوي)", "شهادة 2 (النصف السفلي)"]
     };
     const updated = [...(data.extra_pages || []), newPage];
     setData((prev) => ({ ...prev, extra_pages: updated }));
     setActivePage(nextTotal);
     setHasUnsavedChanges(true);
-    showToast(`تمت إضافة صفحة شهادات الميلاد (أفقي) برقم ${nextTotal}!`, "success");
+    showToast(`تمت إضافة صفحة شهادات الميلاد (A4 رأسي للطباعة) برقم ${nextTotal}!`, "success");
   };
 
   // Delete Extra Page
@@ -1670,6 +1665,11 @@ export const App: React.FC = () => {
           <span className="text-slate-600">•</span>
           <span className="text-slate-300 text-[11px] font-mono font-bold whitespace-nowrap">
             دراسة حالة #{data.page1.church_study_id || "784/2026"}
+          </span>
+          <span className="text-slate-600">•</span>
+          <span className="text-amber-300 text-[11px] font-bold truncate max-w-[220px] flex items-center gap-1">
+            <Users className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>{getHeadOfHouseholdName(data) ? `رب الأسرة: ${getHeadOfHouseholdName(data)}` : "حالة جديدة"}</span>
           </span>
           <span className="text-slate-600">•</span>
           <span className="text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">

@@ -1,6 +1,7 @@
 import React from "react";
 import { CaseStudyData, AidLedgerEntry } from "../../types/schema";
 import { BookOpen, Plus, Trash2, Calendar, UserCheck } from "lucide-react";
+import { getHeadOfHouseholdName } from "../../utils/caseStudyUtils";
 
 interface Page6FormProps {
   data: CaseStudyData;
@@ -9,6 +10,7 @@ interface Page6FormProps {
 
 export const Page6Form: React.FC<Page6FormProps> = ({ data, onChange }) => {
   const p6 = data.page6;
+  const linkedHeadName = getHeadOfHouseholdName(data);
 
   const updateHeader = (field: string, val: string) => {
     onChange({
@@ -27,7 +29,7 @@ export const Page6Form: React.FC<Page6FormProps> = ({ data, onChange }) => {
       amount: "",
       entity: "خزينة الكنيسة",
       date: new Date().toISOString().slice(0, 10).replace(/-/g, "/"),
-      recipient_signature: p6.family_head || ""
+      recipient_signature: p6.family_head || linkedHeadName || ""
     };
     onChange({
       page6: {
@@ -74,10 +76,22 @@ export const Page6Form: React.FC<Page6FormProps> = ({ data, onChange }) => {
       {/* Header Info */}
       <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="text-xs text-slate-300 font-medium">اسم رب الأسرة المستلم:</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-slate-300 font-medium">اسم رب الأسرة المستلم:</label>
+            {linkedHeadName && p6.family_head !== linkedHeadName && (
+              <button
+                type="button"
+                onClick={() => updateHeader("family_head", linkedHeadName)}
+                className="text-[10px] text-amber-400 hover:text-amber-300 hover:underline cursor-pointer"
+                title="استرجاع الاسم المرتبط برقم البحث (الزوج أو الزوجة)"
+              >
+                استرجاع الاسم المرتبط ({linkedHeadName})
+              </button>
+            )}
+          </div>
           <input
             type="text"
-            placeholder="مينا حنا الله جرجس"
+            placeholder={linkedHeadName || "مينا حنا الله جرجس"}
             value={p6.family_head}
             onChange={(e) => updateHeader("family_head", e.target.value)}
             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white mt-1"

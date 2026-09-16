@@ -11,8 +11,10 @@ import {
   Trash2,
   CreditCard,
   FileSpreadsheet,
-  CopyPlus
+  CopyPlus,
+  RotateCw
 } from 'lucide-react';
+import { getHeadOfHouseholdName } from '../../utils/caseStudyUtils';
 
 interface InteractiveDocumentCanvasProps {
   page: number;
@@ -603,6 +605,38 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
     }
   };
 
+  const handleRotateImage = (slotIdx: number, extraPageIndex: number) => {
+    const targetPage = data.extra_pages?.[extraPageIndex];
+    if (!targetPage || !('images' in targetPage)) return;
+    const currentImg = targetPage.images?.[slotIdx];
+    if (!currentImg) return;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.height;
+      canvas.height = img.width;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((90 * Math.PI) / 180);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      const rotatedDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+
+      const currentExtras = [...(data.extra_pages || [])];
+      const pageToUpdate = { ...currentExtras[extraPageIndex] };
+      if ('images' in pageToUpdate) {
+        const newImages = [...(pageToUpdate.images || [])];
+        newImages[slotIdx] = rotatedDataUrl;
+        pageToUpdate.images = newImages;
+        currentExtras[extraPageIndex] = pageToUpdate as any;
+        onChange({ extra_pages: currentExtras });
+      }
+    };
+    img.src = currentImg;
+  };
+
   // =========================================================================
   // RENDER DYNAMIC EXTRA PAGES (Page > 6)
   // =========================================================================
@@ -746,7 +780,7 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             <div className="flex items-center gap-3">
               <div className="text-left text-xs text-slate-500 font-mono">
                 <div>رقم البحث: <strong className="text-slate-800">#{data.page1?.church_study_id || '784/2026'}</strong></div>
-                <div>رب الأسرة: <strong className="text-slate-800">{data.page6?.family_head || data.page2?.husband?.name || data.page2?.wife?.name || 'مينا حنا الله جرجس'}</strong></div>
+                <div>رب الأسرة: <strong className="text-slate-800">{getHeadOfHouseholdName(data) || 'مينا حنا الله جرجس'}</strong></div>
               </div>
               {onDeletePage && (
                 <button
@@ -844,7 +878,7 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
       );
     }
 
-    // 3. BIRTH CERTIFICATES PAGE (Horizontal, White Background, 2 Halves: Right & Left)
+    // 3. BIRTH CERTIFICATES PAGE (Portrait A4, White Background, 2 Stacked Halves: Top & Bottom)
     if (extraPage.type === 'birth_certs') {
       const images = extraPage.images || [undefined, undefined];
 
@@ -853,10 +887,10 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
           dir="rtl"
           className="relative bg-white shadow-2xl transition-transform duration-100 origin-top select-none font-['IBM_Plex_Sans_Arabic'] rounded-sm border border-slate-200"
           style={{
-            width: '1160px',
-            minHeight: '820px',
+            width: '820px',
+            minHeight: '1160px',
             transform: `scale(${scale})`,
-            marginBottom: `${(scale - 1) * 820}px`
+            marginBottom: `${(scale - 1) * 1160}px`
           }}
         >
           {/* Header Banner */}
@@ -866,9 +900,9 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                 {(data.page1?.church_name || data.Page1?.churchName) ? `${data.page1?.church_name || data.Page1?.churchName} - خدمة أخوة الرب` : 'خدمة أخوة الرب'}
               </div>
               <h1 className="text-lg font-bold text-slate-900 mt-0.5 flex items-center gap-2">
-                <span>صفحة شهادات الميلاد (عرض أفقي)</span>
+                <span>صفحة شهادات الميلاد (A4 رأسية Portrait)</span>
                 <span className="text-xs bg-sky-100 text-sky-900 font-bold px-2 py-0.5 rounded-full border border-sky-300">
-                  شهادتين (شهادة 1 وشهادة 2)
+                  شهادتين (النصف العلوي والسفلي)
                 </span>
               </h1>
             </div>
@@ -876,7 +910,7 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             <div className="flex items-center gap-3">
               <div className="text-left text-xs text-slate-500 font-mono">
                 <div>رقم البحث: <strong className="text-slate-800">#{data.page1?.church_study_id || '784/2026'}</strong></div>
-                <div>رب الأسرة: <strong className="text-slate-800">{data.page6?.family_head || data.page2?.husband?.name || data.page2?.wife?.name || 'مينا حنا الله جرجس'}</strong></div>
+                <div>رب الأسرة: <strong className="text-slate-800">{getHeadOfHouseholdName(data) || 'مينا حنا الله جرجس'}</strong></div>
               </div>
               {onDeletePage && (
                 <button
@@ -892,18 +926,18 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             </div>
           </div>
 
-          {/* Two Halves Grid: شهادة 1 و شهادة 2 */}
-          <div className="p-5 grid grid-cols-2 gap-5 select-auto">
+          {/* Two Stacked Halves: Top & Bottom for seamless Portrait A4 Printing */}
+          <div className="p-5 flex flex-col gap-4 select-auto">
             {[0, 1].map((slotIdx) => {
               const img = images[slotIdx];
-              const defaultLabel = slotIdx === 0 ? 'شهادة 1' : 'شهادة 2';
+              const defaultLabel = slotIdx === 0 ? 'شهادة 1 (النصف العلوي)' : 'شهادة 2 (النصف السفلي)';
               const rawLabel = extraPage.labels?.[slotIdx];
               const label = (rawLabel && !rawLabel.includes("يمين") && !rawLabel.includes("شمال")) ? rawLabel : defaultLabel;
 
               return (
                 <div
                   key={slotIdx}
-                  className={`relative h-[680px] rounded-2xl border-2 transition-all duration-200 overflow-hidden flex flex-col bg-slate-50/70 group ${
+                  className={`relative h-[510px] rounded-2xl border-2 transition-all duration-200 overflow-hidden flex flex-col bg-slate-50/70 group ${
                     img
                       ? 'border-sky-500/80 shadow-md bg-white'
                       : 'border-dashed border-slate-300 hover:border-sky-500 hover:bg-sky-50/30'
@@ -916,10 +950,10 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                   }}
                 >
                   {/* Slot Header */}
-                  <div className="px-4 py-2.5 bg-slate-100/90 border-b border-slate-200 flex items-center justify-between text-xs select-none">
+                  <div className="px-4 py-2 bg-slate-100/90 border-b border-slate-200 flex items-center justify-between text-xs select-none">
                     <span className="font-bold text-slate-900">{label}</span>
                     <span className="text-[11px] text-sky-800 font-mono bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-300 font-bold">
-                      {slotIdx === 0 ? 'شهادة 1' : 'شهادة 2'}
+                      {slotIdx === 0 ? 'شهادة 1 - علوي' : 'شهادة 2 - سفلي'}
                     </span>
                   </div>
 
@@ -935,8 +969,17 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                         <div className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 p-3">
                           <button
                             type="button"
+                            onClick={() => handleRotateImage(slotIdx, extraPageIndex)}
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-lg cursor-pointer transition-all"
+                            title="تدوير الصورة 90 درجة مع عقارب الساعة"
+                          >
+                            <RotateCw className="w-4 h-4" />
+                            <span>تدوير 90°</span>
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => onOpenCropper?.(`extra_pages[${extraPageIndex}].images[${slotIdx}]`, label, 'certificate')}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg cursor-pointer transition-all"
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg cursor-pointer transition-all"
                           >
                             <Edit3 className="w-4 h-4" />
                             <span>تعديل واقتصاص</span>
@@ -957,14 +1000,14 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                         onClick={() => handleSlotPickImage(slotIdx, extraPageIndex)}
                         className="w-full h-full flex flex-col items-center justify-center cursor-pointer p-6 text-center select-none"
                       >
-                        <div className="w-16 h-16 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-sm">
-                          <Upload className="w-8 h-8" />
+                        <div className="w-14 h-14 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-sm">
+                          <Upload className="w-7 h-7" />
                         </div>
                         <span className="text-sm font-bold text-slate-800 group-hover:text-sky-800">
                           انقر لاختيار صورة شهادة الميلاد
                         </span>
                         <span className="text-xs text-slate-400 mt-1">
-                          أو اسحب ملف الصورة هنا مباشرة (A4 أفقية أو رأسية)
+                          أو اسحب ملف الصورة هنا مباشرة (جاهزة للطباعة الرأسية A4 Portrait)
                         </span>
                       </div>
                     )}
