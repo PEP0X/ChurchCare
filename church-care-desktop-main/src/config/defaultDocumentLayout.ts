@@ -2490,7 +2490,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2542,7 +2543,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2594,7 +2596,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2646,7 +2649,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2698,7 +2702,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2750,7 +2755,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2802,7 +2808,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2854,7 +2861,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2890,7 +2898,7 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "textAlign": "center",
         "isMono": true,
         "isBold": true,
-        "fontSize": 11
+        "fontSize": 16
       }
     },
     {
@@ -2908,7 +2916,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -2926,7 +2935,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -2944,7 +2954,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -2962,7 +2973,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -2980,7 +2992,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -2999,7 +3012,7 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "textAlign": "center",
         "isMono": true,
         "isBold": true,
-        "fontSize": 11,
+        "fontSize": 16,
         "textColor": "#047857"
       }
     },
@@ -3018,7 +3031,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3036,7 +3050,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3054,7 +3069,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3072,7 +3088,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3090,7 +3107,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3108,7 +3126,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3127,7 +3146,7 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "textAlign": "center",
         "isMono": true,
         "isBold": true,
-        "fontSize": 11,
+        "fontSize": 16,
         "textColor": "#b91c1c"
       }
     },
@@ -3146,7 +3165,8 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -3180,8 +3200,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 3.79
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3198,8 +3220,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3216,8 +3240,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3234,8 +3260,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3252,8 +3280,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 3.79
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3270,8 +3300,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3288,8 +3320,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3306,8 +3340,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3324,8 +3360,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 3.79
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3342,8 +3380,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3360,8 +3400,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3378,8 +3420,10 @@ export const DEFAULT_DOCUMENT_LAYOUT: DocumentLayout = {
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     }
   ],

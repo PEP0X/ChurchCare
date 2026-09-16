@@ -13,6 +13,8 @@ export interface License {
 export interface CreateLicensePayload {
   client_name: string;
   notes?: string;
+  church_name?: string;
+  user_name?: string;
 }
 
 export interface ApiResponse<T> {

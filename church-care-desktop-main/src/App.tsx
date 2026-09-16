@@ -7,6 +7,7 @@ import { VisualCoordinateStudio } from "./components/studio/VisualCoordinateStud
 import { ImageCropperModal } from "./components/studio/ImageCropperModal";
 import { invoke } from "@tauri-apps/api/core";
 import { ActivationModal } from "./components/ActivationModal";
+import { AboutModal } from "./components/AboutModal";
 import { useSidecar } from "./hooks/useSidecar";
 import { parseEgyptianNationalId } from "./hooks/useNationalId";
 import { recalculatePage4Totals } from "./utils/page4Calculations";
@@ -16,14 +17,12 @@ import {
   ChevronRight,
   ChevronLeft,
   ChevronDown,
+  ChevronUp,
   ZoomIn,
   ZoomOut,
-  Maximize2,
-  Minimize2,
   HeartHandshake,
   CheckCircle2,
   RotateCcw,
-  Sparkles,
   Sliders,
   AlertCircle,
   AlertTriangle,
@@ -37,19 +36,12 @@ import {
   Coins,
   Scale,
   FileSignature,
-  Download,
-  UploadCloud,
   Check,
   ShieldCheck,
   FolderOpen,
-  FolderArchive,
   Save,
-  SaveAll,
-  FilePlus,
-  Printer,
   FileText,
   Info,
-  CheckCircle,
   Home,
   CreditCard,
   FileSpreadsheet,
@@ -62,6 +54,7 @@ import {
   ExtraBirthCertsPage,
   DuplicatedLedgerPage
 } from "./types/schema";
+import { isChurchNameLocked, getLockedChurchName } from "./utils/churchLicense";
 
 const BINDING_ALIASES: Record<string, string[]> = {
   "page6.head_name": ["page6.family_head"],
@@ -496,23 +489,23 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   const page3: CaseStudyData["page3"] = {
     family_members: Array.isArray(rawP3.family_members)
       ? rawP3.family_members.map((m: any, idx: number) => ({
-          id: String(m.id || idx + 1),
-          name: String(m.name || ""),
-          national_id: String(m.national_id || m.nationalId || ""),
-          social_status: String(m.social_status || m.socialStatus || ""),
-          education_job: String(m.education_job || m.educationJob || ""),
-          income: m.income ?? "",
-          confession_father: String(m.confession_father || m.confessionFather || "")
-        }))
+        id: String(m.id || idx + 1),
+        name: String(m.name || ""),
+        national_id: String(m.national_id || m.nationalId || ""),
+        social_status: String(m.social_status || m.socialStatus || ""),
+        education_job: String(m.education_job || m.educationJob || ""),
+        income: m.income ?? "",
+        confession_father: String(m.confession_father || m.confessionFather || "")
+      }))
       : [],
     other_persons: Array.isArray(rawP3.other_persons)
       ? rawP3.other_persons.map((o: any, idx: number) => ({
-          id: String(o.id || idx + 1),
-          name: String(o.name || ""),
-          national_id: String(o.national_id || o.nationalId || ""),
-          kinship: String(o.kinship || ""),
-          social_status: String(o.social_status || o.socialStatus || "")
-        }))
+        id: String(o.id || idx + 1),
+        name: String(o.name || ""),
+        national_id: String(o.national_id || o.nationalId || ""),
+        kinship: String(o.kinship || ""),
+        social_status: String(o.social_status || o.socialStatus || "")
+      }))
       : [],
     housing_description: String(rawP3.housing_description || ""),
     family_members_notes: String(rawP3.family_members_notes || ""),
@@ -533,11 +526,11 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   let page4: CaseStudyData["page4"] = {
     church_aid: Array.isArray(rawP4.church_aid)
       ? rawP4.church_aid.map((a: any, idx: number) => ({
-          id: String(a.id || idx + 1),
-          church_name: String(a.church_name || a.churchName || ""),
-          value: Number(a.value) || 0,
-          purpose: String(a.purpose || "")
-        }))
+        id: String(a.id || idx + 1),
+        church_name: String(a.church_name || a.churchName || ""),
+        value: Number(a.value) || 0,
+        purpose: String(a.purpose || "")
+      }))
       : [],
     total_church_aid: rawP4.total_church_aid ?? 0,
     church_aid_total_notes: String(rawP4.church_aid_total_notes || ""),
@@ -588,13 +581,13 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
     to_date: String(rawP6.to_date || ""),
     aid_ledger: Array.isArray(rawP6.aid_ledger)
       ? rawP6.aid_ledger.map((e: any, idx: number) => ({
-          id: String(e.id || idx + 1),
-          aid_type: String(e.aid_type || ""),
-          amount: String(e.amount ?? ""),
-          entity: String(e.entity || ""),
-          date: String(e.date || ""),
-          recipient_signature: String(e.recipient_signature || "")
-        }))
+        id: String(e.id || idx + 1),
+        aid_type: String(e.aid_type || ""),
+        amount: String(e.amount ?? ""),
+        entity: String(e.entity || ""),
+        date: String(e.date || ""),
+        recipient_signature: String(e.recipient_signature || "")
+      }))
       : [],
     signatures: [
       String(rawSigs[0] || ""),
@@ -606,36 +599,36 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   // Extra pages normalization
   const extra_pages: ExtraPage[] = Array.isArray(raw.extra_pages)
     ? raw.extra_pages.map((ep: any, idx: number) => {
-        if (ep.type === "id_cards") {
-          const imgs = Array.isArray(ep.images) ? [...ep.images] : [];
-          while (imgs.length < 8) imgs.push(undefined);
-          return {
-            id: String(ep.id || `extra-id-${idx}`),
-            type: "id_cards",
-            title: String(ep.title || `صفحة البطايق (${idx + 1})`),
-            images: imgs.slice(0, 8),
-            labels: Array.isArray(ep.labels) ? ep.labels : undefined
-          } as ExtraIdCardsPage;
-        } else if (ep.type === "birth_certs") {
-          const imgs = Array.isArray(ep.images) ? [ep.images[0], ep.images[1]] : [undefined, undefined];
-          return {
-            id: String(ep.id || `extra-bc-${idx}`),
-            type: "birth_certs",
-            title: String(ep.title || `شهادات الميلاد (${idx + 1})`),
-            images: imgs,
-            labels: (Array.isArray(ep.labels) && ep.labels.length > 0 && !ep.labels[0].includes("يمين") && !ep.labels[0].includes("شمال"))
-              ? ep.labels
-              : ["شهادة 1", "شهادة 2"]
-          } as ExtraBirthCertsPage;
-        } else {
-          return {
-            id: String(ep.id || `extra-ledger-${idx}`),
-            type: "duplicated_ledger",
-            title: String(ep.title || `سجل الصرف (متابعة ${idx + 2})`),
-            page6Data: ep.page6Data ? { ...page6, ...ep.page6Data } : { ...page6, aid_ledger: [] }
-          } as DuplicatedLedgerPage;
-        }
-      })
+      if (ep.type === "id_cards") {
+        const imgs = Array.isArray(ep.images) ? [...ep.images] : [];
+        while (imgs.length < 8) imgs.push(undefined);
+        return {
+          id: String(ep.id || `extra-id-${idx}`),
+          type: "id_cards",
+          title: String(ep.title || `صفحة البطايق (${idx + 1})`),
+          images: imgs.slice(0, 8),
+          labels: Array.isArray(ep.labels) ? ep.labels : undefined
+        } as ExtraIdCardsPage;
+      } else if (ep.type === "birth_certs") {
+        const imgs = Array.isArray(ep.images) ? [ep.images[0], ep.images[1]] : [undefined, undefined];
+        return {
+          id: String(ep.id || `extra-bc-${idx}`),
+          type: "birth_certs",
+          title: String(ep.title || `شهادات الميلاد (${idx + 1})`),
+          images: imgs,
+          labels: (Array.isArray(ep.labels) && ep.labels.length > 0 && !ep.labels[0].includes("يمين") && !ep.labels[0].includes("شمال"))
+            ? ep.labels
+            : ["شهادة 1", "شهادة 2"]
+        } as ExtraBirthCertsPage;
+      } else {
+        return {
+          id: String(ep.id || `extra-ledger-${idx}`),
+          type: "duplicated_ledger",
+          title: String(ep.title || `سجل الصرف (متابعة ${idx + 2})`),
+          page6Data: ep.page6Data ? { ...page6, ...ep.page6Data } : { ...page6, aid_ledger: [] }
+        } as DuplicatedLedgerPage;
+      }
+    })
     : [];
 
   return {
@@ -695,7 +688,12 @@ export const App: React.FC = () => {
   const [isTransitioningToLock, setIsTransitioningToLock] = useState<boolean>(false);
   const [licensedClientName, setLicensedClientName] = useState<string>("");
   const [showActivationModal, setShowActivationModal] = useState<boolean>(false);
+  const [showAboutModal, setShowAboutModal] = useState<boolean>(false);
   const [licenseReason, setLicenseReason] = useState<string | null>(null);
+
+  // Church-Locked Licensing: if license client name starts with "كنيسة", lock church everywhere!
+  const isChurchLocked = isLicensed && isChurchNameLocked(licensedClientName);
+  const lockedChurchName = isChurchLocked ? getLockedChurchName(licensedClientName) : null;
 
   // References to prevent heartbeat re-entrance and focus race-conditions
   const isLicensedRef = useRef<boolean>(false);
@@ -750,7 +748,7 @@ export const App: React.FC = () => {
                 handleServerRevocation(heartbeatStatus.message);
               }
             })
-            .catch(() => {});
+            .catch(() => { });
         } else {
           setLicenseReason(status.message);
           setShowActivationModal(true);
@@ -809,26 +807,50 @@ export const App: React.FC = () => {
     };
   });
 
+  // Keep church_name strictly synchronized to licensed church if license starts with "كنيسة"
+  useEffect(() => {
+    if (isChurchLocked && lockedChurchName) {
+      setData((prev) => {
+        if (prev.page1?.church_name !== lockedChurchName) {
+          return {
+            ...prev,
+            page1: {
+              ...prev.page1,
+              church_name: lockedChurchName
+            }
+          };
+        }
+        return prev;
+      });
+    }
+  }, [isChurchLocked, lockedChurchName]);
+
   const [activePage, setActivePage] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
   const [appMode, setAppMode] = useState<"form" | "studio">("form");
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [ribbonCollapsed, setRibbonCollapsed] = useState<boolean>(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<string>("تم الحفظ محلياً");
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
+  const [pagesMenuOpen, setPagesMenuOpen] = useState<boolean>(false);
+  const pagesMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target as Node)) {
         setToolsMenuOpen(false);
       }
+      if (pagesMenuRef.current && !pagesMenuRef.current.contains(event.target as Node)) {
+        setPagesMenuOpen(false);
+      }
     }
-    if (toolsMenuOpen) {
+    if (toolsMenuOpen || pagesMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [toolsMenuOpen]);
+  }, [toolsMenuOpen, pagesMenuOpen]);
 
   // Toast Notification
   const [toast, setToast] = useState<{ message: string; type: "success" | "info" | "error" } | null>(null);
@@ -868,7 +890,7 @@ export const App: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Master Default Document Layout with version synchronization
-  const MASTER_LAYOUT_VERSION = "2026.09.09-gov-options-v10";
+  const MASTER_LAYOUT_VERSION = "2026.09.16-p4-larger-fonts-v11";
   const [layout, setLayout] = useState<DocumentLayout>(() => {
     try {
       const storedVersion = localStorage.getItem("church_care_doc_layout_version");
@@ -910,6 +932,12 @@ export const App: React.FC = () => {
   const handleUpdate = (updated: Partial<CaseStudyData>) => {
     setData((prev) => {
       let next = { ...prev, ...updated };
+      if (isChurchLocked && lockedChurchName && next.page1) {
+        next.page1 = {
+          ...next.page1,
+          church_name: lockedChurchName
+        };
+      }
       if (updated.page4) {
         next.page4 = recalculatePage4Totals(next.page4);
       }
@@ -1055,14 +1083,14 @@ export const App: React.FC = () => {
           defaultPath: defaultFileName,
           filters: forceJson
             ? [
-                { name: "ملفات استمارة البحث JSON (*.json)", extensions: ["json"] },
-                { name: "ملفات دراسة الحالة الكنسية (*.care)", extensions: ["care"] }
-              ]
+              { name: "ملفات استمارة البحث JSON (*.json)", extensions: ["json"] },
+              { name: "ملفات دراسة الحالة الكنسية (*.care)", extensions: ["care"] }
+            ]
             : [
-                { name: "ملفات دراسة الحالة الكنسية (*.care)", extensions: ["care"] },
-                { name: "ملفات استمارة البحث JSON (*.json)", extensions: ["json"] },
-                { name: "كافة ملفات الحالات (*.care, *.json)", extensions: ["care", "json"] }
-              ]
+              { name: "ملفات دراسة الحالة الكنسية (*.care)", extensions: ["care"] },
+              { name: "ملفات استمارة البحث JSON (*.json)", extensions: ["json"] },
+              { name: "كافة ملفات الحالات (*.care, *.json)", extensions: ["care", "json"] }
+            ]
         });
 
         if (!chosenPath) {
@@ -1243,6 +1271,9 @@ export const App: React.FC = () => {
         }
 
         const sanitized = sanitizeAndMergeCaseData(parsed);
+        if (isChurchLocked && lockedChurchName) {
+          sanitized.page1.church_name = lockedChurchName;
+        }
         setData(sanitized);
         setCurrentFilePath(filePath);
         safeSaveToLocalStorage(sanitized);
@@ -1274,6 +1305,9 @@ export const App: React.FC = () => {
           const rawText = ev.target?.result as string;
           const parsed = JSON.parse(rawText);
           const sanitized = sanitizeAndMergeCaseData(parsed);
+          if (isChurchLocked && lockedChurchName) {
+            sanitized.page1.church_name = lockedChurchName;
+          }
           setData(sanitized);
           safeSaveToLocalStorage(sanitized);
           setHasUnsavedChanges(false);
@@ -1481,7 +1515,7 @@ export const App: React.FC = () => {
       { id: 3, title: "3. الأبناء والحالة", sub: "الأبناء والحالة الصحية", icon: UserCheck, isDeletable: false, extraIdx: -1 },
       { id: 4, title: "4. المساعدات والميزانية", sub: "مساعدات الكنائس والدخل", icon: Coins, isDeletable: false, extraIdx: -1 },
       { id: 5, title: "5. قرارات اللجنة", sub: "توصيات وموافقة اللجنة", icon: Scale, isDeletable: false, extraIdx: -1 },
-      { id: 6, title: "6. سجل الصرف", sub: "سجل الصرف والتوقيعات", icon: FileSignature, isDeletable: false, extraIdx: -1 }
+      { id: 6, title: "6. سجل المساعدات الشهرية", sub: "سجل الصرف والتوقيعات", icon: FileSignature, isDeletable: false, extraIdx: -1 }
     ];
 
     const extraItems = (data.extra_pages || []).map((ep, idx) => {
@@ -1559,9 +1593,8 @@ export const App: React.FC = () => {
   return (
     <div
       dir="rtl"
-      className={`h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-['IBM_Plex_Sans_Arabic'] flex flex-col antialiased selection:bg-amber-500 selection:text-black transition-all duration-700 ease-out relative ${
-        isTransitioningToLock ? "filter blur-xl scale-95 opacity-25 pointer-events-none" : "animate-in fade-in duration-500"
-      }`}
+      className={`h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-['IBM_Plex_Sans_Arabic'] flex flex-col antialiased selection:bg-amber-500 selection:text-black transition-all duration-700 ease-out relative ${isTransitioningToLock ? "filter blur-xl scale-95 opacity-25 pointer-events-none" : "animate-in fade-in duration-500"
+        }`}
     >
       {/* If currently transitioning to lock, render the ActivationModal overlay on top smoothly */}
       {isTransitioningToLock && (
@@ -1591,278 +1624,130 @@ export const App: React.FC = () => {
       {/* ==================================================================== */}
       {/* 1. ELEGANT STREAMLINED APPLICATION HEADER                           */}
       {/* ==================================================================== */}
-      <header className="h-14 bg-slate-900/95 border-b border-slate-800 px-4 flex items-center justify-between select-none z-40 shrink-0 backdrop-blur-md">
-        {/* Right (RTL): App Emblem, Title, Case ID & Auto-save status */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-slate-950 font-bold shadow-md ring-1 ring-amber-400/40 shrink-0">
-            <HeartHandshake className="w-4 h-4" />
-          </div>
-
-          <div className="flex flex-col justify-center">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white tracking-wide">
-                خدمة أخوة الرب
-              </span>
-              <span className="text-slate-500">•</span>
-              <span className="text-xs font-semibold text-amber-400">
-                القلب المتسع 2026
-              </span>
+      {/* ==================================================================== */}
+      {/* 1. MICROSOFT WORD / OFFICE 365 TOP TITLE BAR                         */}
+      {/* ==================================================================== */}
+      <div className="h-10 bg-slate-900 border-b border-slate-800 px-3 flex items-center justify-between select-none z-40 shrink-0 text-xs">
+        {/* Right (RTL): App Emblem, Quick Save & Auto-Save */}
+        <div className="flex items-center gap-2.5 whitespace-nowrap shrink-0">
+          <div 
+            onClick={() => setShowAboutModal(true)}
+            className="flex items-center gap-2 cursor-pointer group"
+            title="حول البرنامج ومعلومات الترخيص"
+          >
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-slate-950 font-bold shadow-sm group-hover:scale-105 transition-transform">
+              <HeartHandshake className="w-3.5 h-3.5" />
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[10px] text-slate-400 font-mono">
-                ملف البحث: <strong className="text-amber-300">#{data.page1.church_study_id || "784/2026"}</strong>
-              </span>
-              <span className="text-slate-600">•</span>
-              <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                <span className={`w-1.5 h-1.5 rounded-full ${hasUnsavedChanges ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
-                <span>{hasUnsavedChanges ? "تعديلات غير محفوظة" : "تم الحفظ"}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Left (RTL): Unified Action Controls */}
-        <div className="flex items-center gap-2">
-          {/* File Management Dropdown */}
-          <div className="relative" ref={toolsMenuRef}>
-            <button
-              type="button"
-              onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                toolsMenuOpen
-                  ? "bg-sky-500/20 text-sky-300 border-sky-500/50 shadow-sm"
-                  : "bg-slate-950/80 text-slate-300 hover:text-white hover:bg-slate-800 border-slate-800"
-              }`}
-              title="إدارة ملفات الحالة (فتح، حفظ نسخة، تفريغ الاستمارة)"
-            >
-              <FolderArchive className="w-3.5 h-3.5 text-sky-400" />
-              <span>إدارة الملفات</span>
-              <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${toolsMenuOpen ? "rotate-180 text-sky-400" : ""}`} />
-            </button>
-
-            {/* Dropdown Menu Popup */}
-            {toolsMenuOpen && (
-              <div className="absolute left-0 mt-2 w-72 bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-slate-700 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 text-xs">
-                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  إدارة ملفات الحالة (JSON)
-                </div>
-
-                {/* Open JSON File */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleOpenJson();
-                    setToolsMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-800/80 transition-colors text-right cursor-pointer group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <FolderOpen className="w-4 h-4 text-sky-400 shrink-0" />
-                    <div>
-                      <div className="font-semibold text-sky-200 group-hover:text-white">فتح ملف حالة (*.care / *.json)</div>
-                      <div className="text-[10px] text-slate-400">استيراد واسترجاع بيانات بحث محفوظ</div>
-                    </div>
-                  </div>
-                  <kbd className="text-[9px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">Ctrl+O</kbd>
-                </button>
-
-                {/* Save As JSON File */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleSaveAs();
-                    setToolsMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-800/80 transition-colors text-right cursor-pointer group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <SaveAll className="w-4 h-4 text-amber-400 shrink-0" />
-                    <div>
-                      <div className="font-semibold text-amber-200 group-hover:text-white">حفظ دراسة الحالة (*.care)</div>
-                      <div className="text-[10px] text-slate-400">تصدير وحفظ ملف الحالة مع كافة الصور المدمجة</div>
-                    </div>
-                  </div>
-                  <kbd className="text-[9px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">Ctrl+Shift+S</kbd>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleSaveAs(true);
-                    setToolsMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-800/80 transition-colors text-right cursor-pointer group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <div>
-                      <div className="font-semibold text-emerald-200 group-hover:text-white">تصدير نسخة بتنسيق JSON</div>
-                      <div className="text-[10px] text-slate-400">حفظ نسخة متوافقة مع الأنظمة الأخرى (*.json)</div>
-                    </div>
-                  </div>
-                </button>
-
-                <div className="my-1.5 border-t border-slate-800" />
-
-                {/* Clear All Fields */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm("هل أنت متأكد من رغبتك في تفريغ كافة الحقول والبدء باستمارة جديدة؟\n(يُفضل حفظ نسخة من الملف الحالي أولاً إذا كنت ترغب بالاحتفاظ ببياناته)")) {
-                      setData(INITIAL_EMPTY_STATE);
-                      safeSaveToLocalStorage(INITIAL_EMPTY_STATE);
-                      setHasUnsavedChanges(false);
-                      showToast("تم تفريغ كافة الحقول والبدء باستمارة جديدة بنجاح", "info");
-                    }
-                    setToolsMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-300 hover:text-rose-200 hover:bg-rose-950/40 transition-colors text-right cursor-pointer"
-                >
-                  <RotateCcw className="w-4 h-4 text-rose-400 shrink-0" />
-                  <div>
-                    <div className="font-semibold">تفريغ كافة الحقول</div>
-                    <div className="text-[10px] text-rose-400/80">مسح البيانات والبدء باستمارة فارغة</div>
-                  </div>
-                </button>
-              </div>
-            )}
+            <span className="font-bold text-white tracking-wide text-xs group-hover:text-amber-300 transition-colors">
+              خدمة أخوة الرب
+            </span>
           </div>
 
-          <div className="h-6 w-px bg-slate-800 mx-0.5" />
+          <div className="h-3.5 w-px bg-slate-800" />
 
-          {/* Duplicate Last Page Button */}
-          <button
-            type="button"
-            onClick={handleDuplicateLastPage}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all cursor-pointer shadow-sm"
-            title="تكرار الصفحة الأخيرة لتسجيل صروفات أشهر جديدة"
-          >
-            <CopyPlus className="w-3.5 h-3.5 text-emerald-400" />
-            <span>تكرار الأخيرة</span>
-          </button>
-
-          {/* Add ID Cards Page Button */}
-          <button
-            type="button"
-            onClick={handleAddIdCardsPage}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-all cursor-pointer shadow-sm"
-            title="إضافة صفحة بطاقات الرقم القومي (8 خانات - رأسي)"
-          >
-            <CreditCard className="w-3.5 h-3.5 text-amber-400" />
-            <span>صفحة بطايق (8)</span>
-          </button>
-
-          {/* Add Birth Certificates Page Button */}
-          <button
-            type="button"
-            onClick={handleAddBirthCertsPage}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 transition-all cursor-pointer shadow-sm"
-            title="إضافة صفحة شهادات الميلاد (شهادتين 1 و 2 - أفقي)"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-sky-400" />
-            <span>شهادات ميلاد (أفقي)</span>
-          </button>
-
-          <div className="h-6 w-px bg-slate-800 mx-0.5" />
-
-          {/* Coordinate Studio Button */}
-          <button
-            type="button"
-            onClick={() => setAppMode("studio")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-all cursor-pointer shadow-sm"
-            title="تعديل أماكن الحقول بالفأرة (Drag & Drop)"
-          >
-            <Sliders className="w-3.5 h-3.5 text-amber-400" />
-            <span>استوديو الإحداثيات</span>
-          </button>
-
-          <div className="h-6 w-px bg-slate-800 mx-0.5" />
-
-          {/* Save Button */}
+          {/* Quick Save Button (Word Quick Access) */}
           <button
             type="button"
             onClick={handleSave}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-200 bg-slate-950/80 hover:bg-slate-800 hover:text-amber-400 border border-slate-800 transition-all cursor-pointer shadow-sm"
-            title="حفظ التعديلات في ذاكرة البرنامج (Ctrl+S)"
+            className="p-1 rounded hover:bg-slate-800 text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+            title="حفظ سريع (Ctrl+S)"
           >
             <Save className="w-3.5 h-3.5 text-amber-400" />
-            <span>حفظ</span>
-            <kbd className="hidden sm:inline-block text-[9px] text-slate-400 font-mono bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">Ctrl+S</kbd>
           </button>
 
-          {/* Primary Action Button: Export 300 DPI PDF */}
+          {/* Auto-save status indicator */}
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-950/70 border border-slate-800 text-[10px] text-slate-400 font-medium">
+            <span className={`w-1.5 h-1.5 rounded-full ${hasUnsavedChanges ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+            <span>{hasUnsavedChanges ? "تعديلات غير محفوظة" : "حفظ تلقائي: تم الحفظ"}</span>
+          </div>
+        </div>
+
+        {/* Center: Document Title & Church Name (Word Document Titlebar) */}
+        <div className="hidden md:flex items-center justify-center gap-2 text-xs font-semibold text-slate-300 flex-1 px-4 truncate">
+          <span className="text-white font-bold truncate max-w-sm">
+            {lockedChurchName || data.page1.church_name || "كنيسة معتمدة"}
+          </span>
+          <span className="text-slate-600">•</span>
+          <span className="text-slate-300 text-[11px] font-mono font-bold whitespace-nowrap">
+            دراسة حالة #{data.page1.church_study_id || "784/2026"}
+          </span>
+          <span className="text-slate-600">•</span>
+          <span className="text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+            القلب المتسع 2026
+          </span>
+        </div>
+
+        {/* Left (RTL): License badge & Window/About action */}
+        <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
           <button
             type="button"
-            disabled={isGenerating}
-            onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 disabled:opacity-50 shadow-lg shadow-amber-500/20 ring-1 ring-amber-300/50 transition-all cursor-pointer active:scale-98"
-            title="تصدير استمارة البحث كاملة كملف PDF رسمي مفرود وجاهز للطباعة"
+            onClick={() => setShowAboutModal(true)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-950/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer text-[11px]"
+            title="بيانات ترخيص البرنامج والإصدار"
           >
-            <FileDown className={`w-4 h-4 ${isGenerating ? "animate-bounce" : ""}`} />
-            <div className="text-right leading-tight">
-              <div>{isGenerating ? "جارٍ التصدير..." : "تصدير PDF"}</div>
-              <div className="text-[9px] text-slate-900/80 font-normal">طباعة رسمية 300 DPI</div>
-            </div>
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="max-w-[160px] truncate">{licensedClientName || "ترخيص معتمد"}</span>
           </button>
         </div>
-      </header>
+      </div>
 
       {/* ==================================================================== */}
-      {/* 2. STREAMLINED RIBBON TABS STRIP                                    */}
+      {/* 2. MICROSOFT WORD RIBBON TABS STRIP                                  */}
       {/* ==================================================================== */}
-      <div className="h-11 bg-slate-950 border-b border-slate-800 px-3 flex items-center justify-between select-none z-30 shrink-0">
-        {/* Right (RTL): The 6 Form Page Tabs */}
-        <nav className="flex items-center gap-1 h-full pt-1 overflow-x-auto">
-          {pages.map((p) => {
-            const Icon = p.icon;
-            const isActive = activePage === p.id;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setActivePage(p.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-t-lg text-xs font-semibold transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-slate-900 text-amber-400 font-bold border-t-2 border-t-amber-500 border-x border-slate-800 shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-amber-400" : "text-slate-400"}`} />
-                <span>{p.title}</span>
-              </button>
-            );
-          })}
-        </nav>
+      <div className="h-9 bg-slate-950 border-b border-slate-800 px-3 flex items-center justify-between select-none z-30 shrink-0">
+        <div className="flex items-center h-full overflow-x-auto scrollbar-none">
+          {/* Form Pages Tabs (Word-style navigation) */}
+          <nav className="flex items-center h-full pr-1">
+            {pages.map((p) => {
+              const Icon = p.icon;
+              const isActive = activePage === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setActivePage(p.id)}
+                  className={`h-full px-3 text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${isActive
+                    ? "bg-slate-900 text-amber-400 font-bold border-amber-400"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50 border-transparent"
+                    }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? "text-amber-400" : "text-slate-400"}`} />
+                  <span>{p.title}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
 
-        {/* Left (RTL): Verification Status & Sidebar Toggle */}
-        <div className="flex items-center gap-2">
+        {/* Left (RTL): Status badge & Navigation Pane toggle */}
+        <div className="flex items-center gap-2 shrink-0">
           {validationErrors.length === 0 ? (
-            <span className="flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40 font-medium">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>الأرقام القومية مدققة</span>
+            <span className="hidden sm:flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40 font-medium whitespace-nowrap">
+              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              <span>مدققة ✓</span>
             </span>
           ) : (
             <button
               type="button"
               onClick={() => navigateToError(validationErrors[0])}
-              className="flex items-center gap-1 text-[11px] font-bold text-rose-300 bg-rose-950/70 hover:bg-rose-900/80 px-2 py-0.5 rounded border border-rose-600/60 shadow-sm cursor-pointer"
-              title="انقر لتصحيح الرقم القومي المعيب"
+              className="flex items-center gap-1 text-[11px] font-bold text-rose-300 bg-rose-950/70 hover:bg-rose-900/80 px-2.5 py-0.5 rounded border border-rose-600/60 shadow-sm cursor-pointer whitespace-nowrap"
+              title="انقر لتصحيح الرقم القومي"
             >
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-              <span>{validationErrors.length} رقم بحاجة لتصحيح</span>
+              <AlertTriangle className="w-3 h-3 text-rose-400" />
+              <span>{validationErrors.length} رقم به خطأ</span>
             </button>
           )}
 
-          <div className="h-4 w-px bg-slate-800" />
+          <div className="h-3.5 w-px bg-slate-800" />
 
+          {/* Word-Style Navigation Pane Toggle */}
           <button
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
-              sidebarOpen
-                ? "bg-slate-800 text-amber-400"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-            }`}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${sidebarOpen
+              ? "bg-slate-800 text-amber-400 border border-slate-700"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent"
+              }`}
             title="إظهار / إخفاء لوحة التنقل (Navigation Pane)"
           >
             {sidebarOpen ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
@@ -1872,18 +1757,180 @@ export const App: React.FC = () => {
       </div>
 
       {/* ==================================================================== */}
+      {/* 3. MICROSOFT WORD / OFFICE COMMAND RIBBON (The Command Toolbar)      */}
+      {/* ==================================================================== */}
+      {!ribbonCollapsed ? (
+        <div className="h-20 bg-slate-900/95 border-b border-slate-800 px-3 flex items-stretch justify-between select-none z-20 shrink-0 backdrop-blur-md overflow-x-auto scrollbar-none">
+          <div className="flex items-stretch gap-1">
+            {/* Group 1: Document & Files (المستند والملفات) */}
+            <div className="flex flex-col justify-between py-1 px-2 border-l border-slate-800">
+              <div className="flex items-center gap-1.5 flex-1">
+                {/* Hero CTA Button: Export PDF 300 DPI */}
+                <button
+                  type="button"
+                  disabled={isGenerating}
+                  onClick={handleExport}
+                  className="flex flex-col items-center justify-center px-4 py-1 rounded-xl bg-gradient-to-b from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold shadow-md shadow-amber-500/20 ring-1 ring-amber-300/50 cursor-pointer active:scale-98 transition-all disabled:opacity-50 h-[48px]"
+                  title="تصدير استمارة البحث الرسمية كملف PDF مفرود وجاهز للطباعة بدقة 300 DPI"
+                >
+                  <FileDown className={`w-4 h-4 ${isGenerating ? "animate-bounce" : ""}`} />
+                  <span className="text-[11px] font-bold mt-0.5 whitespace-nowrap">
+                    {isGenerating ? "جارٍ التصدير..." : "تصدير PDF"}
+                  </span>
+                </button>
+
+                {/* Save Study Button */}
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-slate-800 text-slate-200 hover:text-amber-400 border border-slate-800 cursor-pointer transition-colors h-[48px]"
+                  title="حفظ التعديلات في ذاكرة البرنامج (Ctrl+S)"
+                >
+                  <Save className="w-4 h-4 text-amber-400" />
+                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">حفظ (Ctrl+S)</span>
+                </button>
+
+                {/* Open Study Button */}
+                <button
+                  type="button"
+                  onClick={handleOpenJson}
+                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-slate-800 text-slate-200 hover:text-sky-300 border border-slate-800 cursor-pointer transition-colors h-[48px]"
+                  title="فتح واستيراد ملف دراسة حالة (Ctrl+O)"
+                >
+                  <FolderOpen className="w-4 h-4 text-sky-400" />
+                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">فتح (Ctrl+O)</span>
+                </button>
+
+                {/* Reset / New Form Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("هل أنت متأكد من رغبتك في تفريغ كافة الحقول والبدء باستمارة جديدة؟\n(يُفضل حفظ نسخة من الملف الحالي أولاً إذا كنت ترغب بالاحتفاظ ببياناته)")) {
+                      const newEmpty = {
+                        ...INITIAL_EMPTY_STATE,
+                        page1: {
+                          ...INITIAL_EMPTY_STATE.page1,
+                          church_name: (isChurchLocked && lockedChurchName) ? lockedChurchName : INITIAL_EMPTY_STATE.page1.church_name
+                        }
+                      };
+                      setData(newEmpty);
+                      safeSaveToLocalStorage(newEmpty);
+                      setHasUnsavedChanges(false);
+                      showToast("تم تفريغ كافة الحقول والبدء باستمارة جديدة بنجاح", "info");
+                    }
+                  }}
+                  className="flex flex-col items-center justify-center px-2.5 py-1 rounded-xl bg-slate-950/70 hover:bg-rose-950/30 text-slate-400 hover:text-rose-300 border border-slate-800 cursor-pointer transition-colors h-[48px]"
+                  title="تفريغ كافة الحقول والبدء باستمارة فارغة"
+                >
+                  <RotateCcw className="w-4 h-4 text-rose-400/80" />
+                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">جديد</span>
+                </button>
+              </div>
+              <span className="text-[9px] text-slate-400 text-center font-semibold block mt-0.5 pt-0.5 border-t border-slate-800/40">المستند والملفات</span>
+            </div>
+
+            {/* Group 2: Insert Pages (إدراج وتكرار صفحات) */}
+            <div className="flex flex-col justify-between py-1 px-2 border-l border-slate-800">
+              <div className="flex items-center gap-1.5 flex-1">
+                <button
+                  type="button"
+                  onClick={handleDuplicateLastPage}
+                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-emerald-950/40 text-slate-200 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/40 transition-all cursor-pointer h-[48px]"
+                  title="تكرار سجل المساعدات لشهر جديد"
+                >
+                  <CopyPlus className="w-4 h-4 text-emerald-400" />
+                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">تكرار سجل الصرف</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleAddIdCardsPage}
+                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-amber-950/40 text-slate-200 hover:text-amber-300 border border-slate-800 hover:border-amber-500/40 transition-all cursor-pointer h-[48px]"
+                  title="إضافة صفحة بطاقات رقم قومي (8 خانات رأسية)"
+                >
+                  <CreditCard className="w-4 h-4 text-amber-400" />
+                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">صفحة بطاقات (8)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleAddBirthCertsPage}
+                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-sky-950/40 text-slate-200 hover:text-sky-300 border border-slate-800 hover:border-sky-500/40 transition-all cursor-pointer h-[48px]"
+                  title="إضافة صفحة شهادات ميلاد (شهادتين أفقيتين)"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-sky-400" />
+                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">شهادات ميلاد (أفقي)</span>
+                </button>
+              </div>
+              <span className="text-[9px] text-slate-400 text-center font-semibold block mt-0.5 pt-0.5 border-t border-slate-800/40">إدراج صفحات</span>
+            </div>
+
+            {/* Group 3: Tools & Layout (أدوات وتخصيص) */}
+            <div className="flex flex-col justify-between py-1 px-2 border-l border-slate-800">
+              <div className="flex items-center gap-1.5 flex-1">
+                <button
+                  type="button"
+                  onClick={() => setAppMode("studio")}
+                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-slate-800 text-slate-200 hover:text-amber-400 border border-slate-800 transition-all cursor-pointer h-[48px]"
+                  title="تعديل أماكن الحقول بالسحب والإفلات"
+                >
+                  <Sliders className="w-4 h-4 text-amber-400" />
+                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">استوديو الإحداثيات</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAboutModal(true)}
+                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 transition-all cursor-pointer h-[48px]"
+                  title="حول البرنامج والترخيص"
+                >
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">حول البرنامج</span>
+                </button>
+              </div>
+              <span className="text-[9px] text-slate-400 text-center font-semibold block mt-0.5 pt-0.5 border-t border-slate-800/40">أدوات وتخصيص</span>
+            </div>
+          </div>
+
+          {/* Far Left: Ribbon Collapse Toggle (Like Word Ctrl+F1) */}
+          <div className="flex items-center pl-1">
+            <button
+              type="button"
+              onClick={() => setRibbonCollapsed(!ribbonCollapsed)}
+              className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="طي شريط الأوامر"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Collapsed Ribbon Minimal Bar */
+        <div className="h-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-end px-3">
+          <button
+            type="button"
+            onClick={() => setRibbonCollapsed(false)}
+            className="text-[10px] text-slate-400 hover:text-amber-400 flex items-center gap-1 cursor-pointer py-0.5"
+            title="توسيع شريط الأوامر"
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+            <span>عرض شريط الأوامر</span>
+          </button>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
       {/* 4. MAIN WORKSPACE & NAVIGATION PANE                                  */}
       {/* ==================================================================== */}
       <div className="flex-1 flex min-h-0 overflow-hidden relative">
-        {/* Right Collapsible Sidebar: Office Navigation Pane */}
+        {/* Right Collapsible Sidebar: Microsoft Word-Style Navigation Pane (لوحة التنقل) */}
         <aside
-          className={`shrink-0 h-full bg-slate-900/95 border-l border-slate-800 flex flex-col transition-all duration-300 z-20 ${
-            sidebarOpen ? "w-72 lg:w-76" : "w-0 overflow-hidden border-none"
-          }`}
+          className={`shrink-0 h-full bg-slate-900/95 border-l border-slate-800 flex flex-col transition-all duration-300 z-20 ${sidebarOpen ? "w-72 lg:w-76" : "w-0 overflow-hidden border-none"
+            }`}
         >
           {sidebarOpen && (
             <div className="p-3 space-y-4 overflow-y-auto flex-1 min-h-0 select-none">
-              {/* Office Navigation Pane Header */}
+              {/* Navigation Pane Header */}
               <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-amber-400" />
@@ -1910,11 +1957,10 @@ export const App: React.FC = () => {
                     return (
                       <div
                         key={p.id}
-                        className={`w-full text-right p-2 rounded-lg text-xs transition-all flex items-center justify-between border group ${
-                          isActive
-                            ? "bg-amber-500/15 border-amber-500/50 text-white font-bold shadow-sm ring-1 ring-amber-500/30"
-                            : "bg-slate-950/40 border-slate-800/60 text-slate-300 hover:bg-slate-800/70 hover:text-white"
-                        }`}
+                        className={`w-full text-right p-2 rounded-xl text-xs transition-all flex items-center justify-between border group ${isActive
+                          ? "bg-amber-500/15 border-amber-500/50 text-white font-bold shadow-sm ring-1 ring-amber-500/30"
+                          : "bg-slate-950/40 border-slate-800/60 text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                          }`}
                       >
                         <button
                           type="button"
@@ -1922,16 +1968,15 @@ export const App: React.FC = () => {
                           className="flex items-center gap-2.5 flex-1 min-w-0 text-right cursor-pointer"
                         >
                           <div
-                            className={`p-1.5 rounded-md shrink-0 ${
-                              isActive
-                                ? "bg-amber-500 text-slate-950 font-bold"
-                                : "bg-slate-800 text-slate-400"
-                            }`}
+                            className={`p-1.5 rounded-lg shrink-0 ${isActive
+                              ? "bg-amber-500 text-slate-950 font-bold"
+                              : "bg-slate-800 text-slate-400"
+                              }`}
                           >
-                            <Icon className="w-4 h-4" />
+                            <Icon className="w-3.5 h-3.5" />
                           </div>
                           <div className="truncate">
-                            <div className="font-bold truncate">{p.title}</div>
+                            <div className="font-bold truncate text-xs">{p.title}</div>
                             <div className="text-[10px] text-slate-400 font-normal truncate">{p.sub}</div>
                           </div>
                         </button>
@@ -1960,71 +2005,46 @@ export const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Add / Duplicate Pages Quick Action Section */}
-              <div className="pt-3 border-t border-slate-800/80 space-y-1.5">
-                <span className="text-[11px] font-semibold text-slate-400 block px-1">
-                  إضافة وتكرار صفحات
+              {/* Document Overview Summary Widget */}
+              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] space-y-2">
+                <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                  <FileBadge className="w-3.5 h-3.5 text-amber-400" />
+                  <span>ملخص المستندات</span>
                 </span>
-                <div className="grid grid-cols-1 gap-1.5">
-                  <button
-                    type="button"
-                    onClick={handleDuplicateLastPage}
-                    className="w-full flex items-center gap-2 p-2 rounded-lg bg-slate-950/70 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-950/40 text-xs transition-colors cursor-pointer text-right"
-                    title="تكرار الصفحة الأخيرة لتسجيل صروفات أشهر جديدة"
-                  >
-                    <CopyPlus className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <div>
-                      <div className="font-bold">تكرار الصفحة الأخيرة</div>
-                      <div className="text-[10px] text-slate-400">إضافة شهر وسجل صرف جديد</div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleAddIdCardsPage}
-                    className="w-full flex items-center gap-2 p-2 rounded-lg bg-slate-950/70 border border-amber-500/30 text-amber-300 hover:bg-amber-950/40 text-xs transition-colors cursor-pointer text-right"
-                    title="إضافة صفحة بطاقات الرقم القومي (8 خانات - رأسي)"
-                  >
-                    <CreditCard className="w-4 h-4 text-amber-400 shrink-0" />
-                    <div>
-                      <div className="font-bold">إضافة صفحة بطايق (8)</div>
-                      <div className="text-[10px] text-slate-400">صفحة عمودية بـ 8 خانات متساوية</div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleAddBirthCertsPage}
-                    className="w-full flex items-center gap-2 p-2 rounded-lg bg-slate-950/70 border border-sky-500/30 text-sky-300 hover:bg-sky-950/40 text-xs transition-colors cursor-pointer text-right"
-                    title="إضافة صفحة شهادات الميلاد (شهادتين يمين وشمال - أفقي)"
-                  >
-                    <FileSpreadsheet className="w-4 h-4 text-sky-400 shrink-0" />
-                    <div>
-                      <div className="font-bold">إضافة شهادات ميلاد (أفقي)</div>
-                      <div className="text-[10px] text-slate-400">صفحة أفقية بنصفين يمين وشمال</div>
-                    </div>
-                  </button>
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
+                    <span className="text-slate-400 block">البطاقات المرفقة:</span>
+                    <span className={`font-bold ${data.husband_id_image && data.wife_id_image ? "text-emerald-400" : "text-amber-400"}`}>
+                      {(data.husband_id_image ? 1 : 0) + (data.husband_id_back_image ? 1 : 0) + (data.wife_id_image ? 1 : 0) + (data.wife_id_back_image ? 1 : 0)} من 4
+                    </span>
+                  </div>
+                  <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
+                    <span className="text-slate-400 block">أفراد الأسرة:</span>
+                    <span className="font-bold text-white">
+                      {data.page3?.family_members?.length || 0} أفراد
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Keyboard Shortcuts Guide */}
-              <div className="p-3 rounded-lg bg-slate-950/50 border border-slate-800/80 text-[11px] text-slate-400 space-y-1.5">
+              <div className="p-3 rounded-xl bg-slate-950/50 border border-slate-800 text-[11px] text-slate-400 space-y-1.5">
                 <span className="font-semibold text-slate-300 block mb-1">اختصارات لوحة المفاتيح</span>
                 <div className="flex items-center justify-between">
                   <span>حفظ الاستمارة:</span>
-                  <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-400 font-mono">Ctrl+S</kbd>
+                  <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-400 font-mono text-[10px]">Ctrl+S</kbd>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>حفظ باسم:</span>
-                  <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-400 font-mono">Ctrl+Shift+S</kbd>
+                  <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-400 font-mono text-[10px]">Ctrl+Shift+S</kbd>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>تصدير PDF:</span>
-                  <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-400 font-mono">Ctrl+P</kbd>
+                  <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-400 font-mono text-[10px]">Ctrl+P</kbd>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>التنقل بين الصفحات:</span>
-                  <span className="font-mono text-slate-300">◀ ▶</span>
+                  <span className="font-mono text-slate-300 text-[10px]">◀ ▶</span>
                 </div>
               </div>
             </div>
@@ -2032,17 +2052,16 @@ export const App: React.FC = () => {
         </aside>
 
         {/* Central Workspace: Document Canvas & Interactive Viewport */}
-        <div className="flex-1 flex flex-col min-h-0 h-full overflow-hidden relative bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] bg-slate-950">
+        <div className="flex-1 flex flex-col min-h-0 h-full overflow-hidden relative bg-[#0b0e14]">
           {/* Toast Notification Banner */}
           {toast && (
             <div
-              className={`fixed top-28 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-xl border flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-top-3 ${
-                toast.type === "success"
-                  ? "bg-emerald-950/90 text-emerald-200 border-emerald-500"
-                  : toast.type === "error"
+              className={`fixed top-28 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-xl border flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-top-3 ${toast.type === "success"
+                ? "bg-emerald-950/90 text-emerald-200 border-emerald-500"
+                : toast.type === "error"
                   ? "bg-rose-950/90 text-rose-200 border-rose-500"
                   : "bg-slate-900/90 text-amber-200 border-amber-500"
-              }`}
+                }`}
             >
               {toast.type === "success" ? (
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -2056,10 +2075,10 @@ export const App: React.FC = () => {
           )}
 
           {/* Main Canvas Container - ONLY this area scrolls when scrolling down */}
-          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-auto p-4 md:p-8 flex flex-col items-center">
+          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-auto py-6 px-4 md:px-8 flex flex-col items-center">
             {/* Validation Alert Banner */}
             {validationAlert && (
-              <div className="w-full max-w-5xl mb-3 p-3 rounded-2xl bg-gradient-to-r from-rose-950/95 to-slate-900/95 text-white shadow-2xl border border-rose-500 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 backdrop-blur-lg">
+              <div className="w-full max-w-4xl mb-4 p-3 rounded-2xl bg-gradient-to-r from-rose-950/95 to-slate-900/95 text-white shadow-2xl border border-rose-500 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-4 backdrop-blur-lg">
                 <div className="flex items-center gap-2.5">
                   <div className="p-1.5 bg-rose-600/30 rounded-xl shrink-0 border border-rose-500/50">
                     <AlertCircle className="w-5 h-5 text-rose-400 animate-bounce" />
@@ -2085,51 +2104,6 @@ export const App: React.FC = () => {
                     className="p-1 rounded-lg hover:bg-rose-800/60 text-rose-300 transition-colors cursor-pointer"
                   >
                     <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ENHANCED FIRST PAGE CONTEXTUAL BANNER (Page 1 Assistant) */}
-            {activePage === 1 && (
-              <div className="w-full max-w-5xl mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-amber-950/30 border border-amber-500/30 backdrop-blur-xl shadow-lg flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
-                    <FileBadge className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xs md:text-sm font-bold text-white flex items-center gap-2">
-                      <span>الصفحة الأولى: البيانات الأساسية وبطاقات الرقم القومي</span>
-                      <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-semibold">
-                        4 بطاقات رقم قومي
-                      </span>
-                    </h2>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      انقر على أي بطاقة لرفعها وتدويرها وقصها، أو اختر الكنيسة والتواريخ من الخانات مباشرة
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {/* 4 Cards Status Pills */}
-                  <div className="hidden lg:flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-slate-800 text-[11px]">
-                    <span className="text-slate-400">البطاقات:</span>
-                    <span className={`font-semibold ${data.husband_id_image ? "text-emerald-400" : "text-amber-400"}`}>
-                      الزوج ({data.husband_id_image && data.husband_id_back_image ? "وجه وظهر ✓" : data.husband_id_image ? "وجه فقط" : "مطلوب"})
-                    </span>
-                    <span className="text-slate-600">•</span>
-                    <span className={`font-semibold ${data.wife_id_image ? "text-emerald-400" : "text-amber-400"}`}>
-                      الزوجة ({data.wife_id_image && data.wife_id_back_image ? "وجه وظهر ✓" : data.wife_id_image ? "وجه فقط" : "مطلوب"})
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleSetToday}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition-all cursor-pointer"
-                  >
-                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                    <span>تاريخ اليوم</span>
                   </button>
                 </div>
               </div>
@@ -2177,6 +2151,7 @@ export const App: React.FC = () => {
                 scale={scale}
                 layout={layout}
                 highlightedFieldId={highlightedFieldId}
+                lockedChurchName={lockedChurchName}
                 onDeletePage={(idx) => handleDeleteExtraPage(idx)}
               />
             </div>
@@ -2189,7 +2164,7 @@ export const App: React.FC = () => {
       {/* ================================================================ */}
       <footer className="h-9 shrink-0 w-full bg-slate-900/95 border-t border-slate-800 px-4 flex items-center justify-between text-xs select-none z-30 backdrop-blur-md">
         {/* Right (RTL): Page Counter & Saving Status */}
-        <div className="flex items-center gap-3 text-[11px] text-slate-300 font-medium">
+        <div className="flex items-center gap-3 text-[11px] text-slate-300 font-medium whitespace-nowrap shrink-0">
           <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1 rounded border border-slate-800 font-mono">
             <span className="text-slate-500">الصفحة:</span>
             <span className="font-bold text-amber-400">{activePage}</span>
@@ -2205,11 +2180,11 @@ export const App: React.FC = () => {
         </div>
 
         {/* Center: Page Stepper Buttons with Home Shortcut */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 whitespace-nowrap shrink-0">
           <button
             type="button"
             onClick={() => setActivePage(1)}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition-colors text-[11px] cursor-pointer"
+            className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition-colors text-[11px] cursor-pointer whitespace-nowrap"
             title="العودة للصفحة الرئيسية (الصفحة 1)"
           >
             <Home className="w-3 h-3" />
@@ -2222,14 +2197,14 @@ export const App: React.FC = () => {
             type="button"
             disabled={activePage <= 1}
             onClick={() => setActivePage((p) => Math.max(1, p - 1))}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 transition-colors text-[11px] cursor-pointer"
+            className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 transition-colors text-[11px] cursor-pointer whitespace-nowrap"
             title="الصفحة السابقة"
           >
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">السابقة</span>
           </button>
 
-          <span className="text-[11px] font-mono text-slate-400 px-2 font-bold">
+          <span className="text-[11px] font-mono text-slate-400 px-2 font-bold max-w-[160px] truncate hidden md:inline">
             {pages[activePage - 1]?.title}
           </span>
 
@@ -2237,7 +2212,7 @@ export const App: React.FC = () => {
             type="button"
             disabled={activePage >= pages.length}
             onClick={() => setActivePage((p) => Math.min(pages.length, p + 1))}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 transition-colors text-[11px] cursor-pointer"
+            className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 transition-colors text-[11px] cursor-pointer whitespace-nowrap"
             title="الصفحة التالية"
           >
             <span className="hidden sm:inline">التالية</span>
@@ -2246,7 +2221,7 @@ export const App: React.FC = () => {
         </div>
 
         {/* Left (RTL): Office Zoom Slider & View Presets */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
           <div className="flex items-center gap-1 bg-slate-950/70 p-0.5 rounded border border-slate-800">
             <button
               type="button"
@@ -2277,11 +2252,10 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={() => setScale(0.85)}
-              className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
-                Math.abs(scale - 0.85) < 0.05
-                  ? "bg-amber-500 text-slate-950 font-bold"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800"
-              }`}
+              className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${Math.abs(scale - 0.85) < 0.05
+                ? "bg-amber-500 text-slate-950 font-bold"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`}
               title="ملء الصفحة على الشاشة"
             >
               ملء الصفحة
@@ -2290,11 +2264,10 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={() => setScale(1.0)}
-              className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
-                Math.abs(scale - 1.0) < 0.05
-                  ? "bg-amber-500 text-slate-950 font-bold"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800"
-              }`}
+              className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${Math.abs(scale - 1.0) < 0.05
+                ? "bg-amber-500 text-slate-950 font-bold"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`}
               title="الحجم الطبيعي 100%"
             >
               100%
@@ -2303,11 +2276,10 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={() => setScale(1.15)}
-              className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
-                Math.abs(scale - 1.15) < 0.05
-                  ? "bg-amber-500 text-slate-950 font-bold"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800"
-              }`}
+              className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${Math.abs(scale - 1.15) < 0.05
+                ? "bg-amber-500 text-slate-950 font-bold"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`}
               title="عرض مريح للقراءة والكتابة"
             >
               عرض مريح
@@ -2336,6 +2308,31 @@ export const App: React.FC = () => {
           setCropperModal({ isOpen: false, binding: "", title: "", image: undefined, defaultMode: "id_card" });
         }}
       />
+
+      {/* ==================================================================== */}
+      {/* 4. ABOUT & LICENSE MODAL                                             */}
+      {/* ==================================================================== */}
+      <AboutModal
+        isOpen={showAboutModal}
+        onClose={() => setShowAboutModal(false)}
+        clientName={licensedClientName}
+        onOpenActivation={() => setShowActivationModal(true)}
+      />
+
+      {/* Re-activation overlay if requested by user while licensed */}
+      {showActivationModal && isLicensed && (
+        <ActivationModal
+          isOpen={true}
+          reason={licenseReason}
+          onActivated={(clientName) => {
+            setIsLicensed(true);
+            isLicensedRef.current = true;
+            setLicensedClientName(clientName);
+            setShowActivationModal(false);
+            showToast(`تم تحديث ترخيص البرنامج بنجاح (${clientName})!`, "success");
+          }}
+        />
+      )}
     </div>
   );
 };

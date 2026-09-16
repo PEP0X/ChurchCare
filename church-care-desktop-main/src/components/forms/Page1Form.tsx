@@ -1,20 +1,23 @@
 import React from "react";
 import { CaseStudyData } from "../../types/schema";
 import { DropZone } from "../studio/DropZone";
-import { Calendar, Hash, MapPin, User, FileBadge } from "lucide-react";
+import { Calendar, Hash, MapPin, User, FileBadge, Lock, Building2 } from "lucide-react";
+import { DIOCESAN_CHURCHES } from "../../utils/churchLicense";
 
 interface Page1FormProps {
   data: CaseStudyData;
   onChange: (updated: Partial<CaseStudyData>) => void;
   onOpenHusbandCropper: () => void;
   onOpenWifeCropper: () => void;
+  lockedChurchName?: string | null;
 }
 
 export const Page1Form: React.FC<Page1FormProps> = ({
   data,
   onChange,
   onOpenHusbandCropper,
-  onOpenWifeCropper
+  onOpenWifeCropper,
+  lockedChurchName = null
 }) => {
   const updateP1 = (field: string, val: string) => {
     onChange({
@@ -50,8 +53,18 @@ export const Page1Form: React.FC<Page1FormProps> = ({
             <FileBadge className="w-5 h-5 text-amber-400" />
             الصفحة الأولى: البيانات الأساسية وبطاقات الرقم القومي
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            كنيسة الشهيد العظيم أبي سيفين والقديسة دميانة - القلج
+          <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+            {lockedChurchName ? (
+              <>
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-amber-300 font-bold">{lockedChurchName}</span>
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">
+                  ثابت بالترخيص
+                </span>
+              </>
+            ) : (
+              <span>{data.page1.church_name || "إيبارشية شبين القناطر وتوابعها"}</span>
+            )}
           </p>
         </div>
       </div>
@@ -88,6 +101,43 @@ export const Page1Form: React.FC<Page1FormProps> = ({
 
       {/* Identification Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+        {/* Church Selection or Locked Church */}
+        <div className="md:col-span-2">
+          <label className="text-xs text-slate-300 font-medium flex items-center justify-between mb-1.5">
+            <span className="flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-amber-400" />
+              <span>الكنيسة:</span>
+            </span>
+            {lockedChurchName && (
+              <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                <span>معتمدة تلقائياً بناءً على ترخيص البرنامج</span>
+              </span>
+            )}
+          </label>
+          {lockedChurchName ? (
+            <div className="w-full bg-slate-800/90 border border-amber-500/60 rounded-lg px-3 py-2 text-sm text-amber-200 font-bold flex items-center justify-between shadow-inner">
+              <span className="truncate">{lockedChurchName}</span>
+              <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30 shrink-0">
+                كنيسة معتمدة
+              </span>
+            </div>
+          ) : (
+            <select
+              value={data.page1.church_name || ""}
+              onChange={(e) => updateP1("church_name", e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-sm text-white focus:outline-none cursor-pointer"
+            >
+              <option value="">-- اختر الكنيسة --</option>
+              {DIOCESAN_CHURCHES.map((c, i) => (
+                <option key={i} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
         <div>
           <label className="text-xs text-slate-300 font-medium flex items-center gap-1.5 mb-1.5">
             <Calendar className="w-3.5 h-3.5 text-amber-400" />

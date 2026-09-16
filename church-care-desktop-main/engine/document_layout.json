@@ -2488,7 +2488,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2540,7 +2541,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2592,7 +2594,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2644,7 +2647,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2696,7 +2700,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2748,7 +2753,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2800,7 +2806,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2852,7 +2859,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -2888,7 +2896,7 @@
         "textAlign": "center",
         "isMono": true,
         "isBold": true,
-        "fontSize": 11
+        "fontSize": 16
       }
     },
     {
@@ -2906,7 +2914,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -2924,7 +2933,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -2942,7 +2952,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -2960,7 +2971,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -2978,7 +2990,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -2997,7 +3010,7 @@
         "textAlign": "center",
         "isMono": true,
         "isBold": true,
-        "fontSize": 11,
+        "fontSize": 16,
         "textColor": "#047857"
       }
     },
@@ -3016,7 +3029,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3034,7 +3048,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3052,7 +3067,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3070,7 +3086,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3088,7 +3105,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3106,7 +3124,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": 11
+        "fontSize": 16,
+        "isBold": true
       }
     },
     {
@@ -3125,7 +3144,7 @@
         "textAlign": "center",
         "isMono": true,
         "isBold": true,
-        "fontSize": 11,
+        "fontSize": 16,
         "textColor": "#b91c1c"
       }
     },
@@ -3144,7 +3163,8 @@
       "style": {
         "textAlign": "center",
         "isMono": true,
-        "fontSize": "auto"
+        "fontSize": 15.5,
+        "isBold": true
       }
     },
     {
@@ -3178,8 +3198,10 @@
         "height": 3.79
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3196,8 +3218,10 @@
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3214,8 +3238,10 @@
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3232,8 +3258,10 @@
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3250,8 +3278,10 @@
         "height": 3.79
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3268,8 +3298,10 @@
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3286,8 +3318,10 @@
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3304,8 +3338,10 @@
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3322,8 +3358,10 @@
         "height": 3.79
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3340,8 +3378,10 @@
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3358,8 +3398,10 @@
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     },
     {
@@ -3376,8 +3418,10 @@
         "height": 2.93
       },
       "style": {
-        "textAlign": "right",
-        "fontSize": "auto"
+        "textAlign": "center",
+        "fontSize": 15.5,
+        "isBold": true,
+        "isMono": true
       }
     }
   ],

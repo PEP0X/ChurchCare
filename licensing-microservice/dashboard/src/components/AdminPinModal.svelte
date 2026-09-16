@@ -50,7 +50,6 @@
             maxlength="6"
             bind:value={pin}
             placeholder="• • • •"
-            autofocus
             class="w-full text-center text-2xl tracking-[0.4em] bg-slate-950 border border-slate-800 rounded-2xl py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono placeholder:tracking-normal"
           />
         </div>

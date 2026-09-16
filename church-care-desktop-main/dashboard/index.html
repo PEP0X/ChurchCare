@@ -25,80 +25,101 @@
     .code-font { font-family: 'Courier New', Courier, monospace; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
+<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-indigo-500 selection:text-white">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     
     <!-- Top Header -->
-    <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-8 border-b border-slate-800 gap-4">
-      <div>
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-500/30">
-            🛡️
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-8 border-b border-slate-800/80 gap-5">
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-indigo-500/30">
+          🛡️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl font-bold text-white tracking-wide">ChurchCare Licensing Service</h1>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              مباشر
+            </span>
           </div>
-          <div>
-            <h1 class="text-2xl font-bold text-white tracking-wide">لوحة إدارة تراخيص ChurchCare</h1>
-            <p class="text-sm text-slate-400">إدارة السيريالات والتفعيل المقفل بالعتاد (Hardware-Locked Licensing)</p>
-          </div>
+          <p class="text-sm text-slate-400">إدارة السيريالات والتفعيل المقفل بالعتاد (Hardware-Locked Licensing)</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
-        <button onclick="openModal('newLicenseModal')" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 transition">
+      <div class="flex items-center gap-3 flex-wrap">
+        <button onclick="openModal('newLicenseModal')" class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold px-4 py-2.5 rounded-2xl shadow-lg shadow-indigo-600/30 transition cursor-pointer text-sm">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           توليد سيريال جديد
         </button>
-        <button onclick="fetchLicenses()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="تحديث البيانات">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <button onclick="exportToCsv()" class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 font-semibold px-3.5 py-2.5 rounded-2xl transition cursor-pointer text-sm" title="تصدير جدول التراخيص إلى Sheet">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          تصدير Sheet
+        </button>
+        <button onclick="fetchLicenses()" class="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition cursor-pointer" title="تحديث البيانات">
+          <svg id="refreshIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         </button>
       </div>
     </header>
 
     <!-- Stats Overview -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 my-8">
-      <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-5 border border-slate-700/60 shadow-sm">
-        <div class="text-slate-400 text-sm font-medium">إجمالي التراخيص</div>
+      <div class="bg-slate-900/80 backdrop-blur rounded-3xl p-5 border border-slate-800 shadow-sm">
+        <div class="text-slate-400 text-sm font-medium flex justify-between">
+          <span>إجمالي التراخيص</span>
+          <span id="statChurchesCount" class="text-xs text-indigo-400 font-semibold">0 كنيسة</span>
+        </div>
         <div id="statTotal" class="text-3xl font-bold text-white mt-2">0</div>
       </div>
-      <div class="bg-emerald-950/30 backdrop-blur rounded-2xl p-5 border border-emerald-800/40 shadow-sm">
+      <div class="bg-emerald-950/20 backdrop-blur rounded-3xl p-5 border border-emerald-800/30 shadow-sm">
         <div class="text-emerald-400 text-sm font-medium">التراخيص المفعلة</div>
         <div id="statActive" class="text-3xl font-bold text-emerald-400 mt-2">0</div>
       </div>
-      <div class="bg-amber-950/30 backdrop-blur rounded-2xl p-5 border border-amber-800/40 shadow-sm">
-        <div class="text-amber-400 text-sm font-medium">غير مفعلة (متاحة)</div>
+      <div class="bg-amber-950/20 backdrop-blur rounded-3xl p-5 border border-amber-800/30 shadow-sm">
+        <div class="text-amber-400 text-sm font-medium">غير مفعلة (جاهزة)</div>
         <div id="statUnactivated" class="text-3xl font-bold text-amber-400 mt-2">0</div>
       </div>
-      <div class="bg-rose-950/30 backdrop-blur rounded-2xl p-5 border border-rose-800/40 shadow-sm">
+      <div class="bg-rose-950/20 backdrop-blur rounded-3xl p-5 border border-rose-800/30 shadow-sm">
         <div class="text-rose-400 text-sm font-medium">الملغاة (Revoked)</div>
         <div id="statRevoked" class="text-3xl font-bold text-rose-400 mt-2">0</div>
       </div>
     </div>
 
     <!-- Search & Filters -->
-    <div class="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
-      <div class="w-full sm:w-80 relative">
-        <input id="searchInput" oninput="filterLicenses()" type="text" placeholder="بحث باسم الكنيسة أو السيريال..." class="w-full bg-slate-800/80 border border-slate-700 text-white rounded-xl px-4 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-        <svg class="w-5 h-5 text-slate-400 absolute right-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    <div class="mb-6 flex flex-col sm:flex-row gap-3 justify-between items-center">
+      <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto flex-1">
+        <div class="w-full sm:w-80 relative">
+          <input id="searchInput" oninput="filterLicenses()" type="text" placeholder="بحث باسم الكنيسة، المستخدم، السيريال..." class="w-full bg-slate-900 border border-slate-800 text-white rounded-2xl px-4 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm shadow-inner">
+          <svg class="w-5 h-5 text-slate-500 absolute right-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <div class="w-full sm:w-64">
+          <select id="churchFilterSelect" onchange="filterLicenses()" class="w-full bg-slate-900 border border-slate-800 text-white rounded-2xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner">
+            <option value="ALL">⛪ كل الكنائس</option>
+          </select>
+        </div>
       </div>
-      <div id="statusBadge" class="text-xs text-slate-400">متصل بـ Supabase</div>
+      <div id="statusBadge" class="text-xs text-slate-400 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>متصل بـ Supabase</span>
+      </div>
     </div>
 
     <!-- Licenses Table -->
-    <div class="bg-slate-800/60 backdrop-blur rounded-2xl border border-slate-700/60 overflow-hidden shadow-xl">
+    <div class="bg-slate-900/80 backdrop-blur rounded-3xl border border-slate-800 overflow-hidden shadow-xl">
       <div class="overflow-x-auto">
-        <table class="w-full text-right text-sm">
-          <thead class="bg-slate-800 text-slate-300 font-semibold border-b border-slate-700">
+        <table class="w-full text-right text-sm min-w-[900px]">
+          <thead class="bg-slate-950/70 text-slate-400 font-semibold border-b border-slate-800">
             <tr>
               <th class="py-4 px-5">السيريال (Serial Key)</th>
-              <th class="py-4 px-5">اسم العميل / الكنيسة</th>
+              <th class="py-4 px-5">اسم الكنيسة (Church)</th>
+              <th class="py-4 px-5">اسم المستخدم / المسؤول</th>
               <th class="py-4 px-5">الحالة</th>
               <th class="py-4 px-5">بصمة العتاد (HWID)</th>
               <th class="py-4 px-5">تاريخ التفعيل</th>
               <th class="py-4 px-5 text-center">إجراءات</th>
             </tr>
           </thead>
-          <tbody id="licensesTableBody" class="divide-y divide-slate-700/50">
+          <tbody id="licensesTableBody" class="divide-y divide-slate-800/60">
             <tr>
-              <td colspan="6" class="py-12 text-center text-slate-400">جاري تحميل التراخيص من السيرفر...</td>
+              <td colspan="7" class="py-12 text-center text-slate-400">جاري تحميل التراخيص من السيرفر...</td>
             </tr>
           </tbody>
         </table>
@@ -108,39 +129,139 @@
   </div>
 
   <!-- New License Modal -->
-  <div id="newLicenseModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-      <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-700">
-        <h3 class="text-lg font-bold text-white">إصدار ترخيص جديد</h3>
-        <button onclick="closeModal('newLicenseModal')" class="text-slate-400 hover:text-white">&times;</button>
+  <div id="newLicenseModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl p-6 sm:p-8 shadow-2xl">
+      <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>✨</span>
+            <span>إصدار ترخيص جديد</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5">اختر الكنيسة واكتب اسم المستخدم/المسؤول</p>
+        </div>
+        <button onclick="closeModal('newLicenseModal')" class="text-slate-400 hover:text-white text-xl cursor-pointer">&times;</button>
       </div>
+
       <form onsubmit="createLicense(event)">
         <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-300 mb-1">اسم العميل أو الكنيسة <span class="text-rose-500">*</span></label>
-            <input id="clientNameInput" required type="text" placeholder="مثال: كنيسة الشهيد مارجرجس - الجيزة" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+          <!-- 2 Columns: Church Dropdown & User Name -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Church Dropdown -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="block text-sm font-semibold text-slate-300">اسم الكنيسة <span class="text-rose-500">*</span></label>
+                <button type="button" onclick="toggleCustomChurchInput()" id="toggleCustomBtn" class="text-xs text-indigo-400 hover:text-indigo-300 cursor-pointer">+ كنيسة غير مدرجة</button>
+              </div>
+              <div id="churchSelectWrapper">
+                <select id="churchSelectInput" required class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm shadow-inner">
+                  <option value="">-- اختر الكنيسة --</option>
+                </select>
+              </div>
+              <div id="churchTextWrapper" class="hidden">
+                <input id="churchTextInput" type="text" placeholder="مثال: كنيسة الشهيد مارجرجس - المنيا" class="w-full bg-slate-950 border border-indigo-500/50 rounded-2xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm shadow-inner">
+              </div>
+            </div>
+
+            <!-- User Name Input -->
+            <div>
+              <label class="block text-sm font-semibold text-slate-300 mb-1">اسم المستخدم / المسؤول <span class="text-rose-500">*</span></label>
+              <input id="userNameInput" required type="text" placeholder="مثال: م. باسم ظريف / أ. نرمين ميشيل" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm shadow-inner">
+            </div>
           </div>
+
+          <!-- Notes -->
           <div>
             <label class="block text-sm font-medium text-slate-300 mb-1">ملاحظات إضافية (اختياري)</label>
-            <textarea id="notesInput" rows="2" placeholder="أي ملاحظات حول العميل أو طريقة الدفع..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></textarea>
+            <input id="notesInput" type="text" placeholder="أي ملاحظات حول العميل، جهاز سكرتارية، رقم الهاتف..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm shadow-inner">
           </div>
         </div>
-        <div class="mt-6 flex justify-end gap-3">
-          <button type="button" onclick="closeModal('newLicenseModal')" class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-sm">إلغاء</button>
-          <button type="submit" id="btnSubmitNew" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30">توليد فوري</button>
+
+        <div class="mt-6 flex justify-end gap-3 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeModal('newLicenseModal')" class="px-5 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm transition cursor-pointer">إلغاء</button>
+          <button type="submit" id="btnSubmitNew" class="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition cursor-pointer">توليد فوري وحفظ</button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    // Configuration
     const SUPABASE_URL = "https://pluijiucmbqjwnaoyyhi.supabase.co";
     const SUPABASE_SECRET = "sb_secret_kEcp8RnS_Y0ns19mkusbng_p0ZPJTrB";
 
-    let allLicenses = [];
+    const DEFAULT_CHURCHES = [
+      "كنيسة السيدة العذراء والرسولين بطرس وبولس المرج الجديدة",
+      "كنيسة السيدة العذراء والقديس يوسف النجار - الخصوص",
+      "كنيسة السيدة العذراء والرسولين بطرس وبولس - الخصوص",
+      "كنيسة البابا أثناسيوس الرسول والانبا بيشوى - الخصوص",
+      "كنيسة السيدة العذراء والقديس ابي سيفين - الخصوص",
+      "كنيسة الانبا كاراس والانبا ابرام - الخصوص",
+      "كنيسة السيدة العذراء والشهيد العظيم أبانوب - الخصوص",
+      "كنيسة السيدة العذراء والانبا موسي - الخصوص",
+      "كنيسة السيدة العذراء والملاك ميخائيل - الخصوص",
+      "كنيسة الشهيد العظيم مارمينا والبابا كيرلس السادس - الخصوص",
+      "كنيسة الشهيد العظيم مارجرجس والبابا ديسقوروس - الخصوص",
+      "كنيسة السيدة العذراء والقديس ماريوحنا الحبيب - الخصوص",
+      "مذبح الاميرين تادرس- ارض عيشة - الخصوص",
+      "كنيسة الشهيد العظيم مارجرجس - قها",
+      "كنيسة الشهيد العظيم مارجرجس - طوخ",
+      "كنيسة القديسة الشهيدة دميانه - ميت كنانة",
+      "كنيسة الشهيد العظيم مارجرجس - بلتان",
+      "كنيسة الشهيد العظيم مارمينا العجايبى - ساحل دجوى",
+      "كنيسة السيدة العذراء والقديس العظيم ابي سيفين - دجوى",
+      "كنيسة رئيس الملائكة الجليل ميخائيل - القلزم",
+      "كنيسة السيدة العذراء والقديس مارمرقس الرسول - كفر شبين",
+      "كنيسة الشهيد العظيم مارجرجس - منيه شبين",
+      "كنيسة البابا كيرلس السادس - الحصافة",
+      "كنيسة رئيس الملائكة الجليل ميخائيل - القشيش",
+      "كنيسة السيدة العذراء والقديس ابي سيفين - السلمانية",
+      "كنيسة الشهيد العظيم مارجرجس والانبا كاراس - نوى",
+      "كنيسة السيدة العذراء - مساكن ابو زعبل",
+      "كنيسة الشهيد العظيم مارجرجس - ابو زعبل",
+      "كنيسة السيدة العذراء ورئيس الملائكة الجليل ميخائيل - العكرشة",
+      "كنيسة السيدة العذراء والبابا بطرس خاتم الشهداء - الخانكة",
+      "كنيسة الشهيد العظيم مارمينا والبابا كيرلس السادس - الجبل الاصفر",
+      "كنيسة السيدة العذراء والقديس ابانوب - القلج",
+      "كنيسة الشهيد العظيم ابي سيفين والقديسة دميانة - القلج",
+      "كنيسة السيدة العذراء والامير تادرس - القلج",
+      "كنيسة السيدة العذراء والانبا بيشوى - المنية"
+    ];
 
-    // Helper: generate serial string in JS matching algorithm
+    let allLicenses = [];
+    let isCustomChurch = false;
+
+    function toggleCustomChurchInput() {
+      isCustomChurch = !isCustomChurch;
+      const selectWrap = document.getElementById('churchSelectWrapper');
+      const textWrap = document.getElementById('churchTextWrapper');
+      const btn = document.getElementById('toggleCustomBtn');
+      const select = document.getElementById('churchSelectInput');
+      const text = document.getElementById('churchTextInput');
+
+      if (isCustomChurch) {
+        selectWrap.classList.add('hidden');
+        textWrap.classList.remove('hidden');
+        select.removeAttribute('required');
+        text.setAttribute('required', 'true');
+        btn.innerText = '← اختيار من القائمة';
+      } else {
+        selectWrap.classList.remove('hidden');
+        textWrap.classList.add('hidden');
+        select.setAttribute('required', 'true');
+        text.removeAttribute('required');
+        btn.innerText = '+ كنيسة غير مدرجة';
+      }
+    }
+
+    function parseNotes(notesStr) {
+      if (!notesStr) return { userName: '—', extra: '' };
+      let raw = notesStr.trim();
+      let parts = raw.split('| Activated on ');
+      let before = parts[0].trim();
+      if (before.startsWith('Activated on ')) return { userName: '—', extra: before };
+      if (!before) return { userName: '—', extra: '' };
+      return { userName: before, extra: parts[1] ? 'Activated on ' + parts[1] : '' };
+    }
+
     function generateSerialString() {
       const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
       let res = "CCARE-";
@@ -154,6 +275,9 @@
     }
 
     async function fetchLicenses() {
+      const icon = document.getElementById('refreshIcon');
+      if (icon) icon.classList.add('animate-spin');
+
       try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/licenses?select=*&order=created_at.desc`, {
           headers: {
@@ -163,18 +287,50 @@
         });
         if (!response.ok) throw new Error("Failed to fetch licenses");
         allLicenses = await response.json();
+        updateChurchDropdowns();
         updateStats();
         renderTable(allLicenses);
       } catch (err) {
         console.error(err);
         document.getElementById('licensesTableBody').innerHTML = `
-          <tr><td colspan="6" class="py-8 text-center text-rose-400">فشل الاتصال بقاعدة البيانات: ${err.message}</td></tr>
+          <tr><td colspan="7" class="py-8 text-center text-rose-400">فشل الاتصال بقاعدة البيانات: ${err.message}</td></tr>
         `;
+      } finally {
+        if (icon) icon.classList.remove('animate-spin');
       }
     }
 
+    function updateChurchDropdowns() {
+      const churchSet = new Set(DEFAULT_CHURCHES);
+      allLicenses.forEach(l => {
+        if (l.client_name && l.client_name.trim()) churchSet.add(l.client_name.trim());
+      });
+      const sortedChurches = Array.from(churchSet).sort((a,b) => a.localeCompare(b, 'ar'));
+
+      // Modal select
+      const select = document.getElementById('churchSelectInput');
+      const curVal = select.value;
+      select.innerHTML = '<option value="">-- اختر الكنيسة من القائمة --</option>' + 
+        sortedChurches.map(c => `<option value="${c}" ${c === curVal ? 'selected' : ''}>${c}</option>`).join('');
+
+      // Filter select
+      const filterSelect = document.getElementById('churchFilterSelect');
+      const curFilter = filterSelect.value;
+      const churchCounts = {};
+      allLicenses.forEach(l => {
+        const c = l.client_name || 'كنيسة عامة';
+        churchCounts[c] = (churchCounts[c] || 0) + 1;
+      });
+
+      const uniqueInDb = Object.keys(churchCounts).sort((a,b) => a.localeCompare(b, 'ar'));
+      filterSelect.innerHTML = `<option value="ALL">⛪ كل الكنائس (${allLicenses.length})</option>` +
+        uniqueInDb.map(c => `<option value="${c}" ${c === curFilter ? 'selected' : ''}>${c} (${churchCounts[c]})</option>`).join('');
+    }
+
     function updateStats() {
+      const uniqueChurches = new Set(allLicenses.map(l => l.client_name?.trim()).filter(Boolean)).size;
       document.getElementById('statTotal').innerText = allLicenses.length;
+      document.getElementById('statChurchesCount').innerText = `${uniqueChurches} كنيسة`;
       document.getElementById('statActive').innerText = allLicenses.filter(l => l.status === 'active').length;
       document.getElementById('statUnactivated').innerText = allLicenses.filter(l => l.status === 'unactivated').length;
       document.getElementById('statRevoked').innerText = allLicenses.filter(l => l.status === 'revoked').length;
@@ -183,7 +339,7 @@
     function renderTable(licenses) {
       const tbody = document.getElementById('licensesTableBody');
       if (licenses.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-slate-400">لا توجد تراخيص حالياً. اضغط "توليد سيريال جديد" لإصدار أول ترخيص.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-slate-400">لا توجد تراخيص مطابقة لبحثك.</td></tr>`;
         return;
       }
 
@@ -197,11 +353,12 @@
           statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>ملغي</span>`;
         }
 
-        const dateStr = lic.activated_at ? new Date(lic.activated_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
-        const hwidStr = lic.hwid ? `<span class="code-font text-xs bg-slate-900 px-2 py-1 rounded border border-slate-700 text-indigo-300 select-all">${lic.hwid}</span>` : '<span class="text-slate-500 text-xs">غير مرتبط بجهاز</span>';
+        const dateStr = lic.activated_at ? new Date(lic.activated_at).toLocaleString('ar-EG') : '—';
+        const parsed = parseNotes(lic.notes);
+        const hwidStr = lic.hwid ? `<span class="code-font text-xs bg-slate-950 px-2 py-1 rounded border border-slate-800 text-indigo-300 select-all">${lic.hwid}</span>` : '<span class="text-slate-500 text-xs">غير مرتبط</span>';
 
         return `
-          <tr class="hover:bg-slate-700/30 transition">
+          <tr class="hover:bg-slate-800/40 transition">
             <td class="py-4 px-5">
               <div class="flex items-center gap-2">
                 <span class="code-font font-bold text-white tracking-wider select-all">${lic.serial_key}</span>
@@ -210,24 +367,25 @@
                 </button>
               </div>
             </td>
-            <td class="py-4 px-5 font-medium text-white">${lic.client_name}</td>
+            <td class="py-4 px-5 font-semibold text-white">⛪ ${lic.client_name || '—'}</td>
+            <td class="py-4 px-5 text-slate-200">👤 ${parsed.userName}</td>
             <td class="py-4 px-5">${statusBadge}</td>
             <td class="py-4 px-5">${hwidStr}</td>
             <td class="py-4 px-5 text-slate-400 text-xs">${dateStr}</td>
             <td class="py-4 px-5 text-center">
               <div class="inline-flex items-center gap-2">
                 ${lic.hwid ? `
-                  <button onclick="resetHwid('${lic.id}')" class="px-2.5 py-1 text-xs rounded bg-indigo-950/60 text-indigo-300 border border-indigo-700 hover:bg-indigo-900 transition" title="إلغاء ربط الجهاز للسماح بتفعيله على جهاز آخر">
-                    فك ربط الجهاز
+                  <button onclick="resetHwid('${lic.id}')" class="px-2.5 py-1 text-xs rounded-xl bg-indigo-950/60 text-indigo-300 border border-indigo-700 hover:bg-indigo-900 transition" title="إلغاء ربط الجهاز">
+                    فك الجهاز
                   </button>
                 ` : ''}
                 
                 ${lic.status !== 'revoked' ? `
-                  <button onclick="changeStatus('${lic.id}', 'revoked')" class="px-2.5 py-1 text-xs rounded bg-rose-950/60 text-rose-300 border border-rose-700 hover:bg-rose-900 transition" title="إلغاء الترخيص">
+                  <button onclick="changeStatus('${lic.id}', 'revoked')" class="px-2.5 py-1 text-xs rounded-xl bg-rose-950/60 text-rose-300 border border-rose-700 hover:bg-rose-900 transition" title="إلغاء الترخيص">
                     إلغاء
                   </button>
                 ` : `
-                  <button onclick="changeStatus('${lic.id}', '${lic.hwid ? 'active' : 'unactivated'}')" class="px-2.5 py-1 text-xs rounded bg-emerald-950/60 text-emerald-300 border border-emerald-700 hover:bg-emerald-900 transition" title="إعادة التفعيل">
+                  <button onclick="changeStatus('${lic.id}', '${lic.hwid ? 'active' : 'unactivated'}')" class="px-2.5 py-1 text-xs rounded-xl bg-emerald-950/60 text-emerald-300 border border-emerald-700 hover:bg-emerald-900 transition" title="إعادة التفعيل">
                     تفعيل
                   </button>
                 `}
@@ -244,8 +402,23 @@
 
     async function createLicense(e) {
       e.preventDefault();
-      const clientName = document.getElementById('clientNameInput').value.trim();
-      const notes = document.getElementById('notesInput').value.trim();
+      const churchName = isCustomChurch 
+        ? document.getElementById('churchTextInput').value.trim()
+        : document.getElementById('churchSelectInput').value.trim();
+
+      const userName = document.getElementById('userNameInput').value.trim();
+      const extraNotes = document.getElementById('notesInput').value.trim();
+
+      if (!churchName) {
+        alert('يرجى اختيار أو كتابة اسم الكنيسة.');
+        return;
+      }
+      if (!userName) {
+        alert('يرجى كتابة اسم المستخدم أو المسؤول.');
+        return;
+      }
+
+      const combinedNotes = extraNotes ? `${userName} - ${extraNotes}` : userName;
       const btn = document.getElementById('btnSubmitNew');
       btn.disabled = true;
       btn.innerText = "جاري التوليد...";
@@ -263,28 +436,29 @@
           },
           body: JSON.stringify({
             serial_key: serialKey,
-            client_name: clientName,
+            client_name: churchName,
             status: "unactivated",
-            notes: notes || null
+            notes: combinedNotes
           })
         });
 
         if (!response.ok) throw new Error("Failed to insert license");
         closeModal('newLicenseModal');
-        document.getElementById('clientNameInput').value = '';
+        document.getElementById('userNameInput').value = '';
         document.getElementById('notesInput').value = '';
+        if (isCustomChurch) toggleCustomChurchInput();
         await fetchLicenses();
-        alert(`تم توليد السيريال بنجاح!\n\nالسيريال: ${serialKey}\nالعميل: ${clientName}`);
+        alert(`تم توليد السيريال بنجاح!\n\nالكنيسة: ${churchName}\nالمستخدم: ${userName}\nالسيريال: ${serialKey}`);
       } catch (err) {
         alert("حدث خطأ أثناء التوليد: " + err.message);
       } finally {
         btn.disabled = false;
-        btn.innerText = "توليد فوري";
+        btn.innerText = "توليد فوري وحفظ";
       }
     }
 
     async function resetHwid(id) {
-      if (!confirm("هل أنت متأكد من فك ربط الجهاز؟ سيمكن هذا العميل من استخدام السيريال على جهاز جديد.")) return;
+      if (!confirm("هل أنت متأكد من فك ربط الجهاز؟")) return;
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/licenses?id=eq.${id}`, {
           method: "PATCH",
@@ -338,18 +512,52 @@
     }
 
     function filterLicenses() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = allLicenses.filter(l => 
-        l.serial_key.toLowerCase().includes(q) || 
-        l.client_name.toLowerCase().includes(q) ||
-        (l.hwid && l.hwid.toLowerCase().includes(q))
-      );
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const churchFilter = document.getElementById('churchFilterSelect').value;
+
+      const filtered = allLicenses.filter(l => {
+        if (churchFilter !== 'ALL' && (l.client_name || '').trim() !== churchFilter) {
+          return false;
+        }
+        if (!q) return true;
+        return (
+          (l.serial_key && l.serial_key.toLowerCase().includes(q)) || 
+          (l.client_name && l.client_name.toLowerCase().includes(q)) ||
+          (l.notes && l.notes.toLowerCase().includes(q)) ||
+          (l.hwid && l.hwid.toLowerCase().includes(q))
+        );
+      });
       renderTable(filtered);
+    }
+
+    function exportToCsv() {
+      if (!allLicenses || allLicenses.length === 0) {
+        alert('لا توجد بيانات لتصديرها.');
+        return;
+      }
+      const headers = ['السيريال', 'اسم الكنيسة', 'المستخدم / الملاحظات', 'الحالة', 'بصمة العتاد HWID', 'تاريخ التفعيل'];
+      const rows = allLicenses.map(l => [
+        `"${l.serial_key}"`,
+        `"${(l.client_name || '').replace(/"/g, '""')}"`,
+        `"${(l.notes || '').replace(/"/g, '""')}"`,
+        `"${l.status}"`,
+        `"${l.hwid || 'غير مرتبط'}"`,
+        `"${l.activated_at || ''}"`
+      ].join(','));
+      const csv = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ChurchCare_Sheet_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
 
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text);
-      alert("تم نسخ السيريال للحافظة: " + text);
+      alert("تم نسخ السيريال: " + text);
     }
 
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }

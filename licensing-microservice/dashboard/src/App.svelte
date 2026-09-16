@@ -1,25 +1,49 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { License } from './lib/types';
+  import { QueryClient, QueryClientProvider, createQuery } from '@tanstack/svelte-query';
   import { getLicenses, createLicense, resetLicenseHwid, updateLicenseStatus, deleteLicense } from './lib/api';
+  import { getUniqueChurches, exportLicensesToCsv } from './lib/churchList';
   import Navbar from './components/Navbar.svelte';
   import StatsCards from './components/StatsCards.svelte';
   import LicenseTable from './components/LicenseTable.svelte';
   import NewLicenseModal from './components/NewLicenseModal.svelte';
   import AdminPinModal from './components/AdminPinModal.svelte';
 
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 5,
+        refetchInterval: 6000,
+        refetchOnWindowFocus: true,
+      }
+    }
+  });
+
   let isAuthenticated = $state<boolean>(false);
-  let licenses = $state<License[]>([]);
-  let isLoading = $state<boolean>(true);
   let isModalOpen = $state<boolean>(false);
   let isSubmitting = $state<boolean>(false);
   let toastMsg = $state<string | null>(null);
+
+  // TanStack Query integration
+  const licensesQuery = createQuery(() => ({
+    queryKey: ['licenses'],
+    queryFn: getLicenses,
+    enabled: isAuthenticated,
+  }), () => queryClient);
+
+  let licenses = $derived(
+    Array.isArray(licensesQuery.data) ? licensesQuery.data : []
+  );
+
+  let isLoading = $derived(licensesQuery.isLoading && licenses.length === 0);
+
+  let availableChurches = $derived(getUniqueChurches(licenses));
 
   function showToast(msg: string) {
     toastMsg = msg;
     setTimeout(() => {
       if (toastMsg === msg) toastMsg = null;
-    }, 3500);
+    }, 4000);
   }
 
   function handleLogout() {
@@ -27,36 +51,40 @@
     isAuthenticated = false;
   }
 
-  async function loadData() {
-    isLoading = true;
+  async function handleRefresh() {
+    await queryClient.invalidateQueries({ queryKey: ['licenses'] });
+  }
+
+  async function handleCreate(churchName: string, userName: string, notes: string) {
+    isSubmitting = true;
     try {
-      const data = await getLicenses();
-      licenses = Array.isArray(data) ? data : [];
-    } catch (err: any) {
-      console.error(err);
-      licenses = [];
-      showToast(err.message || 'فشل تحميل البيانات من الخادم.');
+      const created = await createLicense({
+        church_name: churchName,
+        user_name: userName,
+        notes: notes || undefined,
+        client_name: churchName
+      });
+      await queryClient.invalidateQueries({ queryKey: ['licenses'] });
+      showToast(`✨ تم توليد السيريال بنجاح لكنيسة "${churchName}" (المستخدم: ${userName})`);
     } finally {
-      isLoading = false;
+      isSubmitting = false;
     }
   }
 
-  async function handleCreate(clientName: string, notes: string) {
-    isSubmitting = true;
+  function handleExportSheet() {
     try {
-      const created = await createLicense({ client_name: clientName, notes: notes || undefined });
-      licenses = [created, ...licenses];
-      showToast(`تم توليد السيريال بنجاح: ${created.serial_key}`);
-    } finally {
-      isSubmitting = false;
+      exportLicensesToCsv(licenses);
+      showToast('📥 تم تصدير جدول التراخيص كملف Sheet (Excel / CSV) بنجاح!');
+    } catch (err: any) {
+      alert('خطأ أثناء التصدير: ' + err.message);
     }
   }
 
   async function handleResetHwid(id: string) {
     if (!confirm('هل أنت متأكد من فك ربط هذا الجهاز؟ سيمكن هذا العميل من استخدام السيريال على جهاز آخر.')) return;
     try {
-      const updated = await resetLicenseHwid(id);
-      licenses = licenses.map(l => l.id === id ? updated : l);
+      await resetLicenseHwid(id);
+      await queryClient.invalidateQueries({ queryKey: ['licenses'] });
       showToast('تم فك ربط الجهاز بنجاح!');
     } catch (err: any) {
       alert(err.message);
@@ -65,9 +93,9 @@
 
   async function handleToggleStatus(id: string, status: 'active' | 'revoked' | 'unactivated') {
     try {
-      const updated = await updateLicenseStatus(id, status);
-      licenses = licenses.map(l => l.id === id ? updated : l);
-      showToast(status === 'revoked' ? 'تم إلغاء الترخيص.' : 'تم تفعيل الترخيص.');
+      await updateLicenseStatus(id, status);
+      await queryClient.invalidateQueries({ queryKey: ['licenses'] });
+      showToast(status === 'revoked' ? 'تم إلغاء الترخيص.' : 'تم تفعيل الترخيص بنجاح.');
     } catch (err: any) {
       alert(err.message);
     }
@@ -77,22 +105,10 @@
     if (!confirm('هل أنت متأكد من حذف هذا الترخيص نهائياً من قاعدة البيانات؟')) return;
     try {
       await deleteLicense(id);
-      licenses = licenses.filter(l => l.id !== id);
-      showToast('تم حذف الترخيص بنجاح.');
+      await queryClient.invalidateQueries({ queryKey: ['licenses'] });
+      showToast('تم حذف الترخيص بنجاح من قاعدة البيانات.');
     } catch (err: any) {
       alert(err.message);
-    }
-  }
-
-  async function loadDataSilently() {
-    if (!isAuthenticated) return;
-    try {
-      const fresh = await getLicenses();
-      if (Array.isArray(fresh)) {
-        licenses = fresh;
-      }
-    } catch {
-      // Keep existing data quietly on background fetch failure
     }
   }
 
@@ -100,63 +116,58 @@
     const auth = localStorage.getItem('church_care_admin_auth');
     if (auth === 'authenticated_320702') {
       isAuthenticated = true;
-      loadData();
     } else {
       isAuthenticated = false;
-      isLoading = false;
     }
-
-    const interval = setInterval(() => {
-      if (isAuthenticated && !isSubmitting) {
-        loadDataSilently();
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
   });
 </script>
 
-<AdminPinModal
-  isOpen={!isAuthenticated}
-  onSuccess={() => {
-    isAuthenticated = true;
-    loadData();
-  }}
-/>
+<QueryClientProvider client={queryClient}>
+  <AdminPinModal
+    isOpen={!isAuthenticated}
+    onSuccess={() => {
+      isAuthenticated = true;
+      queryClient.invalidateQueries({ queryKey: ['licenses'] });
+    }}
+  />
 
-{#if isAuthenticated}
-  <main class="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8">
-    <div class="max-w-7xl mx-auto">
-      <Navbar
-        onOpenNewModal={() => isModalOpen = true}
-        onRefresh={loadData}
-        onLogout={handleLogout}
-        {isLoading}
-      />
+  {#if isAuthenticated}
+    <main class="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 selection:bg-indigo-500 selection:text-white">
+      <div class="max-w-7xl mx-auto">
+        <Navbar
+          onOpenNewModal={() => isModalOpen = true}
+          onExportSheet={handleExportSheet}
+          onRefresh={handleRefresh}
+          onLogout={handleLogout}
+          {isLoading}
+          totalCount={licenses.length}
+        />
 
-      <StatsCards {licenses} />
+        <StatsCards {licenses} />
 
-      <LicenseTable
-        {licenses}
-        onResetHwid={handleResetHwid}
-        onToggleStatus={handleToggleStatus}
-        onDelete={handleDelete}
-        {isLoading}
-      />
+        <LicenseTable
+          {licenses}
+          onResetHwid={handleResetHwid}
+          onToggleStatus={handleToggleStatus}
+          onDelete={handleDelete}
+          {isLoading}
+        />
 
-      <NewLicenseModal
-        isOpen={isModalOpen}
-        onClose={() => isModalOpen = false}
-        onSubmit={handleCreate}
-        {isSubmitting}
-      />
+        <NewLicenseModal
+          isOpen={isModalOpen}
+          onClose={() => isModalOpen = false}
+          onSubmit={handleCreate}
+          {isSubmitting}
+          churches={availableChurches}
+        />
 
-      {#if toastMsg}
-        <div class="fixed bottom-6 left-6 z-50 bg-indigo-600 text-white font-medium text-sm px-4 py-3 rounded-2xl shadow-2xl animate-in slide-in-from-bottom duration-200 border border-indigo-400/40">
-          {toastMsg}
-        </div>
-      {/if}
-    </div>
-  </main>
-{/if}
-
+        {#if toastMsg}
+          <div class="fixed bottom-6 left-6 z-50 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-medium text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-2xl animate-in slide-in-from-bottom duration-200 border border-indigo-400/40 flex items-center gap-2">
+            <span>🔔</span>
+            <span>{toastMsg}</span>
+          </div>
+        {/if}
+      </div>
+    </main>
+  {/if}
+</QueryClientProvider>

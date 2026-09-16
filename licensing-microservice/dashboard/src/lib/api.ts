@@ -11,20 +11,34 @@ export async function getLicenses(): Promise<License[]> {
     throw new Error('الخادم لم يرجع بيانات JSON صالحة (مسار /api/licenses لم يتم تفعيله كـ Serverless Function بعد).');
   }
   const list = await res.json();
-  if (!Array.isArray(list)) {
-    if (list && typeof list === 'object' && (list.message || list.error)) {
-      throw new Error(list.message || list.error);
-    }
-    return [];
+  if (list && Array.isArray(list.data)) {
+    return list.data;
   }
-  return list;
+  if (Array.isArray(list)) {
+    return list;
+  }
+  if (list && typeof list === 'object' && (list.message || list.error)) {
+    throw new Error(list.message || list.error);
+  }
+  return [];
 }
 
 export async function createLicense(payload: CreateLicensePayload): Promise<License> {
+  const churchName = (payload.church_name || payload.client_name || '').trim();
+  let notes = (payload.notes || '').trim();
+
+  if (payload.user_name && payload.user_name.trim()) {
+    const user = payload.user_name.trim();
+    notes = notes ? `${user} - ${notes}` : user;
+  }
+
   const res = await fetch('/api/licenses', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      client_name: churchName,
+      notes: notes || undefined
+    })
   });
 
   if (!res.ok) {
@@ -32,7 +46,13 @@ export async function createLicense(payload: CreateLicensePayload): Promise<Lice
     throw new Error(`فشل إنشاء الترخيص: ${text}`);
   }
 
-  const created: License = await res.json();
+  const created = await res.json();
+  if (created && created.data) {
+    return created.data;
+  }
+  if (Array.isArray(created)) {
+    return created[0];
+  }
   return created;
 }
 
@@ -47,7 +67,9 @@ export async function resetLicenseHwid(id: string): Promise<License> {
     throw new Error('فشل فك ربط الجهاز');
   }
 
-  const updated: License = await res.json();
+  const updated = await res.json();
+  if (updated && updated.data) return updated.data;
+  if (Array.isArray(updated)) return updated[0];
   return updated;
 }
 
@@ -62,7 +84,9 @@ export async function updateLicenseStatus(id: string, status: 'unactivated' | 'a
     throw new Error('فشل تعديل حالة الترخيص');
   }
 
-  const updated: License = await res.json();
+  const updated = await res.json();
+  if (updated && updated.data) return updated.data;
+  if (Array.isArray(updated)) return updated[0];
   return updated;
 }
 

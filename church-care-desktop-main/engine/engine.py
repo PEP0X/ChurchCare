@@ -986,33 +986,33 @@ class PDFCareReportEngine:
                 total_aid += float(val)
             except (ValueError, TypeError):
                 pass
-            draw_arabic_text(page, pymupdf.Point(270, y), str(val), fontsize=9)
-            draw_arabic_text(page, pymupdf.Point(150, y), item.get("purpose", ""), fontsize=9)
+            draw_arabic_text(page, pymupdf.Point(270, y), str(val), fontsize=11, fontname="IBMPlexBold")
+            draw_arabic_text(page, pymupdf.Point(150, y), item.get("purpose", ""), fontsize=10)
 
         # Total Church Aid
-        draw_arabic_text(page, pymupdf.Point(270, 312), f"{total_aid:.0f} ج.م", fontsize=9, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(270, 312), f"{total_aid:.0f} ج.م", fontsize=11.5, fontname="IBMPlexBold")
 
         # Income vs Expense Matrix
         inc = p4.get("income", {})
         exp = p4.get("expenses", {})
 
         # Income column (Right side)
-        draw_arabic_text(page, pymupdf.Point(340, 595), str(inc.get("church_aid", total_aid)), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(340, 622), str(inc.get("medical_aid", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(340, 644), str(inc.get("study_aid", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(340, 666), str(inc.get("base_salary", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(340, 691), str(inc.get("side_project", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(340, 715), str(inc.get("relatives_aid", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(340, 742), str(inc.get("total_income", "")), fontsize=9, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(340, 595), str(inc.get("church_aid", total_aid)), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(340, 622), str(inc.get("medical_aid", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(340, 644), str(inc.get("study_aid", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(340, 666), str(inc.get("base_salary", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(340, 691), str(inc.get("side_project", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(340, 715), str(inc.get("relatives_aid", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(340, 742), str(inc.get("total_income", "")), fontsize=11.5, fontname="IBMPlexBold")
 
         # Expense column (Left side)
-        draw_arabic_text(page, pymupdf.Point(150, 595), str(exp.get("living_basics", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(150, 622), str(exp.get("utilities", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(150, 644), str(exp.get("phone", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(150, 666), str(exp.get("rent", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(150, 691), str(exp.get("medical", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(150, 715), str(exp.get("education", "")), fontsize=9)
-        draw_arabic_text(page, pymupdf.Point(150, 742), str(exp.get("total_expenses", "")), fontsize=9, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(150, 595), str(exp.get("living_basics", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(150, 622), str(exp.get("utilities", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(150, 644), str(exp.get("phone", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(150, 666), str(exp.get("rent", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(150, 691), str(exp.get("medical", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(150, 715), str(exp.get("education", "")), fontsize=11, fontname="IBMPlexBold")
+        draw_arabic_text(page, pymupdf.Point(150, 742), str(exp.get("total_expenses", "")), fontsize=11.5, fontname="IBMPlexBold")
 
     # -------------------------------------------------------------------------
     # PAGE 5: Committee Decisions & Signatures

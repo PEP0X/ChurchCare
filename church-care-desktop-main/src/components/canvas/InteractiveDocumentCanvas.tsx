@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { CaseStudyData, ExtraPage } from '../../types/schema';
+import { CaseStudyData } from '../../types/schema';
 import { parseEgyptianNationalId } from '../../hooks/useNationalId';
 import { DocumentLayout, FieldConfig } from '../../types/layout';
 import { DEFAULT_DOCUMENT_LAYOUT } from '../../config/defaultDocumentLayout';
@@ -9,12 +9,9 @@ import {
   Upload,
   Edit3,
   Trash2,
-  CheckCircle2,
-  AlertCircle,
   CreditCard,
   FileSpreadsheet,
-  CopyPlus,
-  FileText
+  CopyPlus
 } from 'lucide-react';
 
 interface InteractiveDocumentCanvasProps {
@@ -28,6 +25,7 @@ interface InteractiveDocumentCanvasProps {
   scale: number;
   layout?: DocumentLayout;
   highlightedFieldId?: string | null;
+  lockedChurchName?: string | null;
 }
 
 const BINDING_ALIASES: Record<string, string[]> = {
@@ -334,7 +332,17 @@ const AutoFitTextInput: React.FC<{
   // Calculate ideal font size directly and deterministically
   const appliedFontSize = React.useMemo(() => {
     if (typeof fontSizePreference === 'number' && fontSizePreference > 0) {
-      return fontSizePreference;
+      // Ensure the preferred font size fits the container box width without horizontal overflow
+      const maxHoriz = calculatePixelPerfectFontSize(
+        value,
+        boxWidthPx,
+        boxHeightPx,
+        isBold,
+        isMono,
+        10.0,
+        fontSizePreference
+      );
+      return Math.min(fontSizePreference, maxHoriz);
     }
     return calculatePixelPerfectFontSize(
       value,
@@ -457,7 +465,8 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
   onDeletePage,
   scale,
   layout = DEFAULT_DOCUMENT_LAYOUT,
-  highlightedFieldId = null
+  highlightedFieldId = null,
+  lockedChurchName = null
 }) => {
   const getPageImage = (p: number) => getTemplatePageImage(p);
 
@@ -476,6 +485,10 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
   }, [highlightedFieldId, page]);
 
   const handleFieldChange = (binding: string, val: any) => {
+    // If church name is locked, prevent modifying page1.church_name
+    if (lockedChurchName && (binding === 'page1.church_name' || binding === 'Page1.churchName')) {
+      return;
+    }
     let updated = setValueByPath(data, binding, val);
     if (binding.startsWith('page4') && updated.page4) {
       updated = {
@@ -1164,11 +1177,46 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
           // 4. DROPDOWN / SELECT (With Proportional Smart Sizing)
           // -------------------------------------------------------------------
           if (field.type === 'select') {
+            const isChurchField = field.binding === 'page1.church_name' || field.id === 'p1_select_1865';
+            const isLockedChurch = isChurchField && Boolean(lockedChurchName);
+
+            const selectBoxHeightPx = (rect.height / 100) * 1160;
+            const selectFontSize = Math.max(10, Math.min(14, Math.round((selectBoxHeightPx - 3.5) / 1.55 * 10) / 10));
+
+            // If this is the church field and it is locked to a licensed church name:
+            if (isLockedChurch && lockedChurchName) {
+              return (
+                <div
+                  key={field.id}
+                  id={`field-container-${field.id}`}
+                  className={`absolute z-10 ${
+                    isHighlighted ? 'animate-field-shake animate-field-error-glow ring-4 ring-rose-500 rounded' : ''
+                  }`}
+                  style={{
+                    left: `${rect.left}%`,
+                    top: `${rect.top}%`,
+                    width: `${rect.width}%`,
+                    height: `${rect.height}%`
+                  }}
+                >
+                  <div
+                    id={`field-input-${field.id}`}
+                    title={`اسم الكنيسة معتمد بناءً على ترخيص البرنامج: ${lockedChurchName}`}
+                    className="w-full h-full bg-white/95 text-slate-950 font-bold px-2 py-0 rounded border border-amber-500/50 shadow-xs flex items-center select-none transition-all"
+                    style={{
+                      fontSize: `${selectFontSize}px`,
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <span className="truncate">{lockedChurchName}</span>
+                  </div>
+                </div>
+              );
+            }
+
             const rawOptions = field.options && field.options.length > 0 ? field.options : ['نعم', 'لا'];
             // Deduplicate options while preserving exact order
             const options = Array.from(new Set(rawOptions));
-            const selectBoxHeightPx = (rect.height / 100) * 1160;
-            const selectFontSize = Math.max(10, Math.min(14, Math.round((selectBoxHeightPx - 3.5) / 1.55 * 10) / 10));
 
             // Determine if a separate empty/placeholder option is needed:
             // 1. If options already contains 'بلا', do NOT prepend a placeholder option.
@@ -1216,12 +1264,27 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
           // -------------------------------------------------------------------
           const isNationalId =
             field.binding.includes('national_id') || field.binding.includes('nid');
-          const isPage4Total =
+          const isPage4IncomeTotal =
+            field.binding === 'page4.income.total_income' || field.id === 'p4_inc_total';
+          const isPage4ExpenseTotal =
+            field.binding === 'page4.expenses.total_expenses' || field.id === 'p4_exp_total';
+          const isPage4AidTotal =
             field.binding === 'page4.total_church_aid' ||
             field.binding === 'page4.church_aid.Total' ||
             field.binding === 'page4.church_aid_total' ||
-            field.binding === 'page4.income.total_income' ||
-            field.binding === 'page4.expenses.total_expenses';
+            field.id === 'p4_church_aid_total';
+          const isPage4Total = isPage4IncomeTotal || isPage4ExpenseTotal || isPage4AidTotal;
+
+          const isPage4TableNumber =
+            field.page === 4 &&
+            (field.binding.startsWith('page4.income.') ||
+             field.binding.startsWith('page4.expenses.') ||
+             field.binding.startsWith('page4.church_aid[') ||
+             field.id.startsWith('p4_inc_') ||
+             field.id.startsWith('p4_exp_') ||
+             field.id.startsWith('p4_aid_') ||
+             field.id.startsWith('number_') ||
+             field.id.startsWith('p4_number_'));
 
           const rawStr = String(val || '');
           const hasVal = rawStr.trim().length > 0;
@@ -1236,8 +1299,14 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             } else {
               borderStyles = 'border-2 border-rose-500 bg-rose-50/35 ring-2 ring-rose-500/30 text-rose-950 font-bold shadow-sm';
             }
-          } else if (isPage4Total) {
-            borderStyles = 'border-2 border-amber-500/60 bg-amber-500/10 text-amber-950 font-bold shadow-sm cursor-default';
+          } else if (isPage4IncomeTotal) {
+            borderStyles = 'border-2 border-amber-500 bg-amber-50/95 text-emerald-700 font-bold shadow-sm cursor-default';
+          } else if (isPage4ExpenseTotal) {
+            borderStyles = 'border-2 border-amber-500 bg-amber-50/95 text-rose-700 font-bold shadow-sm cursor-default';
+          } else if (isPage4AidTotal) {
+            borderStyles = 'border-2 border-amber-500 bg-amber-50/95 text-slate-900 font-bold shadow-sm cursor-default';
+          } else if (isPage4TableNumber) {
+            borderStyles = 'border border-slate-300/90 bg-white/95 hover:bg-white focus:bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-950 font-bold shadow-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
           }
 
           const highlightStyles = isHighlighted
@@ -1275,14 +1344,14 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                 onChange={(newVal) => handleFieldChange(field.binding, newVal)}
                 boxWidthPct={rect.width}
                 boxHeightPct={rect.height}
-                isBold={Boolean(style.isBold || isPage4Total)}
-                isMono={Boolean(style.isMono || isNationalId || isPage4Total)}
+                isBold={Boolean(style.isBold || isPage4Total || isPage4TableNumber)}
+                isMono={Boolean(style.isMono || isNationalId || isPage4Total || isPage4TableNumber)}
                 fontSizePreference={style.fontSize}
                 className={`w-full h-full rounded text-slate-950 font-medium px-1 py-0 focus:outline-none transition-all box-border flex items-center leading-normal overflow-hidden ${borderStyles} ${
-                  style.isMono || isNationalId || isPage4Total ? 'font-mono' : ''
-                } ${style.isBold || isPage4Total ? 'font-bold' : ''}`}
+                  style.isMono || isNationalId || isPage4Total || isPage4TableNumber ? 'font-mono' : ''
+                } ${style.isBold || isPage4Total || isPage4TableNumber ? 'font-bold' : ''}`}
                 style={{
-                  textAlign: style.textAlign || (isNationalId || isPage4Total ? 'center' : 'right'),
+                  textAlign: style.textAlign || (isNationalId || isPage4Total || isPage4TableNumber ? 'center' : 'right'),
                   color: style.textColor || undefined,
                   boxSizing: 'border-box',
                   lineHeight: 'normal'
