@@ -91,7 +91,7 @@ export const Page6Form: React.FC<Page6FormProps> = ({ data, onChange }) => {
           </div>
           <input
             type="text"
-            placeholder={linkedHeadName || "مينا حنا الله جرجس"}
+            placeholder={linkedHeadName || "اسم رب الأسرة (يُجلب تلقائياً من الزوج/الزوجة)"}
             value={p6.family_head}
             onChange={(e) => updateHeader("family_head", e.target.value)}
             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white mt-1"

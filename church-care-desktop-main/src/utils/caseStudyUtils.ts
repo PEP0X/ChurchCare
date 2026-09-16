@@ -43,9 +43,12 @@ export function getHeadOfHouseholdSource(
  * e.g. "دراسة حالة #784/2026 - مينا حنا الله جرجس"
  */
 export function getCaseStudyDisplayName(data?: Partial<CaseStudyData> | null): string {
-  const studyId = data?.page1?.church_study_id?.trim() || "784/2026";
+  const studyId = data?.page1?.church_study_id?.trim();
   const headName = getHeadOfHouseholdName(data);
-  return headName ? `دراسة حالة #${studyId} - ${headName}` : `دراسة حالة #${studyId}`;
+  if (studyId && headName) return `دراسة حالة #${studyId} - ${headName}`;
+  if (studyId) return `دراسة حالة #${studyId}`;
+  if (headName) return `دراسة حالة - ${headName}`;
+  return "دراسة حالة جديدة";
 }
 
 /**
@@ -56,12 +59,12 @@ export function getCaseStudyFileName(
   data: Partial<CaseStudyData> | null | undefined,
   ext: "pdf" | "care" | "json" = "pdf"
 ): string {
-  const rawStudyId = data?.page1?.church_study_id?.trim() || "784-2026";
-  const cleanStudyId = rawStudyId.replace(/[\/\\:*?"<>|]/g, "_");
-
-  const headName = getHeadOfHouseholdName(data) || "حالة";
-  const cleanHeadName = headName.replace(/[\/\\:*?"<>|]/g, "_");
+  const rawStudyId = data?.page1?.church_study_id?.trim();
+  const headName = getHeadOfHouseholdName(data);
+  const cleanStudyId = rawStudyId ? rawStudyId.replace(/[\/\\:*?"<>|]/g, "_") : "";
+  const cleanHeadName = headName ? headName.replace(/[\/\\:*?"<>|]/g, "_") : "";
 
   const prefix = ext === "pdf" ? "بحث_أخوة_الرب" : "بحث_اخوة_الرب";
-  return `${prefix}_${cleanStudyId}_${cleanHeadName}.${ext}`;
+  const parts = [prefix, cleanStudyId, cleanHeadName].filter(Boolean);
+  return `${parts.join("_")}.${ext}`;
 }

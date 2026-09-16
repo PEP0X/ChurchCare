@@ -107,12 +107,12 @@ export const Page2Form: React.FC<Page2FormProps> = ({ data, onChange }) => {
             <label className="text-xs text-slate-300 font-medium flex items-center justify-between">
               <span>الاسم رباعي:</span>
               <span className="text-[10px] text-sky-400 font-medium">
-                يرتبط كرَب للأسرة برقم البحث (#{data.page1.church_study_id || "784/2026"})
+                يرتبط كرَب للأسرة برقم البحث {data.page1.church_study_id ? `(#${data.page1.church_study_id})` : ""}
               </span>
             </label>
             <input
               type="text"
-              placeholder="مثال: مينا حنا الله جرجس"
+              placeholder="مثال: الاسم رباعي كما بالبطاقة"
               value={p2.husband.name}
               onChange={(e) => updateHusband("name", e.target.value)}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-amber-500 mt-1"

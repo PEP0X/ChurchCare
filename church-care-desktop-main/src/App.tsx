@@ -11,7 +11,7 @@ import { AboutModal } from "./components/AboutModal";
 import { useSidecar } from "./hooks/useSidecar";
 import { parseEgyptianNationalId } from "./hooks/useNationalId";
 import { recalculatePage4Totals } from "./utils/page4Calculations";
-import { saveSessionToIndexedDB, loadSessionFromIndexedDB } from "./utils/sessionStorage";
+import { saveSessionToIndexedDB, loadSessionFromIndexedDB, clearSessionFromIndexedDB } from "./utils/sessionStorage";
 import {
   FileDown,
   ChevronRight,
@@ -276,143 +276,81 @@ const INITIAL_EMPTY_STATE: CaseStudyData = {
   }
 };
 
-const SAMPLE_STATE: CaseStudyData = {
-  husband_id_image: undefined,
-  husband_id_back_image: undefined,
-  wife_id_image: undefined,
-  wife_id_back_image: undefined,
-  page1: {
-    study_date: "2026/09/04",
-    church_study_id: "784/2026",
-    church_name: "كنيسة الشهيد العظيم أبي سيفين والقديسة دميانة - القلج",
-    day: "04",
-    month: "09",
-    year: "2026",
-    area: "القلج - الخانكة",
-    responsible_priest: "القمص بيشوي حليم",
-    cathedral_care_id: "CAT-9042",
-    church_membership_id: "MEM-1104"
-  },
-  page2: {
-    husband: {
-      name: "مينا حنا الله جرجس",
-      nickname: "أبو كيرلس",
-      national_id: "28504121470997",
-      job: "عامل باليومية",
-      salary: "3500 ج.م",
-      phone: "01223456789",
-      confession_father: "أبونا أنطونيوس",
-      insurance_no: "9812450"
-    },
-    wife: {
-      name: "مريم فهيم زكي عبد المسيح",
-      nickname: "أم كيرلس",
-      national_id: "29011041438585",
-      job: "ربة منزل",
-      salary: "0",
-      phone: "01098765432",
-      confession_father: "أبونا يوحنا",
-      insurance_no: "غير مؤمن عليها"
-    },
-    address: {
-      street: "شارع النور متفرع من الكنيسة",
-      building_no: "12",
-      governorate: "القليوبية",
-      area: "القلج",
-      landmark: "خلف مدرسة الأورمان",
-      housing_type: "إيجار قديم (150 ج.م)",
-      children_phones: "01234567890",
-      notes: "المنزل يحتاج ترميم سقف وحمام"
-    },
-    gov_programs: {
-      has_ration_card: "نعم",
-      ration_members_count: "4",
-      program_1: "معاش تكافل وكرامة",
-      program_2: "خدمات متكاملة"
-    }
-  },
-  page3: {
-    family_members: [
-      {
-        id: "1",
-        name: "كيرلس مينا حنا الله",
-        national_id: "31005121480859",
-        social_status: "أعزب",
-        education_job: "الصف الأول الثانوي",
-        income: "0",
-        confession_father: "أبونا بيشوي"
-      },
-      {
-        id: "2",
-        name: "مارينا مينا حنا الله",
-        national_id: "31408191459081",
-        social_status: "عزباء",
-        education_job: "الصف الثالث الإعدادي",
-        income: "0",
-        confession_father: "أبونا بيشوي"
-      }
-    ],
-    other_persons: [],
-    housing_description: "شقة غرفتين وصالة وحمام ومطبخ، غسالة عادية، ثلاجة 10 قدم، بوتاجاز 4 شعلة.",
-    medical_conditions: {
-      diseases: "الزوج يعاني من انزلاق غضروفي قطني مزمن",
-      mental_addiction: "لا يوجد",
-      disability: "لا يوجد",
-      abandoned_parent: "لا يوجد",
-      other_circumstances: "الابن يحتاج نظارة طبية ومتابعة رمد"
-    }
-  },
-  page4: {
-    church_aid: [
-      { id: "1", church_name: "كنيسة الشهيد أبي سيفين بالقلج", value: 1500, purpose: "مساعدة شهرية إعاشة" },
-      { id: "2", church_name: "مطرانية شبرا الخيمة", value: 500, purpose: "مساعدة علاجية" }
-    ],
-    income: {
-      church_aid: "2000",
-      medical_aid: "500",
-      study_aid: "400",
-      base_salary: "3500",
-      side_project: "0",
-      relatives_aid: "300",
-      total_income: "6700 ج.م"
-    },
-    expenses: {
-      living_basics: "4000",
-      utilities: "650",
-      phone: "200",
-      rent: "350",
-      medical: "800",
-      education: "900",
-      total_expenses: "6900 ج.م"
-    }
-  },
-  page5: {
-    duration: "سنة كاملة تجدد في أول سبتمبر 2027",
-    entry_reason: "ضعف دخل الزوج بسبب العجز الصحي ووجود طالبين في مراحل الشهادات",
-    approved_amount: "2000",
-    notes: "صرف روشتة علاجية شهرية ومتابعة البحث سنوياً",
-    committee_members: ["د. سامح منير", "أ. ميخائيل وديع", "م. رامي فايز"]
-  },
-  page6: {
-    family_head: "مينا حنا الله جرجس",
-    church_records_id: "784/2026",
-    cathedral_care_id: "CAT-9042",
-    church_membership_id: "MEM-1104",
-    from_date: "2026/09/01",
-    to_date: "2027/08/31",
-    aid_ledger: [
-      {
-        id: "1",
-        aid_type: "مساعدة شهرية سبتمبر",
-        amount: "2000 ج.م",
-        entity: "خزينة الكنيسة",
-        date: "2026/09/05",
-        recipient_signature: "مينا حنا الله"
-      }
-    ],
-    signatures: ["أمين الخدمة", "أمين الصندوق", "كاهن الرعاية"]
+/**
+ * Detects legacy mock test data (e.g. from development sample state)
+ * so that the user's workspace starts 100% clean and pristine.
+ */
+export function isMockTestData(raw: any): boolean {
+  if (!raw || typeof raw !== "object") return false;
+  const p1 = raw.page1 || raw.Page1 || {};
+  const p2 = raw.page2 || raw.Page2 || {};
+  const husband = p2.husband || {};
+  const wife = p2.wife || {};
+
+  if (husband.name === "مينا حنا الله جرجس") return true;
+  if (husband.national_id === "28504121470997") return true;
+  if (wife.name === "مريم فهيم زكي عبد المسيح") return true;
+  if (
+    p1.church_study_id === "784/2026" &&
+    (p1.cathedral_care_id === "CAT-9042" || p1.responsible_priest === "القمص بيشوي حليم")
+  ) {
+    return true;
   }
-};
+  return false;
+}
+
+/**
+ * Returns a pristine, clean initial state with no dummy/mock data.
+ * Prefills today's date and the church name if locked by hardware license.
+ */
+export function getCleanInitialState(lockedChurch?: string | null): CaseStudyData {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear());
+  const formattedDate = `${year}/${month}/${day}`;
+
+  return {
+    ...INITIAL_EMPTY_STATE,
+    page1: {
+      ...INITIAL_EMPTY_STATE.page1,
+      study_date: formattedDate,
+      day,
+      month,
+      year,
+      church_name: lockedChurch || ""
+    },
+    page2: {
+      ...INITIAL_EMPTY_STATE.page2,
+      husband: { ...INITIAL_EMPTY_STATE.page2.husband },
+      wife: { ...INITIAL_EMPTY_STATE.page2.wife },
+      address: { ...INITIAL_EMPTY_STATE.page2.address },
+      gov_programs: { ...INITIAL_EMPTY_STATE.page2.gov_programs }
+    },
+    page3: {
+      ...INITIAL_EMPTY_STATE.page3,
+      family_members: [],
+      other_persons: [],
+      medical_conditions: { ...INITIAL_EMPTY_STATE.page3.medical_conditions }
+    },
+    page4: {
+      ...INITIAL_EMPTY_STATE.page4,
+      church_aid: [],
+      income: { ...INITIAL_EMPTY_STATE.page4.income },
+      expenses: { ...INITIAL_EMPTY_STATE.page4.expenses }
+    },
+    page5: {
+      ...INITIAL_EMPTY_STATE.page5,
+      committee_members: ["", "", ""]
+    },
+    page6: {
+      ...INITIAL_EMPTY_STATE.page6,
+      aid_ledger: [],
+      signatures: ["", "", ""]
+    },
+    extra_pages: []
+  };
+}
 
 /**
  * Deeply validates, normalizes, and merges incoming JSON data with INITIAL_EMPTY_STATE
@@ -791,21 +729,23 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Load saved active case from localStorage or fallback to SAMPLE_STATE
+  // Load saved active case from localStorage or start clean with getCleanInitialState()
   const [data, setData] = useState<CaseStudyData>(() => {
     try {
       const saved = localStorage.getItem("church_care_active_case_data");
       if (saved) {
         const parsed = JSON.parse(saved);
+        if (isMockTestData(parsed)) {
+          console.info("Purging legacy sample/mock test data from localStorage");
+          localStorage.removeItem("church_care_active_case_data");
+          return getCleanInitialState();
+        }
         return sanitizeAndMergeCaseData(parsed);
       }
     } catch (e) {
       console.error("Failed to load saved case data from localStorage:", e);
     }
-    return {
-      ...SAMPLE_STATE,
-      page4: recalculatePage4Totals(SAMPLE_STATE.page4)
-    };
+    return getCleanInitialState();
   });
 
   // Keep church_name strictly synchronized to licensed church if license starts with "كنيسة"
@@ -832,7 +772,7 @@ export const App: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [ribbonCollapsed, setRibbonCollapsed] = useState<boolean>(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
-  const [saveStatus, setSaveStatus] = useState<string>("تم الحفظ محلياً");
+  const [saveStatus, setSaveStatus] = useState<string>("تم الحفظ تلقائياً");
   const [toolsMenuOpen, setToolsMenuOpen] = useState<boolean>(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
   const [pagesMenuOpen, setPagesMenuOpen] = useState<boolean>(false);
@@ -860,17 +800,97 @@ export const App: React.FC = () => {
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Active File Path Tracking for Instant Ctrl+S Saving
+  // Active File Path Tracking for Instant Saving
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
+
+  // References for reliable continuous AutoSaving and flush-on-close
+  const dataRef = useRef<CaseStudyData>(data);
+  const currentFilePathRef = useRef<string | null>(currentFilePath);
+  const isInitialMount = useRef<boolean>(true);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
+
+  useEffect(() => {
+    currentFilePathRef.current = currentFilePath;
+  }, [currentFilePath]);
 
   // Restore active case session with high-resolution images from IndexedDB on startup
   useEffect(() => {
-    loadSessionFromIndexedDB().then((saved) => {
-      if (saved) {
-        const sanitized = sanitizeAndMergeCaseData(saved);
-        setData(sanitized);
+    loadSessionFromIndexedDB()
+      .then((saved) => {
+        if (saved) {
+          if (isMockTestData(saved)) {
+            console.info("Purging legacy sample/mock test data from IndexedDB session");
+            clearSessionFromIndexedDB().catch((err) => console.warn("Clear error:", err));
+            return;
+          }
+          const sanitized = sanitizeAndMergeCaseData(saved);
+          setData(sanitized);
+        }
+      })
+      .catch((e) => console.warn("Failed to load IndexedDB session:", e));
+  }, []);
+
+  // 🔄 Continuous AutoSave Effect: debounced (600ms) syncs changes to IndexedDB & localStorage
+  // Protects user work in case of sudden unexpected app exit or crash ("في حالة البرنامج قفل مره واحدة")
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Never auto-save mock test data
+    if (isMockTestData(data)) {
+      return;
+    }
+
+    setSaveStatus("جارٍ الحفظ التلقائي...");
+
+    const timer = setTimeout(async () => {
+      try {
+        safeSaveToLocalStorage(data);
+
+        // If an active file is open on disk, auto-save changes into it directly
+        const isTauri =
+          typeof window !== "undefined" &&
+          ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
+
+        if (isTauri && currentFilePathRef.current) {
+          try {
+            const { invoke } = await import("@tauri-apps/api/core");
+            const jsonStr = JSON.stringify(data, null, 2);
+            await invoke("save_text_file", { path: currentFilePathRef.current, content: jsonStr });
+          } catch (fileErr) {
+            console.warn("Auto-save to disk file warning:", fileErr);
+          }
+        }
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+        setSaveStatus(`تم الحفظ تلقائياً (${timeStr})`);
+        setHasUnsavedChanges(false);
+      } catch (err) {
+        console.error("AutoSave error:", err);
+        setSaveStatus("تعذر الحفظ التلقائي");
       }
-    }).catch((e) => console.warn("Failed to load IndexedDB session:", e));
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [data]);
+
+  // 🛡️ Emergency flush on window / app unload or unexpected closure
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const currentData = dataRef.current;
+      if (currentData && !isMockTestData(currentData)) {
+        safeSaveToLocalStorage(currentData);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
   // Unified Cropper Modal State (Supports all cards & certificates dynamically)
@@ -1664,7 +1684,7 @@ export const App: React.FC = () => {
           </span>
           <span className="text-slate-600">•</span>
           <span className="text-slate-300 text-[11px] font-mono font-bold whitespace-nowrap">
-            دراسة حالة #{data.page1.church_study_id || "784/2026"}
+            {data.page1.church_study_id ? `دراسة حالة #${data.page1.church_study_id}` : "دراسة حالة جديدة"}
           </span>
           <span className="text-slate-600">•</span>
           <span className="text-amber-300 text-[11px] font-bold truncate max-w-[220px] flex items-center gap-1">
@@ -1804,19 +1824,16 @@ export const App: React.FC = () => {
                 {/* Reset / New Form Button */}
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     if (window.confirm("هل أنت متأكد من رغبتك في تفريغ كافة الحقول والبدء باستمارة جديدة؟\n(يُفضل حفظ نسخة من الملف الحالي أولاً إذا كنت ترغب بالاحتفاظ ببياناته)")) {
-                      const newEmpty = {
-                        ...INITIAL_EMPTY_STATE,
-                        page1: {
-                          ...INITIAL_EMPTY_STATE.page1,
-                          church_name: (isChurchLocked && lockedChurchName) ? lockedChurchName : INITIAL_EMPTY_STATE.page1.church_name
-                        }
-                      };
+                      const newEmpty = getCleanInitialState(isChurchLocked && lockedChurchName ? lockedChurchName : null);
                       setData(newEmpty);
+                      setCurrentFilePath(null);
                       safeSaveToLocalStorage(newEmpty);
+                      await clearSessionFromIndexedDB().catch((err) => console.warn("Clear session error:", err));
                       setHasUnsavedChanges(false);
-                      showToast("تم تفريغ كافة الحقول والبدء باستمارة جديدة بنجاح", "info");
+                      setSaveStatus("استمارة جديدة فارغة");
+                      showToast("تم تفريغ كافة الحقول والبدء باستمارة جديدة نظيفة بنجاح", "info");
                     }
                   }}
                   className="flex flex-col items-center justify-center px-2.5 py-1 rounded-xl bg-slate-950/70 hover:bg-rose-950/30 text-slate-400 hover:text-rose-300 border border-slate-800 cursor-pointer transition-colors h-[48px]"
@@ -2176,7 +2193,10 @@ export const App: React.FC = () => {
           <span className="hidden sm:inline text-slate-400">طباعة رسمية 300 DPI</span>
 
           <div className="h-3.5 w-px bg-slate-800 hidden md:block" />
-          <span className="hidden md:inline text-slate-400 font-mono text-[10px]">{saveStatus}</span>
+          <div className="hidden md:flex items-center gap-1.5 text-slate-300 font-mono text-[10px] bg-slate-950/60 px-2 py-0.5 rounded border border-slate-800" title="مزامنة الحفظ التلقائي الفوري المستمر">
+            <span className={`w-2 h-2 rounded-full transition-colors ${hasUnsavedChanges ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+            <span>{saveStatus}</span>
+          </div>
         </div>
 
         {/* Center: Page Stepper Buttons with Home Shortcut */}

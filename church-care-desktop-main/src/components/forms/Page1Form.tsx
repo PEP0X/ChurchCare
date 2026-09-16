@@ -206,9 +206,11 @@ export const Page1Form: React.FC<Page1FormProps> = ({
             <span className={headName ? "font-bold text-amber-200 truncate" : "text-slate-500 text-xs italic"}>
               {headName || "سيتم الربط باسم الزوج تلقائياً (أو الزوجة إن لم يوجد)"}
             </span>
-            <span className="text-[10px] text-slate-400 font-mono shrink-0 mr-2">
-              #{data.page1.church_study_id || "784/2026"}
-            </span>
+            {data.page1.church_study_id && (
+              <span className="text-[10px] text-slate-400 font-mono shrink-0 mr-2">
+                #{data.page1.church_study_id}
+              </span>
+            )}
           </div>
         </div>
 

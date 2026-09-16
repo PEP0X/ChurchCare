@@ -77,3 +77,28 @@ export async function loadSessionFromIndexedDB(): Promise<any | null> {
     }
   });
 }
+
+export async function clearSessionFromIndexedDB(): Promise<void> {
+  if (typeof window === "undefined" || !window.indexedDB) return;
+
+  return new Promise((resolve) => {
+    try {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onsuccess = (e: any) => {
+        const db = e.target.result;
+        try {
+          const tx = db.transaction(STORE_NAME, "readwrite");
+          const store = tx.objectStore(STORE_NAME);
+          store.delete(KEY);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        } catch {
+          resolve();
+        }
+      };
+      request.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}

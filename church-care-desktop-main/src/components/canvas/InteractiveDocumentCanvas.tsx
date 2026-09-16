@@ -779,8 +779,8 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
 
             <div className="flex items-center gap-3">
               <div className="text-left text-xs text-slate-500 font-mono">
-                <div>رقم البحث: <strong className="text-slate-800">#{data.page1?.church_study_id || '784/2026'}</strong></div>
-                <div>رب الأسرة: <strong className="text-slate-800">{getHeadOfHouseholdName(data) || 'مينا حنا الله جرجس'}</strong></div>
+                <div>رقم البحث: <strong className="text-slate-800">{data.page1?.church_study_id ? `#${data.page1.church_study_id}` : '—'}</strong></div>
+                <div>رب الأسرة: <strong className="text-slate-800">{getHeadOfHouseholdName(data) || '—'}</strong></div>
               </div>
               {onDeletePage && (
                 <button
@@ -909,8 +909,8 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
 
             <div className="flex items-center gap-3">
               <div className="text-left text-xs text-slate-500 font-mono">
-                <div>رقم البحث: <strong className="text-slate-800">#{data.page1?.church_study_id || '784/2026'}</strong></div>
-                <div>رب الأسرة: <strong className="text-slate-800">{getHeadOfHouseholdName(data) || 'مينا حنا الله جرجس'}</strong></div>
+                <div>رقم البحث: <strong className="text-slate-800">{data.page1?.church_study_id ? `#${data.page1.church_study_id}` : '—'}</strong></div>
+                <div>رب الأسرة: <strong className="text-slate-800">{getHeadOfHouseholdName(data) || '—'}</strong></div>
               </div>
               {onDeletePage && (
                 <button
