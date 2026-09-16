@@ -60,12 +60,12 @@ import { getHeadOfHouseholdName, getCaseStudyFileName, getCaseStudyDisplayName }
 const BINDING_ALIASES: Record<string, string[]> = {
   "page6.head_name": ["page6.family_head", "page2.husband.name", "page2.wife.name"],
   "page6.family_head": ["page6.head_name", "page2.husband.name", "page2.wife.name"],
-  "page6.church_id": ["page6.church_records_id"],
-  "page6.church_records_id": ["page6.church_id"],
-  "page6.care_id": ["page6.cathedral_care_id"],
-  "page6.cathedral_care_id": ["page6.care_id"],
-  "page6.member_id": ["page6.church_membership_id"],
-  "page6.church_membership_id": ["page6.member_id"],
+  "page6.church_id": ["page6.church_records_id", "page1.church_study_id"],
+  "page6.church_records_id": ["page6.church_id", "page1.church_study_id"],
+  "page6.care_id": ["page6.cathedral_care_id", "page1.cathedral_care_id"],
+  "page6.cathedral_care_id": ["page6.care_id", "page1.cathedral_care_id"],
+  "page6.member_id": ["page6.church_membership_id", "page1.church_membership_id"],
+  "page6.church_membership_id": ["page6.member_id", "page1.church_membership_id"],
   "page5.other_notes": ["page5.notes"],
   "page5.notes": ["page5.other_notes"],
   "page4.total_church_aid": ["page4.church_aid.Total", "page4.church_aid_total"],
@@ -513,9 +513,9 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   const rawSigs = Array.isArray(rawP6.signatures) ? rawP6.signatures : [];
   const page6: CaseStudyData["page6"] = {
     family_head: String(rawP6.family_head || rawP6.head_name || rawHusband.name || rawWife.name || ""),
-    church_records_id: String(rawP6.church_records_id || rawP6.church_id || ""),
-    cathedral_care_id: String(rawP6.cathedral_care_id || rawP6.care_id || rawP1.cathedral_care_id || ""),
-    church_membership_id: String(rawP6.church_membership_id || rawP6.member_id || rawP1.church_membership_id || ""),
+    church_records_id: String(rawP6.church_records_id || rawP6.church_id || rawP1.church_study_id || rawP1.churchStudyId || ""),
+    cathedral_care_id: String(rawP6.cathedral_care_id || rawP6.care_id || rawP1.cathedral_care_id || rawP1.cathedralCareId || ""),
+    church_membership_id: String(rawP6.church_membership_id || rawP6.member_id || rawP1.church_membership_id || rawP1.churchMembershipId || ""),
     from_date: String(rawP6.from_date || ""),
     to_date: String(rawP6.to_date || ""),
     aid_ledger: Array.isArray(rawP6.aid_ledger)
@@ -962,6 +962,46 @@ export const App: React.FC = () => {
       if (updated.page4) {
         next.page4 = recalculatePage4Totals(next.page4);
       }
+
+      // Automatically mirror/propagate Page 1 IDs into Page 6 (سجل الصرف) and duplicate ledgers
+      if (updated.page1) {
+        const p1 = next.page1;
+        next.page6 = {
+          ...next.page6,
+          church_records_id: p1.church_study_id || next.page6?.church_records_id || "",
+          cathedral_care_id: p1.cathedral_care_id || next.page6?.cathedral_care_id || "",
+          church_membership_id: p1.church_membership_id || next.page6?.church_membership_id || ""
+        };
+
+        if (next.extra_pages) {
+          next.extra_pages = next.extra_pages.map((ep) => {
+            if (ep.type === "duplicated_ledger") {
+              const currentP6Data = ep.page6Data || {};
+              return {
+                ...ep,
+                page6Data: {
+                  ...currentP6Data,
+                  church_records_id: p1.church_study_id || currentP6Data.church_records_id || "",
+                  cathedral_care_id: p1.cathedral_care_id || currentP6Data.cathedral_care_id || "",
+                  church_membership_id: p1.church_membership_id || currentP6Data.church_membership_id || ""
+                }
+              };
+            }
+            return ep;
+          });
+        }
+      }
+
+      // Automatically propagate Head of Household to Page 6 if not manually overridden
+      const head = getHeadOfHouseholdName(next);
+      const prevHead = getHeadOfHouseholdName(prev);
+      if (head && (!next.page6?.family_head || next.page6.family_head === prevHead)) {
+        next.page6 = {
+          ...next.page6,
+          family_head: head
+        };
+      }
+
       return next;
     });
     setHasUnsavedChanges(true);

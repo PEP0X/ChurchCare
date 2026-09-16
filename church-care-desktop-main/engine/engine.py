@@ -396,12 +396,12 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
     aliases = {
         "page6.head_name": ["page6.family_head", "family_head", "page2.husband.name", "page2.wife.name"],
         "page6.family_head": ["page6.head_name", "head_name", "page2.husband.name", "page2.wife.name"],
-        "page6.church_id": ["page6.church_records_id", "church_records_id"],
-        "page6.church_records_id": ["page6.church_id", "church_id"],
-        "page6.care_id": ["page6.cathedral_care_id", "cathedral_care_id"],
-        "page6.cathedral_care_id": ["page6.care_id", "care_id"],
-        "page6.member_id": ["page6.church_membership_id", "church_membership_id"],
-        "page6.church_membership_id": ["page6.member_id", "member_id"],
+        "page6.church_id": ["page6.church_records_id", "church_records_id", "page1.church_study_id"],
+        "page6.church_records_id": ["page6.church_id", "church_id", "page1.church_study_id"],
+        "page6.care_id": ["page6.cathedral_care_id", "cathedral_care_id", "page1.cathedral_care_id"],
+        "page6.cathedral_care_id": ["page6.care_id", "care_id", "page1.cathedral_care_id"],
+        "page6.member_id": ["page6.church_membership_id", "church_membership_id", "page1.church_membership_id"],
+        "page6.church_membership_id": ["page6.member_id", "member_id", "page1.church_membership_id"],
         "page5.other_notes": ["page5.notes", "notes"],
         "page5.notes": ["page5.other_notes", "other_notes"],
         "page4.total_church_aid": ["page4.church_aid.Total", "page4.church_aid_total"],
@@ -1042,10 +1042,15 @@ class PDFCareReportEngine:
             or (p2.get("wife", {}).get("name") if isinstance(p2.get("wife"), dict) else "")
             or ""
         )
+        p1 = data.get("page1", {})
+        church_records_id = p6.get("church_records_id") or p1.get("church_study_id") or ""
+        cathedral_care_id = p6.get("cathedral_care_id") or p1.get("cathedral_care_id") or ""
+        church_membership_id = p6.get("church_membership_id") or p1.get("church_membership_id") or ""
+
         draw_arabic_text(page, pymupdf.Point(430, 54), head_name, fontsize=10)
-        draw_arabic_text(page, pymupdf.Point(210, 54), p6.get("church_records_id", ""), fontsize=10)
-        draw_arabic_text(page, pymupdf.Point(430, 83), p6.get("cathedral_care_id", ""), fontsize=10)
-        draw_arabic_text(page, pymupdf.Point(210, 83), p6.get("church_membership_id", ""), fontsize=10)
+        draw_arabic_text(page, pymupdf.Point(210, 54), church_records_id, fontsize=10)
+        draw_arabic_text(page, pymupdf.Point(430, 83), cathedral_care_id, fontsize=10)
+        draw_arabic_text(page, pymupdf.Point(210, 83), church_membership_id, fontsize=10)
         draw_arabic_text(page, pymupdf.Point(410, 114), p6.get("from_date", ""), fontsize=9)
         draw_arabic_text(page, pymupdf.Point(200, 114), p6.get("to_date", ""), fontsize=9)
 
@@ -1109,8 +1114,28 @@ class PDFCareReportEngine:
                     new_page.insert_font(fontname="IBMPlexBold", fontfile=BOLD_FONT_PATH)
 
                 p6_data = ep.get("page6Data") or case_data.get("page6", {})
+                p1_data = case_data.get("page1", {})
+                p2_data = case_data.get("page2", {})
+
+                # Ensure the 3 IDs and family head are synced into the duplicate ledger
+                merged_p6 = dict(p6_data)
+                if not merged_p6.get("church_records_id") and p1_data.get("church_study_id"):
+                    merged_p6["church_records_id"] = p1_data.get("church_study_id")
+                if not merged_p6.get("cathedral_care_id") and p1_data.get("cathedral_care_id"):
+                    merged_p6["cathedral_care_id"] = p1_data.get("cathedral_care_id")
+                if not merged_p6.get("church_membership_id") and p1_data.get("church_membership_id"):
+                    merged_p6["church_membership_id"] = p1_data.get("church_membership_id")
+                if not merged_p6.get("family_head"):
+                    head_fallback = (
+                        (p2_data.get("husband", {}).get("name") if isinstance(p2_data.get("husband"), dict) else "")
+                        or (p2_data.get("wife", {}).get("name") if isinstance(p2_data.get("wife"), dict) else "")
+                        or ""
+                    )
+                    if head_fallback:
+                        merged_p6["family_head"] = head_fallback
+
                 synthetic_data = dict(case_data)
-                synthetic_data["page6"] = p6_data
+                synthetic_data["page6"] = merged_p6
 
                 fields = (active_layout.get("6") or active_layout.get(6)) if active_layout else []
                 if fields:
@@ -1179,9 +1204,9 @@ class PDFCareReportEngine:
                         inner_rect = pymupdf.Rect(box_rect.x0 + 4, box_rect.y0 + 17, box_rect.x1 - 4, box_rect.y1 - 4)
                         stamp_id_card(new_page, inner_rect, str(img_data), label=lbl)
 
-            # 3. BIRTH CERTIFICATES PAGE (Portrait A4 - 2 Stacked Halves for Seamless Printing)
+            # 3. BIRTH CERTIFICATES PAGE (Landscape A4 Layout, with Page-Level Rotation for Printing)
             elif ep_type == "birth_certs":
-                new_page = doc.new_page(-1, 595.28, 841.89)
+                new_page = doc.new_page(-1, 841.89, 595.28)
                 new_page.draw_rect(new_page.rect, color=None, fill=(1, 1, 1))
 
                 if os.path.exists(REGULAR_FONT_PATH):
@@ -1191,41 +1216,45 @@ class PDFCareReportEngine:
                     new_page.insert_font(fontname="RubikBold", fontfile=BOLD_FONT_PATH)
                     new_page.insert_font(fontname="IBMPlexBold", fontfile=BOLD_FONT_PATH)
 
-                # Header (Standard A4 Portrait, perfectly matching pages 1-6 & ID cards)
+                # Header (Landscape dimensions)
                 church_title = f"{church_name} - خدمة أخوة الرب" if church_name else "خدمة أخوة الرب"
-                draw_arabic_text(new_page, pymupdf.Point(559.28, 30), church_title, fontsize=9.5, fontname="IBMPlexBold", color=(0.15, 0.4, 0.65), align=2)
-                draw_arabic_text(new_page, pymupdf.Point(559.28, 46), "خدمة أخوة الرب - شهادات الميلاد", fontsize=13, fontname="IBMPlexBold", color=(0.1, 0.1, 0.1), align=2)
+                draw_arabic_text(new_page, pymupdf.Point(805.89, 30), church_title, fontsize=9.5, fontname="IBMPlexBold", color=(0.15, 0.4, 0.65), align=2)
+                draw_arabic_text(new_page, pymupdf.Point(805.89, 46), "خدمة أخوة الرب - شهادات الميلاد", fontsize=13, fontname="IBMPlexBold", color=(0.1, 0.1, 0.1), align=2)
 
-                header_meta = f"رقم البحث: #{study_id}"
+                header_meta = f"رقم البحث: #{study_id}" if study_id else ""
                 if family_head:
-                    header_meta += f"   |   رب الأسرة: {family_head}"
-                draw_arabic_text(new_page, pymupdf.Point(36, 46), header_meta, fontsize=9.0, fontname="IBMPlexRegular", color=(0.35, 0.4, 0.45), align=0)
+                    header_meta = f"{header_meta}   |   رب الأسرة: {family_head}" if header_meta else f"رب الأسرة: {family_head}"
+                if header_meta:
+                    draw_arabic_text(new_page, pymupdf.Point(36, 46), header_meta, fontsize=9.0, fontname="IBMPlexRegular", color=(0.35, 0.4, 0.45), align=0)
 
                 # Divider
-                new_page.draw_line(pymupdf.Point(36, 54), pymupdf.Point(559.28, 54), color=(0.82, 0.85, 0.88), width=0.8)
+                new_page.draw_line(pymupdf.Point(36, 54), pymupdf.Point(805.89, 54), color=(0.82, 0.85, 0.88), width=0.8)
 
-                # 2 Boxes (Top half and Bottom half for Portrait A4 printing)
+                # 2 Boxes (Right half and Left half)
                 margin_x = 36.0
                 margin_top = 64.0
-                gap_y = 18.0
-                box_w = 595.28 - 2 * margin_x  # 523.28 pt
-                box_h = (841.89 - margin_top - 28.0 - gap_y) / 2.0  # ~365.94 pt
+                gap_x = 24.0
+                box_w = (841.89 - 2 * margin_x - gap_x) / 2.0  # ~372.94 pt
+                box_h = 595.28 - margin_top - 28.0  # ~503.28 pt
 
                 images = ep.get("images", [])
                 labels = ep.get("labels", [])
 
                 for slot in range(2):
-                    is_top = (slot == 0)
-                    x0 = margin_x
-                    y0 = margin_top if is_top else (margin_top + box_h + gap_y)
+                    is_right = (slot == 0)
+                    if is_right:
+                        x0 = 841.89 - margin_x - box_w
+                    else:
+                        x0 = margin_x
+                    y0 = margin_top
                     box_rect = pymupdf.Rect(x0, y0, x0 + box_w, y0 + box_h)
 
                     # Frame
                     new_page.draw_rect(box_rect, color=(0.75, 0.82, 0.9), fill=(0.98, 0.99, 1.0), width=1, radius=None)
 
                     # Label
-                    default_label = "شهادة 1 (النصف العلوي)" if is_top else "شهادة 2 (النصف السفلي)"
-                    lbl = labels[slot] if (slot < len(labels) and labels[slot] and "يمين" not in labels[slot] and "شمال" not in labels[slot]) else default_label
+                    default_label = "شهادة 1" if is_right else "شهادة 2"
+                    lbl = labels[slot] if (slot < len(labels) and labels[slot] and "علوي" not in labels[slot] and "سفلي" not in labels[slot]) else default_label
                     draw_arabic_text(new_page, pymupdf.Point(box_rect.x1 - 12, box_rect.y0 + 16), lbl, fontsize=9.5, fontname="IBMPlexBold", color=(0.15, 0.3, 0.45), align=2)
 
                     # Image
@@ -1233,6 +1262,10 @@ class PDFCareReportEngine:
                     if img_data:
                         inner_rect = pymupdf.Rect(box_rect.x0 + 6, box_rect.y0 + 24, box_rect.x1 - 6, box_rect.y1 - 6)
                         stamp_id_card(new_page, inner_rect, str(img_data), label=lbl)
+
+                # 🔄 Rotation of the page itself in printing:
+                # Sets the PDF page /Rotate 90 flag so that the printer handles it as Portrait A4 without cropping!
+                new_page.set_rotation(90)
 
 
 # -----------------------------------------------------------------------------

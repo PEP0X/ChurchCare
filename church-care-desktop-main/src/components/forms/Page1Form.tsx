@@ -163,7 +163,7 @@ export const Page1Form: React.FC<Page1FormProps> = ({
               <span>رقم البحث بالكنيسة:</span>
             </span>
             <span className="text-[10px] text-amber-400 font-medium">
-              مرتبط برب الأسرة
+              مرتبط برب الأسرة وسجل الصرف (صفحة 6)
             </span>
           </label>
           <input
@@ -243,9 +243,14 @@ export const Page1Form: React.FC<Page1FormProps> = ({
         </div>
 
         <div>
-          <label className="text-xs text-slate-300 font-medium flex items-center gap-1.5 mb-1.5">
-            <Hash className="w-3.5 h-3.5 text-slate-400" />
-            رقم بحث الحالة ببرنامج إدارة الرعاية (الكاتدرائية):
+          <label className="text-xs text-slate-300 font-medium flex items-center justify-between mb-1.5">
+            <span className="flex items-center gap-1.5">
+              <Hash className="w-3.5 h-3.5 text-slate-400" />
+              <span>رقم بحث الحالة ببرنامج إدارة الرعاية (الكاتدرائية):</span>
+            </span>
+            <span className="text-[10px] text-amber-400 font-medium">
+              يسمّع في سجل الصرف (صفحة 6)
+            </span>
           </label>
           <input
             type="text"
@@ -257,9 +262,14 @@ export const Page1Form: React.FC<Page1FormProps> = ({
         </div>
 
         <div>
-          <label className="text-xs text-slate-300 font-medium flex items-center gap-1.5 mb-1.5">
-            <Hash className="w-3.5 h-3.5 text-slate-400" />
-            رقم الأسرة بقاعدة البيانات ببرنامج العضوية الكنسية:
+          <label className="text-xs text-slate-300 font-medium flex items-center justify-between mb-1.5">
+            <span className="flex items-center gap-1.5">
+              <Hash className="w-3.5 h-3.5 text-slate-400" />
+              <span>رقم الأسرة بقاعدة البيانات ببرنامج العضوية الكنسية:</span>
+            </span>
+            <span className="text-[10px] text-emerald-400 font-medium">
+              يسمّع في سجل الصرف (صفحة 6)
+            </span>
           </label>
           <input
             type="text"

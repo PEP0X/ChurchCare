@@ -31,14 +31,14 @@ interface InteractiveDocumentCanvasProps {
 }
 
 const BINDING_ALIASES: Record<string, string[]> = {
-  "page6.head_name": ["page6.family_head"],
-  "page6.family_head": ["page6.head_name"],
-  "page6.church_id": ["page6.church_records_id"],
-  "page6.church_records_id": ["page6.church_id"],
-  "page6.care_id": ["page6.cathedral_care_id"],
-  "page6.cathedral_care_id": ["page6.care_id"],
-  "page6.member_id": ["page6.church_membership_id"],
-  "page6.church_membership_id": ["page6.member_id"],
+  "page6.head_name": ["page6.family_head", "page2.husband.name", "page2.wife.name"],
+  "page6.family_head": ["page6.head_name", "page2.husband.name", "page2.wife.name"],
+  "page6.church_id": ["page6.church_records_id", "page1.church_study_id"],
+  "page6.church_records_id": ["page6.church_id", "page1.church_study_id"],
+  "page6.care_id": ["page6.cathedral_care_id", "page1.cathedral_care_id"],
+  "page6.cathedral_care_id": ["page6.care_id", "page1.cathedral_care_id"],
+  "page6.member_id": ["page6.church_membership_id", "page1.church_membership_id"],
+  "page6.church_membership_id": ["page6.member_id", "page1.church_membership_id"],
   "page5.other_notes": ["page5.notes"],
   "page5.notes": ["page5.other_notes"],
   "page4.total_church_aid": ["page4.church_aid.Total", "page4.church_aid_total"],
@@ -655,7 +655,17 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
     // 1. DUPLICATED LEDGER PAGE (Duplicate of Page 6)
     if (extraPage.type === 'duplicated_ledger') {
       const ledgerFields: FieldConfig[] = layout[6] || DEFAULT_DOCUMENT_LAYOUT[6] || [];
-      const syntheticData = { page6: extraPage.page6Data || data.page6 };
+      const syntheticData = {
+        ...data,
+        page6: {
+          ...data.page6,
+          ...(extraPage.page6Data || {}),
+          church_records_id: (extraPage.page6Data?.church_records_id || data.page6?.church_records_id || data.page1?.church_study_id || ""),
+          cathedral_care_id: (extraPage.page6Data?.cathedral_care_id || data.page6?.cathedral_care_id || data.page1?.cathedral_care_id || ""),
+          church_membership_id: (extraPage.page6Data?.church_membership_id || data.page6?.church_membership_id || data.page1?.church_membership_id || ""),
+          family_head: (extraPage.page6Data?.family_head || data.page6?.family_head || getHeadOfHouseholdName(data) || "")
+        }
+      };
 
       const handleLedgerFieldChange = (binding: string, val: any) => {
         const updatedPage6 = setValueByPath(syntheticData, binding, val).page6;
@@ -878,7 +888,7 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
       );
     }
 
-    // 3. BIRTH CERTIFICATES PAGE (Portrait A4, White Background, 2 Stacked Halves: Top & Bottom)
+    // 3. BIRTH CERTIFICATES PAGE (Landscape A4 Default, White Background, 2 Halves: Right & Left)
     if (extraPage.type === 'birth_certs') {
       const images = extraPage.images || [undefined, undefined];
 
@@ -887,10 +897,10 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
           dir="rtl"
           className="relative bg-white shadow-2xl transition-transform duration-100 origin-top select-none font-['IBM_Plex_Sans_Arabic'] rounded-sm border border-slate-200"
           style={{
-            width: '820px',
-            minHeight: '1160px',
+            width: '1160px',
+            minHeight: '820px',
             transform: `scale(${scale})`,
-            marginBottom: `${(scale - 1) * 1160}px`
+            marginBottom: `${(scale - 1) * 820}px`
           }}
         >
           {/* Header Banner */}
@@ -900,9 +910,9 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                 {(data.page1?.church_name || data.Page1?.churchName) ? `${data.page1?.church_name || data.Page1?.churchName} - خدمة أخوة الرب` : 'خدمة أخوة الرب'}
               </div>
               <h1 className="text-lg font-bold text-slate-900 mt-0.5 flex items-center gap-2">
-                <span>صفحة شهادات الميلاد (A4 رأسية Portrait)</span>
+                <span>صفحة شهادات الميلاد (عرض أفقي Landscape)</span>
                 <span className="text-xs bg-sky-100 text-sky-900 font-bold px-2 py-0.5 rounded-full border border-sky-300">
-                  شهادتين (النصف العلوي والسفلي)
+                  شهادتين (شهادة 1 وشهادة 2)
                 </span>
               </h1>
             </div>
@@ -926,18 +936,18 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             </div>
           </div>
 
-          {/* Two Stacked Halves: Top & Bottom for seamless Portrait A4 Printing */}
-          <div className="p-5 flex flex-col gap-4 select-auto">
+          {/* Two Halves Grid: شهادة 1 و شهادة 2 (Landscape layout) */}
+          <div className="p-5 grid grid-cols-2 gap-5 select-auto">
             {[0, 1].map((slotIdx) => {
               const img = images[slotIdx];
-              const defaultLabel = slotIdx === 0 ? 'شهادة 1 (النصف العلوي)' : 'شهادة 2 (النصف السفلي)';
+              const defaultLabel = slotIdx === 0 ? 'شهادة 1' : 'شهادة 2';
               const rawLabel = extraPage.labels?.[slotIdx];
-              const label = (rawLabel && !rawLabel.includes("يمين") && !rawLabel.includes("شمال")) ? rawLabel : defaultLabel;
+              const label = (rawLabel && !rawLabel.includes("علوي") && !rawLabel.includes("سفلي")) ? rawLabel : defaultLabel;
 
               return (
                 <div
                   key={slotIdx}
-                  className={`relative h-[510px] rounded-2xl border-2 transition-all duration-200 overflow-hidden flex flex-col bg-slate-50/70 group ${
+                  className={`relative h-[680px] rounded-2xl border-2 transition-all duration-200 overflow-hidden flex flex-col bg-slate-50/70 group ${
                     img
                       ? 'border-sky-500/80 shadow-md bg-white'
                       : 'border-dashed border-slate-300 hover:border-sky-500 hover:bg-sky-50/30'
@@ -950,10 +960,10 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                   }}
                 >
                   {/* Slot Header */}
-                  <div className="px-4 py-2 bg-slate-100/90 border-b border-slate-200 flex items-center justify-between text-xs select-none">
+                  <div className="px-4 py-2.5 bg-slate-100/90 border-b border-slate-200 flex items-center justify-between text-xs select-none">
                     <span className="font-bold text-slate-900">{label}</span>
                     <span className="text-[11px] text-sky-800 font-mono bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-300 font-bold">
-                      {slotIdx === 0 ? 'شهادة 1 - علوي' : 'شهادة 2 - سفلي'}
+                      {slotIdx === 0 ? 'شهادة 1' : 'شهادة 2'}
                     </span>
                   </div>
 
@@ -1000,14 +1010,14 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                         onClick={() => handleSlotPickImage(slotIdx, extraPageIndex)}
                         className="w-full h-full flex flex-col items-center justify-center cursor-pointer p-6 text-center select-none"
                       >
-                        <div className="w-14 h-14 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-sm">
-                          <Upload className="w-7 h-7" />
+                        <div className="w-16 h-16 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-sm">
+                          <Upload className="w-8 h-8" />
                         </div>
                         <span className="text-sm font-bold text-slate-800 group-hover:text-sky-800">
                           انقر لاختيار صورة شهادة الميلاد
                         </span>
                         <span className="text-xs text-slate-400 mt-1">
-                          أو اسحب ملف الصورة هنا مباشرة (جاهزة للطباعة الرأسية A4 Portrait)
+                          أو اسحب ملف الصورة هنا مباشرة (A4 أفقية أو رأسية)
                         </span>
                       </div>
                     )}

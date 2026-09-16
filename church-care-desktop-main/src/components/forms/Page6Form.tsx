@@ -75,6 +75,7 @@ export const Page6Form: React.FC<Page6FormProps> = ({ data, onChange }) => {
 
       {/* Header Info */}
       <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* رب الأسرة المستلم */}
         <div>
           <div className="flex items-center justify-between">
             <label className="text-xs text-slate-300 font-medium">اسم رب الأسرة المستلم:</label>
@@ -97,16 +98,66 @@ export const Page6Form: React.FC<Page6FormProps> = ({ data, onChange }) => {
             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white mt-1"
           />
         </div>
+
+        {/* رقم بحث الكنيسة / رقم الأسرة بكشوف الكنيسة */}
         <div>
-          <label className="text-xs text-slate-300 font-medium">رقم الأسرة بكشوفات الكنيسة:</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-slate-300 font-medium">رقم الأسرة بكشوف الكنيسة (رقم البحث):</label>
+            {data.page1.church_study_id && (
+              <span className="text-[10px] text-sky-400 bg-sky-950/60 border border-sky-800 px-1.5 py-0.2 rounded font-mono">
+                يسمّع من صفحة 1 (#{data.page1.church_study_id})
+              </span>
+            )}
+          </div>
           <input
             type="text"
+            placeholder={data.page1.church_study_id || "رقم بحث الكنيسة"}
             value={p6.church_records_id}
             onChange={(e) => updateHeader("church_records_id", e.target.value)}
             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono mt-1"
           />
         </div>
-        <div className="flex gap-2">
+
+        {/* رقم بحث الحالة بإدارة الرعاية (الكاتدرائية) */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-slate-300 font-medium">رقم بحث إدارة الرعاية (الكاتدرائية):</label>
+            {data.page1.cathedral_care_id && (
+              <span className="text-[10px] text-amber-400 bg-amber-950/60 border border-amber-800 px-1.5 py-0.2 rounded font-mono">
+                يسمّع من صفحة 1 ({data.page1.cathedral_care_id})
+              </span>
+            )}
+          </div>
+          <input
+            type="text"
+            placeholder={data.page1.cathedral_care_id || "رقم بحث الكاتدرائية"}
+            value={p6.cathedral_care_id}
+            onChange={(e) => updateHeader("cathedral_care_id", e.target.value)}
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono mt-1"
+          />
+        </div>
+
+        {/* رقم الأسرة بالعضوية الكنسية */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-slate-300 font-medium">رقم الأسرة بقاعدة بيانات العضوية الكنسية:</label>
+            {data.page1.church_membership_id && (
+              <span className="text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-1.5 py-0.2 rounded font-mono">
+                يسمّع من صفحة 1 ({data.page1.church_membership_id})
+              </span>
+            )}
+          </div>
+          <input
+            type="text"
+            placeholder={data.page1.church_membership_id || "رقم العضوية الكنسية"}
+            value={p6.church_membership_id}
+            onChange={(e) => updateHeader("church_membership_id", e.target.value)}
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono mt-1"
+          />
+        </div>
+
+        {/* الفترة من تاريخ وإلى تاريخ */}
+        <div className="md:col-span-2 flex gap-3">
           <div className="flex-1">
             <label className="text-xs text-slate-300 font-medium">الفترة من تاريخ:</label>
             <input
