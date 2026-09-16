@@ -1541,15 +1541,15 @@ export const App: React.FC = () => {
     const newPage: ExtraBirthCertsPage = {
       id: `birth_certs_${Date.now()}`,
       type: "birth_certs",
-      title: "شهادات الميلاد (رأسي)",
+      title: "شهادات الميلاد",
       images: [undefined, undefined],
-      labels: ["شهادة 1 (النصف العلوي)", "شهادة 2 (النصف السفلي)"]
+      labels: ["شهادة 1", "شهادة 2"]
     };
     const updated = [...(data.extra_pages || []), newPage];
     setData((prev) => ({ ...prev, extra_pages: updated }));
     setActivePage(nextTotal);
     setHasUnsavedChanges(true);
-    showToast(`تمت إضافة صفحة شهادات الميلاد (A4 رأسي للطباعة) برقم ${nextTotal}!`, "success");
+    showToast(`تمت إضافة صفحة شهادات الميلاد برقم ${nextTotal}!`, "success");
   };
 
   // Delete Extra Page
@@ -1582,12 +1582,14 @@ export const App: React.FC = () => {
         sub = "8 بطاقات رقم قومي (عمودي)";
       } else if (ep.type === "birth_certs") {
         icon = FileSpreadsheet;
-        sub = "شهادات الميلاد (أفقي)";
+        sub = "شهادات ميلاد مميكنة";
       }
+
+      const cleanTitle = ep.title ? ep.title.replace(" (رأسي)", "").replace(" (أفقي)", "") : "شهادات الميلاد";
 
       return {
         id: pageId,
-        title: `${pageId}. ${ep.title}`,
+        title: `${pageId}. ${cleanTitle}`,
         sub,
         icon,
         isDeletable: true,
@@ -1755,9 +1757,25 @@ export const App: React.FC = () => {
       {/* 2. MICROSOFT WORD RIBBON TABS STRIP                                  */}
       {/* ==================================================================== */}
       <div className="h-9 bg-slate-950 border-b border-slate-800 px-3 flex items-center justify-between select-none z-30 shrink-0">
-        <div className="flex items-center h-full overflow-x-auto scrollbar-none">
+        <div className="flex items-center h-full overflow-x-auto scrollbar-none gap-2">
+          {/* Word-Style Navigation Pane Toggle Button (Placed prominently on the RIGHT) */}
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${sidebarOpen
+              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm"
+              : "bg-slate-900 text-slate-300 hover:text-amber-300 hover:bg-slate-800 border border-slate-800"
+              }`}
+            title="إظهار / إخفاء لوحة التنقل (Navigation Pane)"
+          >
+            {sidebarOpen ? <PanelRightClose className="w-3.5 h-3.5 text-amber-400" /> : <PanelRightOpen className="w-3.5 h-3.5 text-slate-400" />}
+            <span>لوحة التنقل</span>
+          </button>
+
+          <div className="h-3.5 w-px bg-slate-800 shrink-0" />
+
           {/* Form Pages Tabs (Word-style navigation) */}
-          <nav className="flex items-center h-full pr-1">
+          <nav className="flex items-center h-full">
             {pages.map((p) => {
               const Icon = p.icon;
               const isActive = activePage === p.id;
@@ -1779,7 +1797,7 @@ export const App: React.FC = () => {
           </nav>
         </div>
 
-        {/* Left (RTL): Status badge & Navigation Pane toggle */}
+        {/* Left (RTL): Status badge & validation */}
         <div className="flex items-center gap-2 shrink-0">
           {validationErrors.length === 0 ? (
             <span className="hidden sm:flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40 font-medium whitespace-nowrap">
@@ -1797,22 +1815,6 @@ export const App: React.FC = () => {
               <span>{validationErrors.length} رقم به خطأ</span>
             </button>
           )}
-
-          <div className="h-3.5 w-px bg-slate-800" />
-
-          {/* Word-Style Navigation Pane Toggle */}
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${sidebarOpen
-              ? "bg-slate-800 text-amber-400 border border-slate-700"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent"
-              }`}
-            title="إظهار / إخفاء لوحة التنقل (Navigation Pane)"
-          >
-            {sidebarOpen ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">لوحة التنقل</span>
-          </button>
         </div>
       </div>
 
@@ -1913,10 +1915,10 @@ export const App: React.FC = () => {
                   type="button"
                   onClick={handleAddBirthCertsPage}
                   className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-sky-950/40 text-slate-200 hover:text-sky-300 border border-slate-800 hover:border-sky-500/40 transition-all cursor-pointer h-[48px]"
-                  title="إضافة صفحة شهادات ميلاد (شهادتين أفقيتين)"
+                  title="إضافة صفحة شهادات ميلاد (شهادتين بالصفحة)"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-sky-400" />
-                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">شهادات ميلاد (أفقي)</span>
+                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">شهادات ميلاد</span>
                 </button>
               </div>
               <span className="text-[9px] text-slate-400 text-center font-semibold block mt-0.5 pt-0.5 border-t border-slate-800/40">إدراج صفحات</span>
