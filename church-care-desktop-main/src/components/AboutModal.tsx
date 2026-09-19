@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { 
-  ShieldCheck, 
-  KeyRound, 
-  Cpu, 
-  Building2, 
-  Copy, 
-  Check, 
-  X, 
+import { getVersion } from '@tauri-apps/api/app';
+import {
+  ShieldCheck,
+  KeyRound,
+  Cpu,
+  Building2,
+  Copy,
+  Check,
+  X,
   HeartHandshake,
   Award,
   Sparkles,
@@ -47,10 +48,15 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState<boolean>(false);
   const [updateCheckStatus, setUpdateCheckStatus] = useState<string | null>(null);
+  const [appVersion, setAppVersion] = useState<string>('');
 
-  // Load active license details upon modal open
+  // Load active license details and app version upon modal open
   useEffect(() => {
     if (!isOpen) return;
+
+    getVersion()
+      .then((ver) => setAppVersion(ver))
+      .catch((err) => console.warn('Failed to read app version:', err));
 
     invoke<LicenseStatusResult>('check_license_status')
       .then((status) => {
@@ -68,7 +74,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
       .then((id) => {
         if (id) setHwid(id);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -116,7 +122,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
       <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-emerald-500/10 rounded-full blur-[90px] pointer-events-none -z-10" />
 
       {/* Main Modal Box */}
-      <div 
+      <div
         className="relative w-full max-w-xl bg-slate-900/95 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden text-right animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[92vh]"
         dir="rtl"
       >
@@ -134,9 +140,11 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   2026
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
-                  v1.2.1
-                </span>
+                {appVersion && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono tracking-wider">
+                    v{appVersion}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
                 خدمة أخوة الرب - خدمة القلب المتسع (ChurchCare Desktop)
@@ -156,7 +164,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
         {/* Modal Scrollable Content */}
         <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 text-xs">
-          
+
           {/* Official License Status Banner */}
           <div className="p-4 rounded-2xl bg-gradient-to-l from-emerald-950/60 via-slate-950/80 to-slate-950 border border-emerald-500/40 shadow-inner flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -184,7 +192,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
           {/* License Credentials Grid */}
           <div className="grid grid-cols-1 gap-2.5">
-            
+
             {/* 1. Licensed Client Name */}
             <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex flex-col gap-2">
               <div className="flex items-center justify-between">
@@ -202,11 +210,10 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                   </div>
                 </div>
 
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border shrink-0 ${
-                  isChurchNameLocked(clientName)
-                    ? 'text-amber-300 bg-amber-950/50 border-amber-800/50'
-                    : 'text-indigo-300 bg-indigo-950/50 border-indigo-800/40'
-                }`}>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border shrink-0 ${isChurchNameLocked(clientName)
+                  ? 'text-amber-300 bg-amber-950/50 border-amber-800/50'
+                  : 'text-indigo-300 bg-indigo-950/50 border-indigo-800/40'
+                  }`}>
                   {isChurchNameLocked(clientName) ? 'كنيسة معتمدة' : 'ترخيص عام'}
                 </span>
               </div>
