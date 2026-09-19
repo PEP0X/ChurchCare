@@ -14,6 +14,7 @@
     "@tanstack/svelte-table": "^9.2.4",
     "bits-ui": "^2.19.2",
     "clsx": "^2.1.1",
+    "firebase-admin": "^14.4.0",
     "lucide-svelte": "^1.0.1",
     "svelte": "^5.0.0",
     "tailwind-merge": "^3.0.1"
