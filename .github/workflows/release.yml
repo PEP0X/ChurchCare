@@ -71,3 +71,4 @@ jobs:
           releaseBody: "تحديث تلقائي جديد لتطبيق رعاية الكنائس ودراسة الحالة.\nراجع سجل التغييرات أدناه."
           releaseDraft: false
           prerelease: false
+          updaterJsonPreferNsis: true
