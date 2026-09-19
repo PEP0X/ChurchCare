@@ -1,4 +1,4 @@
-import type { License } from './types';
+import type { License, ChurchServiceItem } from './types';
 
 /**
  * القائمة المعتمدة لكنائس الإيبارشية كقاعدة بيانات أولية
@@ -41,24 +41,117 @@ export const DEFAULT_CHURCHES: string[] = [
   "كنيسة السيدة العذراء والانبا بيشوى - المنية"
 ];
 
+/**
+ * الخدمات الكنسية المدعومة في نظام ChurchCare
+ */
+export const CHURCH_SERVICES: ChurchServiceItem[] = [
+  {
+    id: 'visitation',
+    name: 'خدمة الافتقاد ورعاية الأسر',
+    icon: '🏠',
+    description: 'متابعة بيانات المخدومين وافتقاد المنازل وتدوين الزيارات والاحتياجات',
+    badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+  },
+  {
+    id: 'sundayschool',
+    name: 'مدارس الأحد والتربية الكنسية',
+    icon: '📖',
+    description: 'تسجيل الحضور والغياب، المناهج، مسابقات وحفظ آيات الفصول',
+    badgeClass: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
+  },
+  {
+    id: 'idcards',
+    name: 'استخراج الكارنيهات والبيانات',
+    icon: '🪪',
+    description: 'تصميم وطباعة كارنيهات العضوية الذكية بتقنية الباركود وQR Code',
+    badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/30'
+  },
+  {
+    id: 'deacons',
+    name: 'الشمامسة والألحان والطقوس',
+    icon: '⛪',
+    description: 'رتب الشمامسة وحضور القداسات والمناسبات الكنسية والمواليد',
+    badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+  },
+  {
+    id: 'treasury',
+    name: 'الخزينة والاشتراكات والتبرعات',
+    icon: '💰',
+    description: 'إيصالات التبرع، الصناديق الشهرية، وإدارة السندات والعهدة',
+    badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+  },
+  {
+    id: 'youth',
+    name: 'اجتماعات الشباب وإعداد الخدام',
+    icon: '🌟',
+    description: 'متابعة الأسر الجامعية، كورسات إعداد الخدام، والمؤتمرات',
+    badgeClass: 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+  },
+  {
+    id: 'scouts',
+    name: 'الكشافة والمرشدات والأنشطة',
+    icon: '🏕️',
+    description: 'سجلات الفرق الكشفية والتدريبات والمخيمات الصيفية والبطولات',
+    badgeClass: 'bg-teal-500/15 text-teal-300 border-teal-500/30'
+  },
+  {
+    id: 'secretariat',
+    name: 'أمانة الخدمة والسكرتارية العامة',
+    icon: '📋',
+    description: 'إدارة شاملة، إصدار الخطابات الرسمية، تصاريح ومواعيد الكنيسة',
+    badgeClass: 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+  }
+];
+
 export interface ParsedLicenseInfo {
   churchName: string;
   userName: string;
+  role: string;
+  phone: string;
+  services: string[];
   extraNotes: string;
   deviceInfo: string;
 }
 
 /**
- * تحليل بيانات الترخيص لاستخراج اسم الكنيسة واسم المستخدم وبيانات الجهاز بدقة
+ * تحليل بيانات الترخيص لاستخراج اسم الكنيسة واسم الخادم والدور ورقم الهاتف والخدمات بدقة
  */
 export function parseLicenseInfo(lic: License): ParsedLicenseInfo {
   const churchName = lic.client_name?.trim() || 'كنيسة عامة';
-  const rawNotes = lic.notes?.trim() || '';
+  let rawNotes = lic.notes?.trim() || '';
 
   let userName = '';
+  let role = '';
+  let phone = '';
   let extraNotes = '';
   let deviceInfo = '';
+  const services: string[] = [];
 
+  // 1. استخراج قسم الخدمات [خدمات: ...]
+  const servicesMatch = rawNotes.match(/\[خدمات:\s*([^\]]+)\]/i) || rawNotes.match(/\[services:\s*([^\]]+)\]/i);
+  if (servicesMatch) {
+    const servicesStr = servicesMatch[1];
+    servicesStr.split(/[,،]/).map(s => s.trim()).filter(Boolean).forEach(s => {
+      if (!services.includes(s)) services.push(s);
+    });
+    rawNotes = rawNotes.replace(servicesMatch[0], '').trim();
+  }
+
+  // 2. استخراج الدور [الدور: ...]
+  const roleMatch = rawNotes.match(/\[الدور:\s*([^\]]+)\]/i);
+  if (roleMatch) {
+    role = roleMatch[1].trim();
+    rawNotes = rawNotes.replace(roleMatch[0], '').trim();
+  }
+
+  // 3. استخراج الهاتف [هاتف: ...]
+  const phoneMatch = rawNotes.match(/\[هاتف:\s*([^\]]+)\]/i);
+  if (phoneMatch) {
+    phone = phoneMatch[1].trim();
+    rawNotes = rawNotes.replace(phoneMatch[0], '').trim();
+  }
+
+  // 4. معالجة معلومات الجهاز
   if (rawNotes.includes('| Activated on ')) {
     const parts = rawNotes.split('| Activated on ');
     const beforePart = parts[0].trim();
@@ -93,10 +186,27 @@ export function parseLicenseInfo(lic: License): ParsedLicenseInfo {
     userName = '—';
   }
 
+  // فحص إضافي للدور أو الهاتف في extraNotes إن لم يكونا محددين بـ tags
+  if (!role) {
+    if (extraNotes.includes('كاهن')) role = 'كاهن';
+    else if (extraNotes.includes('أمين خدمة') || extraNotes.includes('امين خدمة')) role = 'أمين خدمة';
+    else if (extraNotes.includes('Data Entry') || extraNotes.includes('مدخل بيانات')) role = 'مدخل بيانات';
+  }
+
+  if (!phone) {
+    const phoneInNotes = (extraNotes || rawNotes).match(/01[0125]\d{8}/);
+    if (phoneInNotes) {
+      phone = phoneInNotes[0];
+    }
+  }
+
   return {
     churchName,
     userName: userName || '—',
-    extraNotes,
+    role,
+    phone,
+    services,
+    extraNotes: extraNotes.replace(/^\|\s*|\s*\|$/g, '').trim(),
     deviceInfo
   };
 }
@@ -107,12 +217,10 @@ export function parseLicenseInfo(lic: License): ParsedLicenseInfo {
 export function getUniqueChurches(licenses: License[]): string[] {
   const churchSet = new Set<string>();
 
-  // 1. إضافة الكنائس الافتراضية
   for (const c of DEFAULT_CHURCHES) {
     if (c.trim()) churchSet.add(c.trim());
   }
 
-  // 2. إضافة أي كنائس مسجلة في قاعدة البيانات
   if (Array.isArray(licenses)) {
     for (const lic of licenses) {
       if (lic.client_name && lic.client_name.trim()) {
@@ -153,7 +261,10 @@ export function exportLicensesToCsv(licenses: License[]) {
   const headers = [
     'السيريال (Serial Key)',
     'اسم الكنيسة (Church Name)',
-    'اسم المستخدم / المسؤول (User Name)',
+    'اسم الخادم / المسؤول (Servant Name)',
+    'الدور / الوظيفة (Role)',
+    'رقم الهاتف (Phone)',
+    'الخدمات المشمولة (Services)',
     'الحالة (Status)',
     'بصمة العتاد (HWID)',
     'تاريخ التفعيل (Activated At)',
@@ -167,12 +278,16 @@ export function exportLicensesToCsv(licenses: License[]) {
     const hwidText = lic.hwid || 'غير مرتبط بجهاز';
     const activatedAtText = lic.activated_at ? new Date(lic.activated_at).toLocaleString('ar-EG') : '—';
     const createdAtText = lic.created_at ? new Date(lic.created_at).toLocaleString('ar-EG') : '—';
+    const servicesText = info.services.length > 0 ? info.services.join(' ، ') : 'شامل عام';
     const notesText = [info.extraNotes, info.deviceInfo].filter(Boolean).join(' | ') || (lic.notes || '—');
 
     return [
       `"${lic.serial_key}"`,
       `"${info.churchName.replace(/"/g, '""')}"`,
       `"${info.userName.replace(/"/g, '""')}"`,
+      `"${(info.role || '—').replace(/"/g, '""')}"`,
+      `"${(info.phone || '—').replace(/"/g, '""')}"`,
+      `"${servicesText.replace(/"/g, '""')}"`,
       `"${statusText}"`,
       `"${hwidText}"`,
       `"${activatedAtText}"`,
@@ -181,7 +296,7 @@ export function exportLicensesToCsv(licenses: License[]) {
     ].join(',');
   });
 
-  // UTF-8 BOM (\uFEFF) لضمان قراءة Excel للحروف العربية بدقة
+  // UTF-8 BOM (\uFEFF)
   const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

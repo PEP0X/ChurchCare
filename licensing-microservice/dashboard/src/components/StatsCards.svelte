@@ -1,16 +1,18 @@
 <script lang="ts">
   import type { License } from '../lib/types';
+  import { Separator } from 'bits-ui';
+  import { Key, ShieldCheck, Hourglass, Ban, Church } from '@lucide/svelte';
 
   let { licenses = [] }: { licenses: License[] } = $props();
 
   let safeLicenses = $derived(Array.isArray(licenses) ? licenses : []);
   let total = $derived(safeLicenses.length);
-  let active = $derived(safeLicenses.filter(l => l.status === 'active').length);
-  let unactivated = $derived(safeLicenses.filter(l => l.status === 'unactivated').length);
-  let revoked = $derived(safeLicenses.filter(l => l.status === 'revoked').length);
+  let active = $derived(safeLicenses.filter((l) => l.status === 'active').length);
+  let unactivated = $derived(safeLicenses.filter((l) => l.status === 'unactivated').length);
+  let revoked = $derived(safeLicenses.filter((l) => l.status === 'revoked').length);
 
   let uniqueChurchesCount = $derived(
-    new Set(safeLicenses.map(l => l.client_name?.trim()).filter(Boolean)).size
+    new Set(safeLicenses.map((l) => l.client_name?.trim()).filter(Boolean)).size
   );
 
   let activePercent = $derived(
@@ -24,17 +26,23 @@
     <div class="absolute -top-10 -left-10 w-28 h-28 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition"></div>
     <div class="flex items-center justify-between">
       <span class="text-xs font-semibold text-slate-400">إجمالي التراخيص</span>
-      <div class="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-sm">
-        🔑
+      <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+        <Key class="w-4 h-4" />
       </div>
     </div>
     <div class="flex items-baseline gap-2 mt-3">
-      <div class="text-3xl sm:text-4xl font-black text-white">{total}</div>
+      <div class="text-3xl sm:text-4xl font-black text-white font-mono">{total}</div>
       <span class="text-xs text-slate-400 font-medium">سيريال مُصدر</span>
     </div>
-    <div class="mt-3 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
-      <span>الكنائس المسجلة:</span>
-      <span class="font-bold text-indigo-300 bg-indigo-950/60 px-2 py-0.5 rounded-lg border border-indigo-800/40">
+
+    <Separator.Root class="bg-slate-800/60 my-3 h-px w-full" />
+
+    <div class="flex items-center justify-between text-xs text-slate-400">
+      <span class="flex items-center gap-1">
+        <Church class="w-3.5 h-3.5 text-indigo-400" />
+        <span>الكنائس المسجلة:</span>
+      </span>
+      <span class="font-bold text-indigo-300 bg-indigo-950/60 px-2 py-0.5 rounded-lg border border-indigo-800/40 font-mono">
         {uniqueChurchesCount} {uniqueChurchesCount === 1 ? 'كنيسة' : 'كنائس'}
       </span>
     </div>
@@ -45,17 +53,20 @@
     <div class="absolute -top-10 -left-10 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition"></div>
     <div class="flex items-center justify-between">
       <span class="text-xs font-semibold text-emerald-400">التراخيص المفعّلة</span>
-      <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-sm">
-        🟢
+      <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+        <ShieldCheck class="w-4 h-4" />
       </div>
     </div>
     <div class="flex items-baseline gap-2 mt-3">
-      <div class="text-3xl sm:text-4xl font-black text-emerald-400">{active}</div>
+      <div class="text-3xl sm:text-4xl font-black text-emerald-400 font-mono">{active}</div>
       <span class="text-xs text-emerald-300/70 font-medium">جهاز نشط ({activePercent}%)</span>
     </div>
-    <div class="mt-3 pt-3 border-t border-emerald-900/40 flex items-center justify-between text-xs text-emerald-400/80">
+
+    <Separator.Root class="bg-emerald-900/40 my-3 h-px w-full" />
+
+    <div class="flex items-center justify-between text-xs text-emerald-400/80">
       <span>مقفل بالعتاد HWID:</span>
-      <span class="font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-800/50">
+      <span class="font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-800/50 font-mono">
         {active} جهاز
       </span>
     </div>
@@ -66,15 +77,18 @@
     <div class="absolute -top-10 -left-10 w-28 h-28 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition"></div>
     <div class="flex items-center justify-between">
       <span class="text-xs font-semibold text-amber-400">سيريالات جاهزة (غير مفعلة)</span>
-      <div class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-sm">
-        ⏳
+      <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+        <Hourglass class="w-4 h-4" />
       </div>
     </div>
     <div class="flex items-baseline gap-2 mt-3">
-      <div class="text-3xl sm:text-4xl font-black text-amber-400">{unactivated}</div>
+      <div class="text-3xl sm:text-4xl font-black text-amber-400 font-mono">{unactivated}</div>
       <span class="text-xs text-amber-300/70 font-medium">بانتظار الإدخال</span>
     </div>
-    <div class="mt-3 pt-3 border-t border-amber-900/40 flex items-center justify-between text-xs text-amber-400/80">
+
+    <Separator.Root class="bg-amber-900/40 my-3 h-px w-full" />
+
+    <div class="flex items-center justify-between text-xs text-amber-400/80">
       <span>جاهزة للعميل:</span>
       <span class="font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded-lg border border-amber-800/50">
         غير مقترنة
@@ -87,17 +101,20 @@
     <div class="absolute -top-10 -left-10 w-28 h-28 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition"></div>
     <div class="flex items-center justify-between">
       <span class="text-xs font-semibold text-rose-400">التراخيص الملغاة</span>
-      <div class="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-sm">
-        🚫
+      <div class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+        <Ban class="w-4 h-4" />
       </div>
     </div>
     <div class="flex items-baseline gap-2 mt-3">
-      <div class="text-3xl sm:text-4xl font-black text-rose-400">{revoked}</div>
+      <div class="text-3xl sm:text-4xl font-black text-rose-400 font-mono">{revoked}</div>
       <span class="text-xs text-rose-300/70 font-medium">محظورة / موقفة</span>
     </div>
-    <div class="mt-3 pt-3 border-t border-rose-900/40 flex items-center justify-between text-xs text-rose-400/80">
+
+    <Separator.Root class="bg-rose-900/40 my-3 h-px w-full" />
+
+    <div class="flex items-center justify-between text-xs text-rose-400/80">
       <span>تتطلب إعادة تفعيل:</span>
-      <span class="font-bold text-rose-300 bg-rose-950/80 px-2 py-0.5 rounded-lg border border-rose-800/50">
+      <span class="font-bold text-rose-300 bg-rose-950/80 px-2 py-0.5 rounded-lg border border-rose-800/50 font-mono">
         {revoked} رخصة
       </span>
     </div>

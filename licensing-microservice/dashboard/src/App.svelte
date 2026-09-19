@@ -14,7 +14,7 @@
       queries: {
         staleTime: 1000 * 5,
         refetchInterval: 6000,
-        refetchOnWindowFocus: true,
+        refetchOnWindowFocus: true
       }
     }
   });
@@ -24,12 +24,15 @@
   let isSubmitting = $state<boolean>(false);
   let toastMsg = $state<string | null>(null);
 
-  // TanStack Query integration
-  const licensesQuery = createQuery(() => ({
-    queryKey: ['licenses'],
-    queryFn: getLicenses,
-    enabled: isAuthenticated,
-  }), () => queryClient);
+  // TanStack Query
+  const licensesQuery = createQuery(
+    () => ({
+      queryKey: ['licenses'],
+      queryFn: getLicenses,
+      enabled: isAuthenticated
+    }),
+    () => queryClient
+  );
 
   let licenses = $derived(
     Array.isArray(licensesQuery.data) ? licensesQuery.data : []
@@ -55,17 +58,24 @@
     await queryClient.invalidateQueries({ queryKey: ['licenses'] });
   }
 
-  async function handleCreate(churchName: string, userName: string, notes: string) {
+  async function handleCreate(
+    churchName: string,
+    userName: string,
+    notes: string,
+    services?: string[]
+  ) {
     isSubmitting = true;
     try {
-      const created = await createLicense({
+      await createLicense({
         church_name: churchName,
         user_name: userName,
         notes: notes || undefined,
-        client_name: churchName
+        client_name: churchName,
+        services: services
       });
       await queryClient.invalidateQueries({ queryKey: ['licenses'] });
-      showToast(`✨ تم توليد السيريال بنجاح لكنيسة "${churchName}" (المستخدم: ${userName})`);
+      const servicesCountText = services && services.length > 0 ? ` [${services.length} خدمات]` : '';
+      showToast(`✨ تم توليد السيريال بنجاح لكنيسة "${churchName}" (${userName})${servicesCountText}`);
     } finally {
       isSubmitting = false;
     }
@@ -81,13 +91,12 @@
   }
 
   async function handleResetHwid(id: string) {
-    if (!confirm('هل أنت متأكد من فك ربط هذا الجهاز؟ سيمكن هذا العميل من استخدام السيريال على جهاز آخر.')) return;
     try {
       await resetLicenseHwid(id);
       await queryClient.invalidateQueries({ queryKey: ['licenses'] });
-      showToast('تم فك ربط الجهاز بنجاح!');
+      showToast('✓ تم فك ربط الجهاز بنجاح!');
     } catch (err: any) {
-      alert(err.message);
+      showToast('⚠️ فشل فك ربط الجهاز: ' + err.message);
     }
   }
 
@@ -95,20 +104,19 @@
     try {
       await updateLicenseStatus(id, status);
       await queryClient.invalidateQueries({ queryKey: ['licenses'] });
-      showToast(status === 'revoked' ? 'تم إلغاء الترخيص.' : 'تم تفعيل الترخيص بنجاح.');
+      showToast(status === 'revoked' ? 'تم إلغاء الترخيص وتعطيله.' : 'تم تفعيل الترخيص بنجاح.');
     } catch (err: any) {
-      alert(err.message);
+      showToast('⚠️ خطأ في تعديل الحالة: ' + err.message);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('هل أنت متأكد من حذف هذا الترخيص نهائياً من قاعدة البيانات؟')) return;
     try {
       await deleteLicense(id);
       await queryClient.invalidateQueries({ queryKey: ['licenses'] });
-      showToast('تم حذف الترخيص بنجاح من قاعدة البيانات.');
+      showToast('🗑️ تم حذف الترخيص بنجاح من قاعدة البيانات.');
     } catch (err: any) {
-      alert(err.message);
+      showToast('⚠️ فشل الحذف: ' + err.message);
     }
   }
 
@@ -135,7 +143,7 @@
     <main class="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 selection:bg-indigo-500 selection:text-white">
       <div class="max-w-7xl mx-auto">
         <Navbar
-          onOpenNewModal={() => isModalOpen = true}
+          onOpenNewModal={() => (isModalOpen = true)}
           onExportSheet={handleExportSheet}
           onRefresh={handleRefresh}
           onLogout={handleLogout}
@@ -155,14 +163,14 @@
 
         <NewLicenseModal
           isOpen={isModalOpen}
-          onClose={() => isModalOpen = false}
+          onClose={() => (isModalOpen = false)}
           onSubmit={handleCreate}
           {isSubmitting}
           churches={availableChurches}
         />
 
         {#if toastMsg}
-          <div class="fixed bottom-6 left-6 z-50 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-medium text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-2xl animate-in slide-in-from-bottom duration-200 border border-indigo-400/40 flex items-center gap-2">
+          <div class="fixed bottom-6 left-6 z-50 bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 text-white font-semibold text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-2xl animate-in slide-in-from-bottom duration-200 border border-indigo-400/40 flex items-center gap-2">
             <span>🔔</span>
             <span>{toastMsg}</span>
           </div>

@@ -32,6 +32,11 @@ export async function createLicense(payload: CreateLicensePayload): Promise<Lice
     notes = notes ? `${user} - ${notes}` : user;
   }
 
+  if (payload.services && payload.services.length > 0) {
+    const servicesTag = `[خدمات: ${payload.services.join('، ')}]`;
+    notes = notes ? `${notes} | ${servicesTag}` : servicesTag;
+  }
+
   const res = await fetch('/api/licenses', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

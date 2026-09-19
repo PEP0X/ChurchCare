@@ -10,11 +10,20 @@ export interface License {
   notes: string | null;
 }
 
+export interface ChurchServiceItem {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  badgeClass: string;
+}
+
 export interface CreateLicensePayload {
   client_name: string;
   notes?: string;
   church_name?: string;
   user_name?: string;
+  services?: string[];
 }
 
 export interface ApiResponse<T> {
