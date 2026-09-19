@@ -1,6 +1,6 @@
 [package]
 name = "church-care-app"
-version = "1.2.2"
+version = "1.2.3"
 description = "Desktop App for Egyptian Church Social Care"
 authors = ["Antigravity"]
 edition = "2021"
