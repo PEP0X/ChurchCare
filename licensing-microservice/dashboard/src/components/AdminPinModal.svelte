@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Dialog, PinInput, REGEXP_ONLY_DIGITS } from 'bits-ui';
-  import { Lock, ShieldCheck, ArrowLeft, KeyRound } from '@lucide/svelte';
+  import { Lock, ShieldCheck, KeyRound, Eye, EyeOff, XCircle } from '@lucide/svelte';
 
   let {
     isOpen,
@@ -11,6 +11,7 @@
   } = $props();
 
   let pin = $state('');
+  let showPin = $state(false);
   let errorMsg = $state<string | null>(null);
 
   const CORRECT_PIN = '320702';
@@ -21,18 +22,28 @@
       localStorage.setItem('church_care_admin_auth', 'authenticated_320702');
       onSuccess();
     } else {
-      errorMsg = 'رمز الدخول غير صحيح. يرجى المحاولة مرة أخرى.';
-      pin = '';
+      errorMsg = 'رمز الدخول غير صحيح. يرجى التأكد من الرمز والمحاولة مرة أخرى.';
     }
   }
 
   function handleSubmit(e?: Event) {
     if (e) e.preventDefault();
+    if (!pin || pin.length < 6) {
+      errorMsg = 'يرجى إدخال الرمز المكون من 6 أرقام بالكامل';
+      return;
+    }
     verifyPin(pin);
   }
 
   function handleComplete() {
-    verifyPin(pin);
+    if (pin.trim() === CORRECT_PIN) {
+      verifyPin(pin);
+    }
+  }
+
+  function clearPin() {
+    pin = '';
+    errorMsg = null;
   }
 </script>
 
@@ -59,30 +70,72 @@
       </Dialog.Description>
 
       {#if errorMsg}
-        <div class="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs py-2.5 px-3 rounded-2xl mb-5 animate-bounce">
+        <div class="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs py-2.5 px-3 rounded-2xl mb-5">
           {errorMsg}
         </div>
       {/if}
 
       <form onsubmit={handleSubmit} class="space-y-6">
         <!-- Bits UI PinInput -->
-        <div class="flex justify-center" dir="ltr">
-          <PinInput.Root
-            bind:value={pin}
-            maxlength={6}
-            pattern={REGEXP_ONLY_DIGITS}
-            onComplete={handleComplete}
-            class="flex items-center justify-center gap-2 sm:gap-2.5"
-          >
-            {#snippet children({ cells })}
-              {#each cells as cell}
-                <PinInput.Cell
-                  {cell}
-                  class="w-11 h-13 sm:w-12 sm:h-14 rounded-2xl bg-slate-950 border-2 border-slate-800 text-white font-mono font-bold text-xl flex items-center justify-center transition-all duration-150 data-[active]:border-indigo-500 data-[active]:ring-2 data-[active]:ring-indigo-500/40 shadow-inner"
-                />
-              {/each}
-            {/snippet}
-          </PinInput.Root>
+        <div class="flex flex-col items-center gap-3">
+          <div class="flex justify-center" dir="ltr">
+            <PinInput.Root
+              bind:value={pin}
+              maxlength={6}
+              pattern={REGEXP_ONLY_DIGITS}
+              onComplete={handleComplete}
+              onValueChange={() => { errorMsg = null; }}
+              class="flex items-center justify-center gap-2 sm:gap-2.5"
+            >
+              {#snippet children({ cells })}
+                {#each cells as cell}
+                  <PinInput.Cell
+                    {cell}
+                    class="relative w-11 h-14 sm:w-12 sm:h-16 rounded-2xl bg-slate-950 border-2 {errorMsg ? 'border-rose-500/60' : 'border-slate-800'} text-white font-mono font-black text-2xl flex items-center justify-center transition-all duration-150 data-[active]:border-indigo-500 data-[active]:ring-2 data-[active]:ring-indigo-500/40 shadow-inner select-none"
+                  >
+                    {#if cell.char !== null}
+                      <span class="animate-in zoom-in-75 duration-100 {showPin ? 'text-indigo-300' : 'text-slate-200'}">
+                        {showPin ? cell.char : '●'}
+                      </span>
+                    {/if}
+                    {#if cell.hasFakeCaret}
+                      <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                        <div class="h-6 w-0.5 bg-indigo-400 animate-pulse"></div>
+                      </div>
+                    {/if}
+                  </PinInput.Cell>
+                {/each}
+              {/snippet}
+            </PinInput.Root>
+          </div>
+
+          <!-- Helper controls: Show/Hide & Clear -->
+          <div class="flex items-center justify-center gap-4 text-xs text-slate-400">
+            <button
+              type="button"
+              onclick={() => showPin = !showPin}
+              class="hover:text-indigo-400 transition flex items-center gap-1.5 cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-800/50"
+            >
+              {#if showPin}
+                <EyeOff class="w-3.5 h-3.5" />
+                <span>إخفاء الرمز</span>
+              {:else}
+                <Eye class="w-3.5 h-3.5" />
+                <span>إظهار الرمز</span>
+              {/if}
+            </button>
+
+            {#if pin.length > 0}
+              <button
+                type="button"
+                onclick={clearPin}
+                class="hover:text-rose-400 transition flex items-center gap-1 cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-800/50"
+              >
+                <XCircle class="w-3.5 h-3.5" />
+                <span>مسح ({pin.length}/6)</span>
+              </button>
+            {/if}
+          </div>
         </div>
 
         <button
