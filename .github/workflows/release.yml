@@ -59,11 +59,21 @@ jobs:
         with:
           workspaces: "./church-care-desktop-main/src-tauri -> target"
 
+      - name: Prepare Signing Key
+        shell: pwsh
+        run: |
+          $cleanKey = "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}".Trim()
+          $keyFile = "$HOME\churchcare.key"
+          [System.IO.File]::WriteAllText($keyFile, $cleanKey)
+          echo "TAURI_SIGNING_PRIVATE_KEY=$cleanKey" >> $env:GITHUB_ENV
+          echo "TAURI_SIGNING_PRIVATE_KEY_PATH=$keyFile" >> $env:GITHUB_ENV
+
       - name: Build Desktop Application & Generate Auto-Update Release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PATH: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PATH }}
         with:
           projectPath: "./church-care-desktop-main"
           tagName: ${{ github.ref_name }}
