@@ -36,9 +36,9 @@
           <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             ChurchCare Licensing Service
           </h1>
-          <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+          <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm shadow-emerald-500/10">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            سحابي مباشر
+            Firebase Realtime
           </span>
           {#if totalCount > 0}
             <span class="text-xs font-semibold text-slate-400 bg-slate-800/80 px-2.5 py-0.5 rounded-full border border-slate-700/60 font-mono">

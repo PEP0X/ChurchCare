@@ -186,7 +186,7 @@ pub fn check_local_license() -> LicenseStatus {
     }
 }
 
-/// Queries Supabase RPC validate_license and falls back to local microservice
+/// Queries cloud validation (Vercel/Firestore), then Supabase RPC validate_license, then local microservice
 pub fn query_remote_validation(serial: &str, hwid: &str) -> Result<bool, String> {
     let client = match reqwest::blocking::Client::builder()
         .timeout(std::time::Duration::from_secs(4))
@@ -195,15 +195,31 @@ pub fn query_remote_validation(serial: &str, hwid: &str) -> Result<bool, String>
             Err(e) => return Err(format!("فشل تهيئة الاتصال: {}", e)),
         };
 
-    let supabase_url = obfstr!("https://pluijiucmbqjwnaoyyhi.supabase.co").to_string();
-    let publishable_key = obfstr!("sb_publishable_AXTJg_CXmTcON9dIgDdHYA_QQcOgTBt").to_string();
-
-    // 1. First priority: Supabase RPC validate_license
-    let endpoint = format!("{}/rest/v1/rpc/validate_license", supabase_url);
     let body = serde_json::json!({
         "p_serial": serial.trim(),
         "p_hwid": hwid.trim()
     });
+
+    // 1. Primary priority: Cloud Vercel / Firebase Firestore (/api/validate)
+    let cloud_validate = obfstr!("https://coptic-care.vercel.app/api/validate").to_string();
+    if let Ok(res) = client.post(&cloud_validate)
+        .header("Content-Type", "application/json")
+        .json(&body)
+        .send()
+    {
+        if res.status().is_success() {
+            if let Ok(val) = res.json::<ServerValidationResponse>() {
+                if let Some(valid) = val.valid {
+                    return Ok(valid);
+                }
+            }
+        }
+    }
+
+    // 2. Secondary fallback: Supabase RPC validate_license
+    let supabase_url = obfstr!("https://pluijiucmbqjwnaoyyhi.supabase.co").to_string();
+    let publishable_key = obfstr!("sb_publishable_AXTJg_CXmTcON9dIgDdHYA_QQcOgTBt").to_string();
+    let endpoint = format!("{}/rest/v1/rpc/validate_license", supabase_url);
 
     if let Ok(res) = client.post(&endpoint)
         .header("apikey", &publishable_key)
@@ -221,7 +237,7 @@ pub fn query_remote_validation(serial: &str, hwid: &str) -> Result<bool, String>
         }
     }
 
-    // 2. Second priority: Licensing microservice (http://localhost:4040/api/validate)
+    // 3. Third priority: Licensing microservice (http://localhost:4040/api/validate)
     let ms_endpoint = "http://localhost:4040/api/validate";
     let ms_body = serde_json::json!({
         "serial_key": serial.trim(),
@@ -343,7 +359,7 @@ fn save_local_license(lic: &LicenseData) -> Result<(), String> {
     Ok(())
 }
 
-/// Calls Supabase activation endpoint via HTTPS and binds license to this machine
+/// Calls cloud activation endpoint (Vercel/Firestore) via HTTPS with fallback to Supabase, binding license to this machine
 pub fn activate_license_online(serial: &str) -> Result<LicenseStatus, String> {
     let current_hwid = get_hardware_id();
     let cleaned_serial = serial.trim().to_uppercase();
@@ -352,9 +368,6 @@ pub fn activate_license_online(serial: &str) -> Result<LicenseStatus, String> {
         return Err("يرجى إدخال السيريال.".to_string());
     }
 
-    let supabase_url = obfstr!("https://pluijiucmbqjwnaoyyhi.supabase.co").to_string();
-    let publishable_key = obfstr!("sb_publishable_AXTJg_CXmTcON9dIgDdHYA_QQcOgTBt").to_string();
-
     let device_name = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "Desktop-PC".to_string());
 
     let client = reqwest::blocking::Client::builder()
@@ -362,13 +375,56 @@ pub fn activate_license_online(serial: &str) -> Result<LicenseStatus, String> {
         .build()
         .map_err(|e| format!("فشل تهيئة الاتصال بالشبكة: {}", e))?;
 
-    let endpoint = format!("{}/rest/v1/rpc/activate_license", supabase_url);
-
     let body = serde_json::json!({
         "p_serial": cleaned_serial,
         "p_hwid": current_hwid,
         "p_device_name": device_name
     });
+
+    // 1. Primary priority: Cloud Vercel / Firebase Firestore endpoint
+    let cloud_activate = obfstr!("https://coptic-care.vercel.app/api/activate").to_string();
+    if let Ok(res) = client.post(&cloud_activate)
+        .header("Content-Type", "application/json")
+        .json(&body)
+        .send()
+    {
+        if res.status().is_success() {
+            if let Ok(rpc_res) = res.json::<SupabaseRpcResponse>() {
+                if rpc_res.success {
+                    let lic_data = LicenseData {
+                        serial_key: rpc_res.serial_key.unwrap_or_else(|| cleaned_serial.clone()),
+                        client_name: rpc_res.client_name.unwrap_or_else(|| "العميل".to_string()),
+                        hwid: rpc_res.hwid.unwrap_or_else(|| current_hwid.clone()),
+                        activated_at: rpc_res.activated_at.unwrap_or_else(|| chrono::Utc::now().to_rfc3339()),
+                        license_type: rpc_res.license_type.unwrap_or_else(|| "LIFETIME".to_string()),
+                        signature: rpc_res.signature.ok_or("لم يرسل السيرفر توقيعاً رقمياً معتمداً.")?,
+                    };
+
+                    if verify_license_signature(&lic_data) {
+                        save_local_license(&lic_data)?;
+                        return Ok(LicenseStatus {
+                            is_licensed: true,
+                            client_name: Some(lic_data.client_name),
+                            serial_key: Some(lic_data.serial_key),
+                            hwid: current_hwid,
+                            message: "تم تفعيل البرنامج بنجاح مدى الحياة لهذا الجهاز!".to_string(),
+                        });
+                    }
+                } else if let Some(code) = rpc_res.error_code.as_deref() {
+                    // Stop on explicit status errors (Revoked or Hardware Mismatch)
+                    if code == "LICENSE_REVOKED" || code == "HARDWARE_MISMATCH" {
+                        let msg = rpc_res.message.unwrap_or_else(|| "فشل التفعيل.".to_string());
+                        return Err(msg);
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Secondary fallback: Supabase RPC activate_license
+    let supabase_url = obfstr!("https://pluijiucmbqjwnaoyyhi.supabase.co").to_string();
+    let publishable_key = obfstr!("sb_publishable_AXTJg_CXmTcON9dIgDdHYA_QQcOgTBt").to_string();
+    let endpoint = format!("{}/rest/v1/rpc/activate_license", supabase_url);
 
     let res = client.post(&endpoint)
         .header("apikey", &publishable_key)
