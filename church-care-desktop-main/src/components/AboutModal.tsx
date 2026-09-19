@@ -134,6 +134,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   2026
                 </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
+                  v1.2.1
+                </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
                 خدمة أخوة الرب - خدمة القلب المتسع (ChurchCare Desktop)
