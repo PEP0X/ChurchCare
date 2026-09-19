@@ -17,7 +17,8 @@ $repo = "PEP0X/ChurchCare"
 $apiUrl = "https://api.github.com/repos/$repo/releases/latest"
 
 try {
-    $release = Invoke-RestMethod -Uri $apiUrl -Method Get
+    $headers = @{ "User-Agent" = "ChurchCare-Updater" }
+    $release = Invoke-RestMethod -Uri $apiUrl -Headers $headers -Method Get
     $asset = $release.assets | Where-Object { $_.name -like "*x64-setup.exe" } | Select-Object -First 1
     
     if (-not $asset) {
