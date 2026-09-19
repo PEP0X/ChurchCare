@@ -32,6 +32,16 @@ export interface AidLedgerEntry {
   recipient_signature: string;
 }
 
+export type HusbandStatus =
+  | "present"     // متواجد (على قيد الحياة)
+  | "deceased"    // متوفي
+  | "abandoned"   // تارك المنزل
+  | "apostate"    // خارج الحظيرة
+  | "separated"   // منفصل / طلاق
+  | "traveler"    // مسافر / غائب
+  | "prisoner"    // سجين / محبوس
+  | "other";      // أخرى
+
 export interface CaseStudyData {
   husband_id_image?: string;
   husband_id_back_image?: string;
@@ -70,6 +80,8 @@ export interface CaseStudyData {
       phone: string;
       confession_father: string;
       insurance_no: string;
+      status?: HusbandStatus;
+      custom_status?: string;
     };
     wife: {
       name: string;

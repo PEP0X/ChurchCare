@@ -8,6 +8,8 @@ import { ImageCropperModal } from "./components/studio/ImageCropperModal";
 import { invoke } from "@tauri-apps/api/core";
 import { ActivationModal } from "./components/ActivationModal";
 import { AboutModal } from "./components/AboutModal";
+import { UpdateNotificationModal } from "./components/UpdateNotificationModal";
+import { checkForAppUpdates, UpdateCheckResult } from "./services/updaterService";
 import { useSidecar } from "./hooks/useSidecar";
 import { parseEgyptianNationalId } from "./hooks/useNationalId";
 import { recalculatePage4Totals } from "./utils/page4Calculations";
@@ -52,10 +54,29 @@ import {
   ExtraPage,
   ExtraIdCardsPage,
   ExtraBirthCertsPage,
-  DuplicatedLedgerPage
+  DuplicatedLedgerPage,
+  HusbandStatus
 } from "./types/schema";
 import { isChurchNameLocked, getLockedChurchName } from "./utils/churchLicense";
-import { getHeadOfHouseholdName, getCaseStudyFileName, getCaseStudyDisplayName } from "./utils/caseStudyUtils";
+import {
+  getHeadOfHouseholdName,
+  getCaseStudyFileName,
+  getCaseStudyDisplayName,
+  isHusbandAbsent,
+  getHusbandStatusLabel,
+  HUSBAND_STATUS_LABELS
+} from "./utils/caseStudyUtils";
+
+const HUSBAND_STATUS_OPTIONS: { id: HusbandStatus; label: string; icon: string; desc: string }[] = [
+  { id: "present", label: "متواجد (عايش)", icon: "🟢", desc: "الزوج متواجد وهو عائل الأسرة الأساسي" },
+  { id: "deceased", label: "متوفي", icon: "⚰️", desc: "الزوج متوفي والزوجة أصبحت أرملة ورب الأسرة" },
+  { id: "abandoned", label: "تارك المنزل", icon: "🚪", desc: "الزوج ترك المنزل والأسرة والزوجة هي العائل" },
+  { id: "apostate", label: "خارج الحظيرة", icon: "⚠️", desc: "ترك العقيدة والزوجة هي رب الأسرة" },
+  { id: "separated", label: "منفصل / طلاق", icon: "⚖️", desc: "انفصال الزوجين والزوجة ترعى الأبناء" },
+  { id: "traveler", label: "مسافر / غائب", icon: "✈️", desc: "الزوج مسافر أو مغترب والزوجة تدير المنزل" },
+  { id: "prisoner", label: "سجين / محبوس", icon: "🔒", desc: "الزوج مقيد الحرية والزوجة رب الأسرة" },
+  { id: "other", label: "أخرى...", icon: "✍️", desc: "حالة استثنائية أخرى يحددها الباحث" }
+];
 
 const BINDING_ALIASES: Record<string, string[]> = {
   "page6.head_name": ["page6.family_head", "page2.husband.name", "page2.wife.name"],
@@ -195,7 +216,9 @@ const INITIAL_EMPTY_STATE: CaseStudyData = {
       salary: "",
       phone: "",
       confession_father: "",
-      insurance_no: ""
+      insurance_no: "",
+      status: "present",
+      custom_status: ""
     },
     wife: {
       name: "",
@@ -391,7 +414,9 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
       salary: rawHusband.salary ?? "",
       phone: String(rawHusband.phone || ""),
       confession_father: String(rawHusband.confession_father || rawHusband.confessionFather || ""),
-      insurance_no: String(rawHusband.insurance_no || rawHusband.insuranceNo || "")
+      insurance_no: String(rawHusband.insurance_no || rawHusband.insuranceNo || ""),
+      status: rawHusband.status || "present",
+      custom_status: String(rawHusband.custom_status || "")
     },
     wife: {
       name: String(rawWife.name || ""),
@@ -492,7 +517,7 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
       total_expenses: rawExpenses.total_expenses ?? ""
     }
   };
-  page4 = recalculatePage4Totals(page4);
+  page4 = recalculatePage4Totals(page4, raw);
 
   const rawP5 = raw.page5 || raw.Page5 || {};
   const rawComm = Array.isArray(rawP5.committee_members) ? rawP5.committee_members : [];
@@ -512,7 +537,7 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   const rawP6 = raw.page6 || raw.Page6 || {};
   const rawSigs = Array.isArray(rawP6.signatures) ? rawP6.signatures : [];
   const page6: CaseStudyData["page6"] = {
-    family_head: String(rawP6.family_head || rawP6.head_name || rawHusband.name || rawWife.name || ""),
+    family_head: String(rawP6.family_head || rawP6.head_name || getHeadOfHouseholdName({ page2, page6: rawP6 }) || ""),
     church_records_id: String(rawP6.church_records_id || rawP6.church_id || rawP1.church_study_id || rawP1.churchStudyId || ""),
     cathedral_care_id: String(rawP6.cathedral_care_id || rawP6.care_id || rawP1.cathedral_care_id || rawP1.cathedralCareId || ""),
     church_membership_id: String(rawP6.church_membership_id || rawP6.member_id || rawP1.church_membership_id || rawP1.churchMembershipId || ""),
@@ -629,6 +654,23 @@ export const App: React.FC = () => {
   const [showActivationModal, setShowActivationModal] = useState<boolean>(false);
   const [showAboutModal, setShowAboutModal] = useState<boolean>(false);
   const [licenseReason, setLicenseReason] = useState<string | null>(null);
+  const [activeUpdateInfo, setActiveUpdateInfo] = useState<UpdateCheckResult | null>(null);
+
+  // Auto-check for updates on launch (silent background check)
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const update = await checkForAppUpdates();
+        if (update.available) {
+          setActiveUpdateInfo(update);
+        }
+      } catch (err) {
+        console.debug("Silent update check skipped:", err);
+      }
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Church-Locked Licensing: if license client name starts with "كنيسة", lock church everywhere!
   const isChurchLocked = isLicensed && isChurchNameLocked(licensedClientName);
@@ -959,8 +1001,14 @@ export const App: React.FC = () => {
           church_name: lockedChurchName
         };
       }
-      if (updated.page4) {
-        next.page4 = recalculatePage4Totals(next.page4);
+      const hasPage4RelatedChanges = Boolean(
+        updated.page4 ||
+        updated.page2?.husband?.salary !== undefined ||
+        updated.page2?.wife?.salary !== undefined ||
+        Object.keys(updated).some((k) => k.startsWith("الدخل الشهري"))
+      );
+      if (hasPage4RelatedChanges && next.page4) {
+        next.page4 = recalculatePage4Totals(next.page4, next);
       }
 
       // Automatically mirror/propagate Page 1 IDs into Page 6 (سجل الصرف) and duplicate ledgers
@@ -992,14 +1040,36 @@ export const App: React.FC = () => {
         }
       }
 
-      // Automatically propagate Head of Household to Page 6 if not manually overridden
+      // Automatically propagate Head of Household to Page 6 if not manually overridden or when husband status changed
+      const husbandStatusChanged = updated.page2?.husband?.status !== undefined &&
+        updated.page2.husband.status !== prev.page2?.husband?.status;
       const head = getHeadOfHouseholdName(next);
       const prevHead = getHeadOfHouseholdName(prev);
-      if (head && (!next.page6?.family_head || next.page6.family_head === prevHead)) {
+
+      if (head && (husbandStatusChanged || !next.page6?.family_head || next.page6.family_head === prevHead)) {
         next.page6 = {
           ...next.page6,
           family_head: head
         };
+      }
+
+      // Also propagate head to any duplicated ledger extra pages
+      if (head && next.extra_pages) {
+        next.extra_pages = next.extra_pages.map((ep) => {
+          if (ep.type === "duplicated_ledger") {
+            const currentP6Data = ep.page6Data || {};
+            if (husbandStatusChanged || !currentP6Data.family_head || currentP6Data.family_head === prevHead) {
+              return {
+                ...ep,
+                page6Data: {
+                  ...currentP6Data,
+                  family_head: head
+                }
+              };
+            }
+          }
+          return ep;
+        });
       }
 
       return next;
@@ -1008,9 +1078,133 @@ export const App: React.FC = () => {
     setSaveStatus("تعديلات غير محفوظة (Ctrl+S للحفظ)");
   };
 
+  const currentHusbandStatus = (data.page2?.husband?.status || "present") as HusbandStatus;
+  const husbandIsAbsent = isHusbandAbsent(data.page2?.husband);
+
+  const handleSetHusbandStatus = (newStatus: HusbandStatus) => {
+    const prevHusband = data.page2?.husband || {
+      name: "",
+      nickname: "",
+      national_id: "",
+      job: "",
+      salary: "",
+      phone: "",
+      confession_father: "",
+      insurance_no: "",
+      status: "present"
+    };
+
+    const updatedHusband = {
+      ...prevHusband,
+      status: newStatus
+    };
+
+    handleUpdate({
+      page2: {
+        ...data.page2,
+        husband: updatedHusband
+      }
+    });
+
+    const statusLabel = HUSBAND_STATUS_LABELS[newStatus] || newStatus;
+    if (newStatus !== "present") {
+      const wife = data.page2?.wife?.name?.trim();
+      showToast(
+        wife
+          ? `تم تحديد حالة الزوج: (${statusLabel}) — الزوجة (${wife}) أصبحت رب الأسرة رسمياً في صفحة 6 وسجل الصرف`
+          : `تم تحديد حالة الزوج: (${statusLabel}) — الزوجة أصبحت رب الأسرة رسمياً في كافة المستندات`,
+        "success"
+      );
+    } else {
+      showToast("تم ضبط حالة الزوج: متواجد (عائل الأسرة الأساسي)", "info");
+    }
+  };
+
+  const handleCustomHusbandStatusChange = (text: string) => {
+    const prevHusband = data.page2?.husband || {
+      name: "",
+      nickname: "",
+      national_id: "",
+      job: "",
+      salary: "",
+      phone: "",
+      confession_father: "",
+      insurance_no: "",
+      status: "other"
+    };
+
+    handleUpdate({
+      page2: {
+        ...data.page2,
+        husband: {
+          ...prevHusband,
+          status: "other",
+          custom_status: text
+        }
+      }
+    });
+  };
+
+  const handleAutoApplyHusbandStatusToOtherPages = () => {
+    const husband = data.page2?.husband;
+    const status = husband?.status || "present";
+    const statusLabel = getHusbandStatusLabel(husband);
+    const wifeName = data.page2?.wife?.name?.trim() || "الزوجة";
+
+    if (status === "present") {
+      showToast("الزوج مسجل كمتواجد، لا توجد أسباب استثنائية لترحيلها", "info");
+      return;
+    }
+
+    const note = `الأسرة تعولها ${wifeName} نظراً لأن الزوج (${statusLabel}).`;
+    const committeeReason = `الموافقة على تقديم المساعدة نظراً لغياب عائل الأسرة (الزوج ${statusLabel}) وتحمل ${wifeName} مسؤولية الأسرة بالكامل.`;
+
+    const updatedP3 = {
+      ...data.page3,
+      family_members_notes: data.page3?.family_members_notes
+        ? (data.page3.family_members_notes.includes(statusLabel)
+            ? data.page3.family_members_notes
+            : `${data.page3.family_members_notes}\n• ${note}`)
+        : note,
+      medical_conditions: {
+        ...data.page3?.medical_conditions,
+        abandoned_parent:
+          status === "abandoned"
+            ? "الزوج تارك المنزل والأسرة"
+            : data.page3?.medical_conditions?.abandoned_parent || ""
+      }
+    };
+
+    const updatedP5 = {
+      ...data.page5,
+      entry_reason: data.page5?.entry_reason
+        ? (data.page5.entry_reason.includes(statusLabel)
+            ? data.page5.entry_reason
+            : `${data.page5.entry_reason}\n• ${committeeReason}`)
+        : committeeReason,
+      notes: data.page5?.notes
+        ? (data.page5.notes.includes(statusLabel)
+            ? data.page5.notes
+            : `${data.page5.notes}\n• ${note}`)
+        : note
+    };
+
+    handleUpdate({
+      page3: updatedP3,
+      page5: updatedP5
+    });
+
+    showToast("✓ تم تحديث ملاحظات صفحة 3 وقرار اللجنة في صفحة 5 بنجاح بناءً على حالة الزوج", "success");
+  };
+
   // Safe path value reader
   const getValueByPath = (obj: any, path: string): any => {
     if (!path || !obj) return "";
+    if (path === "page6.family_head" || path === "page6.head_name") {
+      if (obj.page6?.family_head) return obj.page6.family_head;
+      const head = getHeadOfHouseholdName(obj);
+      if (head) return head;
+    }
     if (obj[path] !== undefined && obj[path] !== null && obj[path] !== "") return obj[path];
     const parts = path.replace(/\[/g, ".").replace(/\]/g, "").split(".").filter(Boolean);
     let current = obj;
@@ -1155,13 +1349,17 @@ export const App: React.FC = () => {
           return;
         }
 
-        // Use native Rust file writing command (bypasses all sandbox/scope limitations)
-        await invoke("save_text_file", { path: chosenPath, content: jsonStr });
+        const normalizedChosenPath = chosenPath.toLowerCase().endsWith(`.${ext}`)
+          ? chosenPath
+          : `${chosenPath}.${ext}`;
 
-        setCurrentFilePath(chosenPath);
+        // Use native Rust file writing command (bypasses all sandbox/scope limitations)
+        await invoke("save_text_file", { path: normalizedChosenPath, content: jsonStr });
+
+        setCurrentFilePath(normalizedChosenPath);
         safeSaveToLocalStorage(data);
         setHasUnsavedChanges(false);
-        const fileName = chosenPath.split(/[\/\\]/).pop() || chosenPath;
+        const fileName = normalizedChosenPath.split(/[\/\\]/).pop() || normalizedChosenPath;
         const imgCount = countEmbeddedImages(data);
         setSaveStatus("تم الحفظ في ملف");
         showToast(`تم حفظ ملف الحالة (${fileName}) بنجاح مع تضمين كافة الصور والبطاقات (${imgCount} صورة مدمجة)!`, "success");
@@ -1195,7 +1393,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // Export 300 DPI PDF with strict validation protection and dynamic layout
+  // Export 300 DPI PDF with strict validation protection and dynamic layout (Browse save dialog)
   const handleExport = async () => {
     if (validationErrors.length > 0) {
       const firstErr = validationErrors[0];
@@ -1210,19 +1408,22 @@ export const App: React.FC = () => {
 
     const defaultFileName = getCaseStudyFileName(data, "pdf");
 
-    let chosenPath = `/Users/saitama/Downloads/${defaultFileName}`;
+    let chosenPath = defaultFileName;
 
     if (isTauri) {
       try {
         const { save } = await import("@tauri-apps/plugin-dialog");
         const selected = await save({
           defaultPath: defaultFileName,
-          filters: [{ name: "ملفات PDF للطباعة (300 DPI)", extensions: ["pdf"] }]
+          filters: [
+            { name: "ملفات PDF للطباعة (300 DPI)", extensions: ["pdf"] },
+            { name: "كافة الملفات (*.*)", extensions: ["*"] }
+          ]
         });
         if (!selected) {
           return; // User cancelled file picker
         }
-        chosenPath = selected;
+        chosenPath = selected.toLowerCase().endsWith(".pdf") ? selected : `${selected}.pdf`;
       } catch (e: any) {
         console.warn("Tauri save dialog fallback:", e);
       }
@@ -1823,131 +2024,142 @@ export const App: React.FC = () => {
       {/* ==================================================================== */}
       {!ribbonCollapsed ? (
         <div className="h-20 bg-slate-900/95 border-b border-slate-800 px-3 flex items-stretch justify-between select-none z-20 shrink-0 backdrop-blur-md overflow-x-auto scrollbar-none">
-          <div className="flex items-stretch gap-1">
-            {/* Group 1: Document & Files (المستند والملفات) */}
-            <div className="flex flex-col justify-between py-1 px-2 border-l border-slate-800">
+          <div className="flex items-stretch gap-2 py-1">
+            {/* Group 1: Document & File Operations (ملفات البحث والمستند) */}
+            <div className="flex flex-col justify-between px-2.5 py-0.5 bg-slate-950/40 rounded-xl border border-slate-800/80">
               <div className="flex items-center gap-1.5 flex-1">
-                {/* Hero CTA Button: Export PDF 300 DPI */}
+                {/* 1. Hero CTA: Export PDF (Browse) */}
                 <button
                   type="button"
                   disabled={isGenerating}
                   onClick={handleExport}
-                  className="flex flex-col items-center justify-center px-4 py-1 rounded-xl bg-gradient-to-b from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold shadow-md shadow-amber-500/20 ring-1 ring-amber-300/50 cursor-pointer active:scale-98 transition-all disabled:opacity-50 h-[48px]"
-                  title="تصدير استمارة البحث الرسمية كملف PDF مفرود وجاهز للطباعة بدقة 300 DPI"
+                  className="group relative flex flex-col items-center justify-center px-4 py-1 rounded-xl bg-gradient-to-b from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold shadow-md shadow-amber-500/25 ring-1 ring-amber-300/70 cursor-pointer active:scale-95 transition-all disabled:opacity-50 h-[48px] min-w-[85px]"
+                  title="تصدير استمارة البحث كاملة كملف PDF عالي الدقة (300 DPI) مع تحديد مجلد الحفظ (Browse)"
                 >
-                  <FileDown className={`w-4 h-4 ${isGenerating ? "animate-bounce" : ""}`} />
-                  <span className="text-[11px] font-bold mt-0.5 whitespace-nowrap">
-                    {isGenerating ? "جارٍ التصدير..." : "تصدير PDF"}
+                  <div className="flex items-center gap-1">
+                    <FileDown className={`w-4 h-4 text-slate-950 ${isGenerating ? "animate-bounce" : "group-hover:-translate-y-0.5 transition-transform"}`} />
+                    <span className="text-[11.5px] font-black tracking-tight whitespace-nowrap">
+                      {isGenerating ? "جارٍ التصدير..." : "تصدير PDF"}
+                    </span>
+                  </div>
+                  <span className="text-[8.5px] font-bold text-amber-950/90 bg-amber-200/70 px-1.5 py-0.2 rounded mt-0.5 whitespace-nowrap">
+                    300 DPI (Browse)
                   </span>
                 </button>
 
-                {/* Save Study Button */}
+                {/* 2. Save .care (Browse) */}
                 <button
                   type="button"
-                  onClick={handleSave}
-                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-slate-800 text-slate-200 hover:text-amber-400 border border-slate-800 cursor-pointer transition-colors h-[48px]"
-                  title="حفظ التعديلات في ذاكرة البرنامج (Ctrl+S)"
+                  onClick={() => handleSaveAs(false)}
+                  className="group flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-900/80 hover:bg-emerald-950/40 text-slate-200 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/50 cursor-pointer transition-all active:scale-95 h-[48px] min-w-[76px]"
+                  title="حفظ بيانات دراسة الحالة كملف (.care) مع تحديد مكان الحفظ والمجلد (Browse)"
                 >
-                  <Save className="w-4 h-4 text-amber-400" />
-                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">حفظ (Ctrl+S)</span>
+                  <Save className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10.5px] font-bold mt-0.5 whitespace-nowrap">حفظ .care</span>
+                  <span className="text-[8.5px] text-slate-400 group-hover:text-emerald-300/80 -mt-0.5 whitespace-nowrap">(Browse)</span>
                 </button>
 
-                {/* Open Study Button */}
+                {/* 3. Open Study File (Ctrl+O) */}
                 <button
                   type="button"
                   onClick={handleOpenJson}
-                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-slate-800 text-slate-200 hover:text-sky-300 border border-slate-800 cursor-pointer transition-colors h-[48px]"
-                  title="فتح واستيراد ملف دراسة حالة (Ctrl+O)"
+                  className="group flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-900/80 hover:bg-sky-950/40 text-slate-200 hover:text-sky-300 border border-slate-800 hover:border-sky-500/50 cursor-pointer transition-all active:scale-95 h-[48px] min-w-[72px]"
+                  title="فتح واستيراد ملف دراسة حالة سابق بصيغة .care أو .json (Ctrl+O)"
                 >
-                  <FolderOpen className="w-4 h-4 text-sky-400" />
-                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">فتح (Ctrl+O)</span>
+                  <FolderOpen className="w-4 h-4 text-sky-400 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10.5px] font-bold mt-0.5 whitespace-nowrap">فتح ملف</span>
+                  <span className="text-[8.5px] text-slate-400 group-hover:text-sky-300/80 -mt-0.5 whitespace-nowrap">(Ctrl+O)</span>
                 </button>
 
-                {/* Reset / New Form Button */}
+                {/* 4. New Case Study (بحث جديد) */}
                 <button
                   type="button"
                   onClick={async () => {
-                    if (window.confirm("هل أنت متأكد من رغبتك في تفريغ كافة الحقول والبدء باستمارة جديدة؟\n(يُفضل حفظ نسخة من الملف الحالي أولاً إذا كنت ترغب بالاحتفاظ ببياناته)")) {
+                    if (window.confirm("هل أنت متأكد من رغبتك في تفريغ كافة الحقول والبدء ببحث جديد فارغ؟\n(يُفضل حفظ نسخة من الملف الحالي أولاً إذا كنت ترغب بالاحتفاظ ببياناته)")) {
                       const newEmpty = getCleanInitialState(isChurchLocked && lockedChurchName ? lockedChurchName : null);
                       setData(newEmpty);
                       setCurrentFilePath(null);
                       safeSaveToLocalStorage(newEmpty);
                       await clearSessionFromIndexedDB().catch((err) => console.warn("Clear session error:", err));
                       setHasUnsavedChanges(false);
-                      setSaveStatus("استمارة جديدة فارغة");
-                      showToast("تم تفريغ كافة الحقول والبدء باستمارة جديدة نظيفة بنجاح", "info");
+                      setSaveStatus("بحث جديد فارغ");
+                      showToast("تم تفريغ كافة الحقول والبدء ببحث جديد فارغ بنجاح", "info");
                     }
                   }}
-                  className="flex flex-col items-center justify-center px-2.5 py-1 rounded-xl bg-slate-950/70 hover:bg-rose-950/30 text-slate-400 hover:text-rose-300 border border-slate-800 cursor-pointer transition-colors h-[48px]"
-                  title="تفريغ كافة الحقول والبدء باستمارة فارغة"
+                  className="group flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-900/80 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border border-slate-800 hover:border-rose-500/50 cursor-pointer transition-all active:scale-95 h-[48px] min-w-[72px]"
+                  title="تفريغ كافة الحقول والبدء ببحث جديد فارغ"
                 >
-                  <RotateCcw className="w-4 h-4 text-rose-400/80" />
-                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">جديد</span>
+                  <RotateCcw className="w-4 h-4 text-rose-400/90 group-hover:-rotate-45 transition-transform" />
+                  <span className="text-[10.5px] font-bold mt-0.5 whitespace-nowrap text-rose-300">بحث جديد</span>
+                  <span className="text-[8.5px] text-slate-400 group-hover:text-rose-300/80 -mt-0.5 whitespace-nowrap">(استمارة فارغة)</span>
                 </button>
               </div>
-              <span className="text-[9px] text-slate-400 text-center font-semibold block mt-0.5 pt-0.5 border-t border-slate-800/40">المستند والملفات</span>
+              <span className="text-[9.5px] text-slate-400 text-center font-bold block pt-0.5 border-t border-slate-800/60 tracking-wide">
+                ملفات البحث والمستند
+              </span>
             </div>
 
-            {/* Group 2: Insert Pages (إدراج وتكرار صفحات) */}
-            <div className="flex flex-col justify-between py-1 px-2 border-l border-slate-800">
+            {/* Group 2: Insert & Manage Extra Pages (إدراج وتكرار الصفحات) */}
+            <div className="flex flex-col justify-between px-2.5 py-0.5 bg-slate-950/40 rounded-xl border border-slate-800/80">
               <div className="flex items-center gap-1.5 flex-1">
+                {/* 5. Duplicate Ledger Page */}
                 <button
                   type="button"
                   onClick={handleDuplicateLastPage}
-                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-emerald-950/40 text-slate-200 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/40 transition-all cursor-pointer h-[48px]"
-                  title="تكرار سجل المساعدات لشهر جديد"
+                  className="group flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-900/80 hover:bg-emerald-950/40 text-slate-200 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/50 cursor-pointer transition-all active:scale-95 h-[48px] min-w-[90px]"
+                  title="تكرار صفحة سجل المساعدات الشهرية لصرف شهر جديد بنفس البيانات"
                 >
-                  <CopyPlus className="w-4 h-4 text-emerald-400" />
-                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">تكرار سجل الصرف</span>
+                  <CopyPlus className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10.5px] font-bold mt-0.5 whitespace-nowrap">تكرار سجل الصرف</span>
+                  <span className="text-[8.5px] text-slate-400 group-hover:text-emerald-300/80 -mt-0.5 whitespace-nowrap">(شهر جديد)</span>
                 </button>
 
+                {/* 6. Add ID Cards Page (8) */}
                 <button
                   type="button"
                   onClick={handleAddIdCardsPage}
-                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-amber-950/40 text-slate-200 hover:text-amber-300 border border-slate-800 hover:border-amber-500/40 transition-all cursor-pointer h-[48px]"
-                  title="إضافة صفحة بطاقات رقم قومي (8 خانات رأسية)"
+                  className="group flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-900/80 hover:bg-amber-950/40 text-slate-200 hover:text-amber-300 border border-slate-800 hover:border-amber-500/50 cursor-pointer transition-all active:scale-95 h-[48px] min-w-[85px]"
+                  title="إدراج صفحة بطاقات رقم قومي ملونة (تتسع لـ 8 بطاقات)"
                 >
-                  <CreditCard className="w-4 h-4 text-amber-400" />
-                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">صفحة بطاقات (8)</span>
+                  <CreditCard className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10.5px] font-bold mt-0.5 whitespace-nowrap">صفحة بطاقات</span>
+                  <span className="text-[8.5px] text-slate-400 group-hover:text-amber-300/80 -mt-0.5 whitespace-nowrap">(8 بطاقات)</span>
                 </button>
 
+                {/* 7. Add Birth Certificates Page */}
                 <button
                   type="button"
                   onClick={handleAddBirthCertsPage}
-                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-sky-950/40 text-slate-200 hover:text-sky-300 border border-slate-800 hover:border-sky-500/40 transition-all cursor-pointer h-[48px]"
-                  title="إضافة صفحة شهادات ميلاد (شهادتين بالصفحة)"
+                  className="group flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-900/80 hover:bg-sky-950/40 text-slate-200 hover:text-sky-300 border border-slate-800 hover:border-sky-500/50 cursor-pointer transition-all active:scale-95 h-[48px] min-w-[85px]"
+                  title="إدراج صفحة إضافية لشهادات ميلاد الأبناء المميكنة"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-sky-400" />
-                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">شهادات ميلاد</span>
+                  <FileSpreadsheet className="w-4 h-4 text-sky-400 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10.5px] font-bold mt-0.5 whitespace-nowrap">شهادات ميلاد</span>
+                  <span className="text-[8.5px] text-slate-400 group-hover:text-sky-300/80 -mt-0.5 whitespace-nowrap">(إدراج صفحة)</span>
                 </button>
               </div>
-              <span className="text-[9px] text-slate-400 text-center font-semibold block mt-0.5 pt-0.5 border-t border-slate-800/40">إدراج صفحات</span>
+              <span className="text-[9.5px] text-slate-400 text-center font-bold block pt-0.5 border-t border-slate-800/60 tracking-wide">
+                إدراج وتكرار الصفحات
+              </span>
             </div>
 
-            {/* Group 3: Tools & Layout (أدوات وتخصيص) */}
-            <div className="flex flex-col justify-between py-1 px-2 border-l border-slate-800">
+            {/* Group 3: System & Info (معلومات) - Coordinate Studio is hidden! */}
+            <div className="flex flex-col justify-between px-2.5 py-0.5 bg-slate-950/40 rounded-xl border border-slate-800/80">
               <div className="flex items-center gap-1.5 flex-1">
                 <button
                   type="button"
-                  onClick={() => setAppMode("studio")}
-                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-slate-800 text-slate-200 hover:text-amber-400 border border-slate-800 transition-all cursor-pointer h-[48px]"
-                  title="تعديل أماكن الحقول بالسحب والإفلات"
-                >
-                  <Sliders className="w-4 h-4 text-amber-400" />
-                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">استوديو الإحداثيات</span>
-                </button>
-
-                <button
-                  type="button"
                   onClick={() => setShowAboutModal(true)}
-                  className="flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-950/70 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 transition-all cursor-pointer h-[48px]"
-                  title="حول البرنامج والترخيص"
+                  className="group flex flex-col items-center justify-center px-3 py-1 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 cursor-pointer transition-all active:scale-95 h-[48px] min-w-[72px]"
+                  title="بيانات ترخيص البرنامج والإصدار وجهة الاعتماد"
                 >
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span className="text-[10px] font-semibold mt-0.5 whitespace-nowrap">حول البرنامج</span>
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10.5px] font-bold mt-0.5 whitespace-nowrap">حول البرنامج</span>
+                  <span className="text-[8.5px] text-slate-400 group-hover:text-slate-300 -mt-0.5 whitespace-nowrap">(الترخيص)</span>
                 </button>
               </div>
-              <span className="text-[9px] text-slate-400 text-center font-semibold block mt-0.5 pt-0.5 border-t border-slate-800/40">أدوات وتخصيص</span>
+              <span className="text-[9.5px] text-slate-400 text-center font-bold block pt-0.5 border-t border-slate-800/60 tracking-wide">
+                معلومات
+              </span>
             </div>
           </div>
 
@@ -1956,8 +2168,8 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={() => setRibbonCollapsed(!ribbonCollapsed)}
-              className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
-              title="طي شريط الأوامر"
+              className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
+              title="طي / إظهار شريط الأوامر (Ctrl+F1)"
             >
               <ChevronUp className="w-4 h-4" />
             </button>
@@ -2379,7 +2591,16 @@ export const App: React.FC = () => {
         onClose={() => setShowAboutModal(false)}
         clientName={licensedClientName}
         onOpenActivation={() => setShowActivationModal(true)}
+        onOpenUpdateModal={(info) => setActiveUpdateInfo(info)}
       />
+
+      {/* 5. IN-APP AUTO-UPDATE NOTIFICATION MODAL */}
+      {activeUpdateInfo && (
+        <UpdateNotificationModal
+          updateInfo={activeUpdateInfo}
+          onClose={() => setActiveUpdateInfo(null)}
+        />
+      )}
 
       {/* Re-activation overlay if requested by user while licensed */}
       {showActivationModal && isLicensed && (

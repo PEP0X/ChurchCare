@@ -1,7 +1,7 @@
 import React from "react";
 import { CaseStudyData, AidLedgerEntry } from "../../types/schema";
-import { BookOpen, Plus, Trash2, Calendar, UserCheck } from "lucide-react";
-import { getHeadOfHouseholdName } from "../../utils/caseStudyUtils";
+import { BookOpen, Plus, Trash2, Calendar, UserCheck, Sparkles, CheckCheck } from "lucide-react";
+import { getHeadOfHouseholdName, getHeadOfHouseholdInfo } from "../../utils/caseStudyUtils";
 
 interface Page6FormProps {
   data: CaseStudyData;
@@ -11,6 +11,8 @@ interface Page6FormProps {
 export const Page6Form: React.FC<Page6FormProps> = ({ data, onChange }) => {
   const p6 = data.page6;
   const linkedHeadName = getHeadOfHouseholdName(data);
+  const headInfo = getHeadOfHouseholdInfo(data);
+  const effectiveHead = p6.family_head?.trim() || linkedHeadName;
 
   const updateHeader = (field: string, val: string) => {
     onChange({
@@ -35,6 +37,20 @@ export const Page6Form: React.FC<Page6FormProps> = ({ data, onChange }) => {
       page6: {
         ...p6,
         aid_ledger: [...p6.aid_ledger, newRow]
+      }
+    });
+  };
+
+  const syncAllSignaturesToHead = () => {
+    if (!effectiveHead) return;
+    const updated = p6.aid_ledger.map((row) => ({
+      ...row,
+      recipient_signature: effectiveHead
+    }));
+    onChange({
+      page6: {
+        ...p6,
+        aid_ledger: updated
       }
     });
   };
@@ -78,13 +94,21 @@ export const Page6Form: React.FC<Page6FormProps> = ({ data, onChange }) => {
         {/* رب الأسرة المستلم */}
         <div>
           <div className="flex items-center justify-between">
-            <label className="text-xs text-slate-300 font-medium">اسم رب الأسرة المستلم:</label>
+            <div className="flex items-center gap-1.5">
+              <label className="text-xs text-slate-300 font-medium">اسم رب الأسرة المستلم:</label>
+              {headInfo.isWifeLeading && (
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.2 rounded font-bold flex items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  الزوجة (الزوج: {headInfo.husbandStatusLabel})
+                </span>
+              )}
+            </div>
             {linkedHeadName && p6.family_head !== linkedHeadName && (
               <button
                 type="button"
                 onClick={() => updateHeader("family_head", linkedHeadName)}
                 className="text-[10px] text-amber-400 hover:text-amber-300 hover:underline cursor-pointer"
-                title="استرجاع الاسم المرتبط برقم البحث (الزوج أو الزوجة)"
+                title={`استرجاع الاسم المرتبط (${linkedHeadName})`}
               >
                 استرجاع الاسم المرتبط ({linkedHeadName})
               </button>
@@ -187,15 +211,28 @@ export const Page6Form: React.FC<Page6FormProps> = ({ data, onChange }) => {
           <span className="text-sm font-bold text-amber-400">
             سجل المساعدات المنصرفة ({p6.aid_ledger.length} من 20)
           </span>
-          <button
-            type="button"
-            onClick={addLedgerRow}
-            disabled={p6.aid_ledger.length >= 20}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs disabled:opacity-40"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            إضافة عملية صرف
-          </button>
+          <div className="flex items-center gap-2">
+            {p6.aid_ledger.length > 0 && effectiveHead && (
+              <button
+                type="button"
+                onClick={syncAllSignaturesToHead}
+                className="text-[11px] text-sky-300 hover:text-sky-200 bg-sky-950/60 hover:bg-sky-900/60 border border-sky-700/60 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                title={`تحديث خانة توقيع المستلم في كافة الأسطر إلى ${effectiveHead}`}
+              >
+                <CheckCheck className="w-3.5 h-3.5 text-sky-400" />
+                <span>تحديث التوقيع للمستلم ({effectiveHead})</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={addLedgerRow}
+              disabled={p6.aid_ledger.length >= 20}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs disabled:opacity-40 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              إضافة عملية صرف
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto max-h-[360px] overflow-y-auto">

@@ -4,7 +4,7 @@ import { parseEgyptianNationalId } from '../../hooks/useNationalId';
 import { DocumentLayout, FieldConfig } from '../../types/layout';
 import { DEFAULT_DOCUMENT_LAYOUT } from '../../config/defaultDocumentLayout';
 import { getTemplatePageImage } from '../../utils/templateImages';
-import { recalculatePage4Totals } from '../../utils/page4Calculations';
+import { recalculatePage4Totals, calculatePage2Salaries } from '../../utils/page4Calculations';
 import {
   Upload,
   Edit3,
@@ -12,9 +12,17 @@ import {
   CreditCard,
   FileSpreadsheet,
   CopyPlus,
-  RotateCw
+  RotateCw,
+  ChevronDown,
+  Check,
+  AlertCircle
 } from 'lucide-react';
-import { getHeadOfHouseholdName } from '../../utils/caseStudyUtils';
+import {
+  getHeadOfHouseholdName,
+  getEffectiveHusbandDisplayName,
+  isHusbandAbsent,
+  getHusbandStatusLabel
+} from '../../utils/caseStudyUtils';
 
 interface InteractiveDocumentCanvasProps {
   page: number;
@@ -101,6 +109,14 @@ function getValueByPath(obj: any, path: string): any {
     }
     return current ?? '';
   };
+
+  // Special intelligent handling for family head in page 6
+  if (path === 'page6.family_head' || path === 'page6.head_name') {
+    const rawHead = getRaw(obj, 'page6.family_head') || getRaw(obj, 'page6.head_name');
+    if (rawHead) return rawHead;
+    const computedHead = getHeadOfHouseholdName(obj);
+    if (computedHead) return computedHead;
+  }
 
   const directVal = getRaw(obj, path);
   if (directVal !== '' && directVal !== undefined) return directVal;
@@ -471,6 +487,7 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
   lockedChurchName = null
 }) => {
   const getPageImage = (p: number) => getTemplatePageImage(p);
+  const [husbandMenuOpen, setHusbandMenuOpen] = React.useState<boolean>(false);
 
   // Automatically scroll into view and focus highlighted erroneous field
   React.useEffect(() => {
@@ -492,10 +509,15 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
       return;
     }
     let updated = setValueByPath(data, binding, val);
-    if (binding.startsWith('page4') && updated.page4) {
+    const isPage4Related =
+      binding.startsWith('page4') ||
+      binding.startsWith('الدخل الشهري') ||
+      binding.includes('salary');
+
+    if (isPage4Related && updated.page4) {
       updated = {
         ...updated,
-        page4: recalculatePage4Totals(updated.page4)
+        page4: recalculatePage4Totals(updated.page4, updated)
       };
     }
     onChange(updated);
@@ -1057,6 +1079,111 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
 
       {/* Dynamic Overlay Fields from Visual Studio Layout */}
       <div className="absolute inset-0 select-auto">
+        {/* In-Canvas Quick Husband Status Pill for Page 2 */}
+        {page === 2 && (
+          <div
+            className="absolute z-20 flex items-center justify-center px-1"
+            style={{
+              left: '72%',
+              top: '6.2%',
+              width: '21%',
+              height: '3.8%'
+            }}
+          >
+            <div className="relative flex items-center">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setHusbandMenuOpen((prev) => !prev);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold shadow-md border transition-all cursor-pointer select-none active:scale-95 ${
+                  isHusbandAbsent(data.page2?.husband)
+                    ? "bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-600 ring-2 ring-amber-400/50"
+                    : "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-700 shadow-sm"
+                }`}
+                title="انقر لتغيير حالة الزوج ونقل رب الأسرة تلقائياً"
+              >
+                <span>{getHusbandStatusLabel(data.page2?.husband)}</span>
+                <ChevronDown
+                  className={`w-3 h-3 stroke-[2.5] transition-transform duration-200 ${
+                    husbandMenuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Menu under the Pill */}
+              {husbandMenuOpen && (
+                <>
+                  {/* Backdrop to close on click outside */}
+                  <div
+                    className="fixed inset-0 z-30 cursor-default"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setHusbandMenuOpen(false);
+                    }}
+                  />
+                  <div
+                    className="absolute top-full mt-1.5 right-0 w-48 bg-slate-900/98 border border-amber-500/60 rounded-xl shadow-2xl p-1.5 flex flex-col gap-0.5 z-40 backdrop-blur-md animate-in fade-in zoom-in-95 duration-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="text-[10px] text-amber-300 font-bold px-2 py-1 border-b border-slate-700/80 mb-0.5 flex items-center justify-between">
+                      <span>تحديد حالة الزوج:</span>
+                      <span className="text-[9px] text-slate-400 font-normal">(نقل رب الأسرة)</span>
+                    </div>
+                    {[
+                      { id: "present", label: "🟢 متواجد (عايش)" },
+                      { id: "deceased", label: "⚰️ متوفي" },
+                      { id: "abandoned", label: "🚪 تارك المنزل" },
+                      { id: "apostate", label: "⚠️ خارج الحظيرة" },
+                      { id: "separated", label: "⚖️ منفصل / طلاق" },
+                      { id: "traveler", label: "✈️ مسافر / غائب" },
+                      { id: "prisoner", label: "🔒 سجين / محبوس" },
+                      { id: "other", label: "✍️ أخرى..." }
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          handleFieldChange("page2.husband.status", item.id);
+                          if (item.id !== "other") {
+                            setHusbandMenuOpen(false);
+                          }
+                        }}
+                        className={`text-right px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center justify-between ${
+                          (data.page2?.husband?.status || "present") === item.id
+                            ? "bg-amber-500 text-slate-950 font-extrabold"
+                            : "text-slate-200 hover:bg-slate-800 hover:text-amber-300"
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        {(data.page2?.husband?.status || "present") === item.id && (
+                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                        )}
+                      </button>
+                    ))}
+
+                    {/* If other, custom text input */}
+                    {(data.page2?.husband?.status || "present") === "other" && (
+                      <div className="p-1.5 mt-1 border-t border-slate-700/80 flex flex-col gap-1">
+                        <span className="text-[10px] text-teal-300 font-bold">الحالة المخصصة:</span>
+                        <input
+                          type="text"
+                          value={data.page2?.husband?.custom_status || ""}
+                          onChange={(e) => handleFieldChange("page2.husband.custom_status", e.target.value)}
+                          placeholder="اكتب الحالة..."
+                          className="w-full text-[11px] font-bold rounded px-2 py-1 border border-teal-500 bg-slate-950 text-white focus:outline-none"
+                          autoFocus
+                        />
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {pageFields.map((field) => {
           const val = getValueByPath(data, field.binding);
           const rect = field.rect;
@@ -1366,6 +1493,18 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             ? 'animate-field-shake animate-field-error-glow ring-4 ring-rose-500 rounded-md z-30'
             : '';
 
+          const isHusbandName = field.binding === 'page2.husband.name';
+          const husbandStatusBadge = isHusbandName && isHusbandAbsent(data.page2?.husband);
+          const isBaseSalary = field.binding === 'page4.income.base_salary';
+          const page2Salaries = isBaseSalary ? calculatePage2Salaries(data) : 0;
+
+          const effectivePlaceholder =
+            husbandStatusBadge && !rawStr
+              ? `(الزوج ${getHusbandStatusLabel(data.page2?.husband)})`
+              : isBaseSalary && !rawStr && page2Salaries > 0
+              ? `مجموع ص2: ${page2Salaries}`
+              : (field.placeholder || '');
+
           return (
             <div
               key={field.id}
@@ -1378,6 +1517,11 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                 height: `${rect.height}%`
               }}
             >
+              {husbandStatusBadge && (
+                <div className="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 pointer-events-none flex items-center gap-1 bg-amber-500 text-slate-950 font-extrabold text-[9px] px-1.5 py-0.5 rounded shadow-xs">
+                  <span>{getHusbandStatusLabel(data.page2?.husband)}</span>
+                </div>
+              )}
               <AutoFitTextInput
                 id={`field-input-${field.id}`}
                 title={
@@ -1387,12 +1531,14 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                         : `⚠️ ${nidInfo?.errorMessage || 'الرقم القومي غير صحيح'}`)
                     : isPage4Total
                     ? `∑ ${field.label} (محسوب تلقائياً من عناصر الجدول)`
+                    : isHusbandName && husbandStatusBadge
+                    ? `حالة الزوج: ${getHusbandStatusLabel(data.page2?.husband)} — الزوجة هي رب الأسرة`
                     : undefined
                 }
                 type={isPage4Total ? 'text' : (field.type === 'number' && !isNationalId ? 'number' : 'text')}
                 readOnly={isPage4Total}
                 maxLength={isNationalId ? 14 : undefined}
-                placeholder={field.placeholder || ''}
+                placeholder={effectivePlaceholder}
                 value={rawStr}
                 onChange={(newVal) => handleFieldChange(field.binding, newVal)}
                 boxWidthPct={rect.width}

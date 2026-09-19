@@ -1,0 +1,73 @@
+name: "Release ChurchCare Desktop"
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python Dependencies for Sidecar
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller reportlab pymupdf pillow arabic-reshaper python-bidi
+
+      - name: Install Bun Dependencies
+        working-directory: ./church-care-desktop-main
+        run: bun install
+
+      - name: Build Python Sidecar Binary
+        working-directory: ./church-care-desktop-main
+        run: bun run build:sidecar
+
+      - name: Setup Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./church-care-desktop-main/src-tauri -> target"
+
+      - name: Build Desktop Application & Generate Auto-Update Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        with:
+          projectPath: "./church-care-desktop-main"
+          tagName: ${{ github.ref_name }}
+          releaseName: "ChurchCare Desktop ${{ github.ref_name }}"
+          releaseBody: "تحديث تلقائي جديد لتطبيق رعاية الكنائس ودراسة الحالة.\nراجع سجل التغييرات أدناه."
+          releaseDraft: false
+          prerelease: false

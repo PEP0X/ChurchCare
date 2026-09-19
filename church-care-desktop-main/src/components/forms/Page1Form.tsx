@@ -1,9 +1,15 @@
 import React from "react";
 import { CaseStudyData } from "../../types/schema";
 import { DropZone } from "../studio/DropZone";
-import { Calendar, Hash, MapPin, User, FileBadge, Lock, Building2, Users } from "lucide-react";
+import { Calendar, Hash, MapPin, User, FileBadge, Lock, Building2, Users, Sparkles } from "lucide-react";
 import { DIOCESAN_CHURCHES } from "../../utils/churchLicense";
-import { getHeadOfHouseholdName, getHeadOfHouseholdSource } from "../../utils/caseStudyUtils";
+import {
+  getHeadOfHouseholdName,
+  getHeadOfHouseholdSource,
+  getHeadOfHouseholdInfo,
+  isHusbandAbsent,
+  getHusbandStatusLabel
+} from "../../utils/caseStudyUtils";
 
 interface Page1FormProps {
   data: CaseStudyData;
@@ -22,6 +28,9 @@ export const Page1Form: React.FC<Page1FormProps> = ({
 }) => {
   const headName = getHeadOfHouseholdName(data);
   const headSource = getHeadOfHouseholdSource(data);
+  const headInfo = getHeadOfHouseholdInfo(data);
+  const isAbsent = isHusbandAbsent(data.page2?.husband);
+  const husbandStatusLabel = getHusbandStatusLabel(data.page2?.husband);
 
   const updateP1 = (field: string, val: string) => {
     onChange({
@@ -80,10 +89,17 @@ export const Page1Form: React.FC<Page1FormProps> = ({
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <span className="text-xs text-slate-300 font-medium">صورة بطاقة الزوج:</span>
+            <span className="text-xs text-slate-300 font-medium flex items-center justify-between">
+              <span>صورة بطاقة الزوج:</span>
+              {isAbsent && (
+                <span className="text-[10px] text-amber-300 font-normal">
+                  (اختياري - الزوج {husbandStatusLabel})
+                </span>
+              )}
+            </span>
             <DropZone
               label="بطاقة الزوج"
-              sublabel="الخانة اليمنى Rect(320, 135, 545, 275)"
+              sublabel={isAbsent ? `(اختياري - الزوج ${husbandStatusLabel})` : "الخانة اليمنى Rect(320, 135, 545, 275)"}
               image={data.husband_id_image}
               onOpenEditor={onOpenHusbandCropper}
               onDropImage={handleHusbandFile}
@@ -187,8 +203,9 @@ export const Page1Form: React.FC<Page1FormProps> = ({
               </span>
             )}
             {headSource === "wife" && (
-              <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-medium">
-                اسم الزوجة (لعدم وجود زوج)
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+                {headInfo.reasonLabel}
               </span>
             )}
             {headSource === "manual" && (

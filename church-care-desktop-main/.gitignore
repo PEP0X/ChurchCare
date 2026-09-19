@@ -69,3 +69,8 @@ pnpm-debug.log*
 test_*.pdf
 sample_output*.pdf
 engine/sample_output_test.pdf
+
+# Tauri Signing Private Keys (Keep secret!)
+*.key
+**/src-tauri/*.key
+

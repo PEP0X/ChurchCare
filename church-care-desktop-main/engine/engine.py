@@ -33,7 +33,7 @@ for _stream in (sys.stdin, sys.stdout, sys.stderr):
 import pymupdf  # fitz
 import arabic_reshaper
 from bidi.algorithm import get_display
-from PIL import Image
+from PIL import Image, ImageOps
 
 # -----------------------------------------------------------------------------
 # Path Resolvers & Constants
@@ -286,12 +286,14 @@ def stamp_id_card(
     page: pymupdf.Page,
     rect: pymupdf.Rect,
     image_data: Optional[str],
-    label: str = ""
+    label: str = "",
+    force_portrait: bool = False
 ) -> None:
     """
-    Stamps an ID card image into the designated PyMuPDF Rect.
-    Ensures correct aspect ratio (ISO 7810 ID-1 = 85.6mm x 53.98mm = 1.5858).
-    Auto-centers inside the bounding box and renders a crisp clean finish.
+    Stamps an ID card or certificate image into the designated PyMuPDF Rect.
+    Ensures correct aspect ratio, handles smartphone camera EXIF orientation,
+    guarantees vertical portrait alignment for birth certificates,
+    auto-centers inside the bounding box and renders a crisp clean finish.
     """
     if not image_data:
         return
@@ -308,8 +310,28 @@ def stamp_id_card(
         return
 
     try:
-        # Load through Pillow to sanitize, ensure RGB, and apply high quality
-        pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        # Load through Pillow
+        pil_img = Image.open(io.BytesIO(img_bytes))
+
+        # 🔄 1. Auto-transpose EXIF orientation from smartphone cameras (iPhone / Android)
+        try:
+            pil_img = ImageOps.exif_transpose(pil_img)
+        except Exception as exif_err:
+            sys.stderr.write(f"[stamp_id_card] EXIF transpose error: {exif_err}\n")
+
+        # Convert to RGB (handles RGBA, Palette, Grayscale, etc.)
+        if pil_img.mode != "RGB":
+            pil_img = pil_img.convert("RGB")
+
+        # 📐 2. Ensure Portrait orientation for documents that require it (e.g. Birth Certificates)
+        # An Egyptian birth certificate is inherently a portrait document (height > width).
+        # If an uploaded image is landscape (width > height), rotate it so it enters the bounding box
+        # as Portrait. When page-level rotation (set_rotation(90)) rotates the page,
+        # the certificate rotates seamlessly to Landscape, filling the box exactly as intended!
+        if force_portrait and pil_img.width > pil_img.height:
+            sys.stderr.write(f"[stamp_id_card] Auto-rotating landscape image to portrait for {label} ({pil_img.size})\n")
+            pil_img = pil_img.rotate(270, expand=True)
+
         out_buf = io.BytesIO()
         pil_img.save(out_buf, format="JPEG", quality=95, dpi=(300, 300))
         processed_bytes = out_buf.getvalue()
@@ -379,9 +401,95 @@ def get_nested_value(obj: Any, path: str) -> Any:
             return ""
     return curr if curr is not None else ""
 
+def is_husband_absent_py(husband: dict) -> bool:
+    if not isinstance(husband, dict):
+        return False
+    status = husband.get("status")
+    if status and status != "present":
+        return True
+    name = (husband.get("name") or "").strip().lower()
+    for kw in ["متوفي", "تارك المنزل", "خارج الحظيرة", "مرتد", "منفصل", "مطلق", "سجين"]:
+        if kw in name:
+            return True
+    return False
+
+def get_husband_status_label_py(husband: dict) -> str:
+    if not isinstance(husband, dict):
+        return ""
+    st = husband.get("status")
+    labels = {
+        "present": "متواجد (على قيد الحياة)",
+        "deceased": "متوفي",
+        "abandoned": "تارك المنزل",
+        "apostate": "خارج الحظيرة",
+        "separated": "منفصل / طلاق",
+        "traveler": "مسافر / غائب",
+        "prisoner": "سجين / محبوس",
+        "other": husband.get("custom_status") or "أخرى"
+    }
+    if st in labels:
+        return labels[st]
+    name = (husband.get("name") or "").strip()
+    if "متوفي" in name: return "متوفي"
+    if "تارك" in name: return "تارك المنزل"
+    if "خارج الحظيرة" in name or "مرتد" in name: return "خارج الحظيرة"
+    if "منفصل" in name or "مطلق" in name: return "منفصل / طلاق"
+    if "سجين" in name: return "سجين / محبوس"
+    if "مسافر" in name: return "مسافر / غائب"
+    return "متواجد (على قيد الحياة)"
+
+def get_effective_husband_display_name_py(husband: dict) -> str:
+    if not isinstance(husband, dict):
+        return ""
+    name = (husband.get("name") or "").strip()
+    if not is_husband_absent_py(husband):
+        return name
+    status_label = get_husband_status_label_py(husband)
+    if not name:
+        return status_label
+    if status_label in name or "متوفي" in name or "المرحوم" in name:
+        return name
+    return f"{name} ({status_label})"
+
+def get_head_of_household_name_py(data: dict) -> str:
+    if not isinstance(data, dict):
+        return ""
+    p2 = data.get("page2", {})
+    husband = p2.get("husband", {}) if isinstance(p2, dict) else {}
+    wife = p2.get("wife", {}) if isinstance(p2, dict) else {}
+    p6 = data.get("page6", {}) if isinstance(data.get("page6"), dict) else {}
+    wife_name = (wife.get("name") or "").strip()
+    husband_name = (husband.get("name") or "").strip()
+
+    if is_husband_absent_py(husband):
+        if wife_name: return wife_name
+        if p6.get("family_head"): return str(p6.get("family_head")).strip()
+        return husband_name
+
+    if husband_name: return husband_name
+    if wife_name: return wife_name
+    if p6.get("family_head"): return str(p6.get("family_head")).strip()
+    return ""
+
 def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") -> Any:
     if not binding:
         return ""
+
+    # Special intelligent handling for husband name and family head
+    if binding == "page2.husband.name":
+        p2 = data.get("page2", {}) if isinstance(data, dict) else {}
+        h = p2.get("husband", {}) if isinstance(p2, dict) else {}
+        formatted = get_effective_husband_display_name_py(h)
+        if formatted:
+            return formatted
+
+    if binding in ["page6.family_head", "page6.head_name"]:
+        val = get_nested_value(data, binding)
+        if val:
+            return val
+        head = get_head_of_household_name_py(data)
+        if head:
+            return head
 
     # 1. Direct path lookup
     val = get_nested_value(data, binding)
@@ -394,8 +502,8 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
 
     # 3. Canonical Aliases Map
     aliases = {
-        "page6.head_name": ["page6.family_head", "family_head", "page2.husband.name", "page2.wife.name"],
-        "page6.family_head": ["page6.head_name", "head_name", "page2.husband.name", "page2.wife.name"],
+        "page6.head_name": ["page6.family_head", "family_head", "page2.wife.name" if is_husband_absent_py(data.get("page2", {}).get("husband", {})) else "page2.husband.name", "page2.wife.name"],
+        "page6.family_head": ["page6.head_name", "head_name", "page2.wife.name" if is_husband_absent_py(data.get("page2", {}).get("husband", {})) else "page2.husband.name", "page2.wife.name"],
         "page6.church_id": ["page6.church_records_id", "church_records_id", "page1.church_study_id"],
         "page6.church_records_id": ["page6.church_id", "church_id", "page1.church_study_id"],
         "page6.care_id": ["page6.cathedral_care_id", "cathedral_care_id", "page1.cathedral_care_id"],
@@ -891,7 +999,8 @@ class PDFCareReportEngine:
         gov = p2.get("gov_programs", {})
 
         # Husband Column (Right side, approx X=470)
-        draw_arabic_text(page, pymupdf.Point(480, 150), h.get("name", ""), fontsize=10)
+        h_display_name = get_effective_husband_display_name_py(h)
+        draw_arabic_text(page, pymupdf.Point(480, 150), h_display_name, fontsize=10)
         draw_arabic_text(page, pymupdf.Point(470, 176), h.get("nickname", ""), fontsize=10)
         draw_arabic_text(page, pymupdf.Point(460, 203), h.get("national_id", ""), fontsize=10)
         draw_arabic_text(page, pymupdf.Point(475, 236), h.get("job", ""), fontsize=10)
@@ -1087,7 +1196,7 @@ class PDFCareReportEngine:
         church_name = p1.get("church_name") or case_data.get("Page1", {}).get("churchName") or "كنيسة الشهيد العظيم أبي سيفين والقديسة دميانة - القلج"
         p6 = case_data.get("page6", {})
         p2 = case_data.get("page2", {})
-        family_head = p6.get("family_head") or p2.get("husband", {}).get("name") or p2.get("wife", {}).get("name") or "مينا حنا الله جرجس"
+        family_head = p6.get("family_head") or get_head_of_household_name_py(case_data) or "مينا حنا الله جرجس"
 
         for idx, ep in enumerate(extra_pages):
             if not isinstance(ep, dict):
@@ -1126,11 +1235,7 @@ class PDFCareReportEngine:
                 if not merged_p6.get("church_membership_id") and p1_data.get("church_membership_id"):
                     merged_p6["church_membership_id"] = p1_data.get("church_membership_id")
                 if not merged_p6.get("family_head"):
-                    head_fallback = (
-                        (p2_data.get("husband", {}).get("name") if isinstance(p2_data.get("husband"), dict) else "")
-                        or (p2_data.get("wife", {}).get("name") if isinstance(p2_data.get("wife"), dict) else "")
-                        or ""
-                    )
+                    head_fallback = get_head_of_household_name_py(case_data)
                     if head_fallback:
                         merged_p6["family_head"] = head_fallback
 
@@ -1261,7 +1366,7 @@ class PDFCareReportEngine:
                     img_data = images[slot] if slot < len(images) else None
                     if img_data:
                         inner_rect = pymupdf.Rect(box_rect.x0 + 6, box_rect.y0 + 24, box_rect.x1 - 6, box_rect.y1 - 6)
-                        stamp_id_card(new_page, inner_rect, str(img_data), label=lbl)
+                        stamp_id_card(new_page, inner_rect, str(img_data), label=lbl, force_portrait=True)
 
                 # 🔄 Rotation of the page itself in printing:
                 # Sets the PDF page /Rotate 90 flag so that the printer handles it as Portrait A4 without cropping!

@@ -1,4 +1,4 @@
-﻿# Binaries and Installers
+# Binaries and Installers
 *.exe
 *.rar
 *.zip
@@ -34,6 +34,8 @@ src-tauri/binaries/*
 .env
 .env.*
 !.env.example
+*.key
+!*.key.pub
 
 # Logs
 logs/

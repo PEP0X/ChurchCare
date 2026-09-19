@@ -11,15 +11,18 @@ import {
   HeartHandshake,
   Award,
   Sparkles,
-  Lock
+  Lock,
+  RotateCw
 } from 'lucide-react';
 import { isChurchNameLocked } from '../utils/churchLicense';
+import { checkForAppUpdates, UpdateCheckResult } from '../services/updaterService';
 
 interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
   clientName?: string;
   onOpenActivation?: () => void;
+  onOpenUpdateModal?: (info: UpdateCheckResult) => void;
 }
 
 interface LicenseStatusResult {
@@ -34,6 +37,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   isOpen,
   onClose,
   clientName: initialClientName = '',
+  onOpenUpdateModal
 }) => {
   const [clientName, setClientName] = useState<string>(initialClientName);
   const [serialKey, setSerialKey] = useState<string>('');
@@ -41,6 +45,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   const [statusMessage, setStatusMessage] = useState<string>('الترخيص سارٍ ومفعّل مدى الحياة');
   const [isLicensed, setIsLicensed] = useState<boolean>(true);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState<boolean>(false);
+  const [updateCheckStatus, setUpdateCheckStatus] = useState<string | null>(null);
 
   // Load active license details upon modal open
   useEffect(() => {
@@ -78,6 +84,30 @@ export const AboutModal: React.FC<AboutModalProps> = ({
       ? `${serialKey.slice(0, 6)}••••-••••-${serialKey.slice(-4)}`
       : '••••••••••••••••'
     : 'CCARE-••••-••••-••••';
+
+  const handleManualCheckUpdate = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateCheckStatus(null);
+    try {
+      const res = await checkForAppUpdates();
+      if (res.available) {
+        if (onOpenUpdateModal) {
+          onClose();
+          onOpenUpdateModal(res);
+        } else {
+          setUpdateCheckStatus(`يوجد تحديث جديد (v${res.version})!`);
+        }
+      } else if (res.error) {
+        setUpdateCheckStatus(res.error);
+      } else {
+        setUpdateCheckStatus('أنت تعمل بأحدث إصدار رسمي متوفر ✓');
+      }
+    } catch (e: any) {
+      setUpdateCheckStatus('تعذر التحقق من التحديثات حالياً');
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 select-none animate-in fade-in duration-300">
@@ -246,8 +276,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({
               )}
             </div>
 
-            {/* 4. Software Version */}
-            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between">
+            {/* 4. Software Version & Update Checker */}
+            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 shrink-0">
                   <Sparkles className="w-4 h-4" />
@@ -257,14 +287,28 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                     إصدار البرنامج (Version):
                   </span>
                   <span className="text-xs font-mono font-bold text-slate-200 block" dir="ltr">
-                    v1.0.0 (Release 2026)
+                    v1.1.0 (Auto-Update Enabled)
                   </span>
                 </div>
               </div>
 
-              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-800/40">
-                أحدث إصدار رسمي
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                {updateCheckStatus && (
+                  <span className="text-[10px] text-amber-300 font-medium px-2 py-0.5 rounded bg-slate-900 border border-slate-700">
+                    {updateCheckStatus}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  disabled={isCheckingUpdate}
+                  onClick={handleManualCheckUpdate}
+                  className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-sky-300 hover:text-sky-200 border border-sky-500/40 hover:border-sky-400 transition-all cursor-pointer disabled:opacity-50"
+                  title="التحقق من وجود تحديث جديد عبر خوادم GitHub Releases"
+                >
+                  <RotateCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                  <span>{isCheckingUpdate ? 'جارٍ الفحص...' : 'فحص التحديثات'}</span>
+                </button>
+              </div>
             </div>
 
           </div>
