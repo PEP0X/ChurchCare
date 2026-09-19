@@ -2,17 +2,19 @@
 # Usage in PowerShell:
 # irm "https://raw.githubusercontent.com/PEP0X/ChurchCare/main/install_update.ps1" | iex
 
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "   ChurchCare Desktop - جاري تحديث البرنامج" -ForegroundColor Yellow
+Write-Host "   ChurchCare Desktop - Updating System   " -ForegroundColor Yellow
 Write-Host "==========================================" -ForegroundColor Cyan
 
 # 1. Close any running instances of ChurchCare
-Write-Host "[1/4] إغلاق أي نسخ مفتوحة من البرنامج..." -ForegroundColor White
+Write-Host "[1/4] Closing any active ChurchCare instances..." -ForegroundColor White
 Get-Process -Name "ChurchCareCaseStudy", "church-care-app" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
 # 2. Fetch the latest release installer URL from GitHub
-Write-Host "[2/4] جلب رابط أحدث إصدار من سيرفرات GitHub..." -ForegroundColor White
+Write-Host "[2/4] Checking latest release from GitHub..." -ForegroundColor White
 $repo = "PEP0X/ChurchCare"
 $apiUrl = "https://api.github.com/repos/$repo/releases/latest"
 
@@ -22,29 +24,29 @@ try {
     $asset = $release.assets | Where-Object { $_.name -like "*x64-setup.exe" } | Select-Object -First 1
     
     if (-not $asset) {
-        Write-Host "[-] لم يتم العثور على ملف التثبيت في أحدث Release." -ForegroundColor Red
+        Write-Host "[-] Error: Installer asset not found in latest release." -ForegroundColor Red
         return
     }
     
     $downloadUrl = $asset.browser_download_url
     $version = $release.tag_name
-    Write-Host "[+] تم العثور على الإصدار: $version" -ForegroundColor Green
+    Write-Host "[+] Found latest release version: $version" -ForegroundColor Green
 } catch {
-    Write-Host "[-] فشل الاتصال بسيرفرات GitHub: $_" -ForegroundColor Red
+    Write-Host "[-] Error connecting to GitHub servers: $_" -ForegroundColor Red
     return
 }
 
 # 3. Download the installer to Temp folder
 $tempInstaller = "$env:TEMP\ChurchCareSetup_$version.exe"
-Write-Host "[3/4] جاري تحميل التحديث ($($asset.name))..." -ForegroundColor White
+Write-Host "[3/4] Downloading update package ($($asset.name))..." -ForegroundColor White
 Invoke-WebRequest -Uri $downloadUrl -OutFile $tempInstaller
 
 # 4. Perform silent in-place installation
-Write-Host "[4/4] جاري تثبيت التحديث بهدوء (دون مساس بالبيانات أو الترخيص)..." -ForegroundColor White
+Write-Host "[4/4] Installing update silently (preserving data & license)..." -ForegroundColor White
 $installProcess = Start-Process -FilePath $tempInstaller -ArgumentList "/S" -PassThru -Wait
 
 # 5. Launch the updated application
-Write-Host "[✓] تم التحديث بنجاح! جاري فتح البرنامج الآن..." -ForegroundColor Green
+Write-Host "[+] Update installed successfully! Launching ChurchCare..." -ForegroundColor Green
 $installedExe = "$env:LOCALAPPDATA\Programs\ChurchCareCaseStudy\ChurchCareCaseStudy.exe"
 
 if (Test-Path $installedExe) {
@@ -60,5 +62,5 @@ if (Test-Path $installedExe) {
 # Cleanup installer
 Remove-Item $tempInstaller -Force -ErrorAction SilentlyContinue
 Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "   اكتمل التحديث بنجاح! يمكنك إغلاق النافذة." -ForegroundColor Green
+Write-Host "   Update completed! You may close this.  " -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Cyan
