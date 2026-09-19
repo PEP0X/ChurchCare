@@ -444,12 +444,12 @@
   <!-- TanStack Data Table Card -->
   <div class="bg-gradient-to-b from-slate-900/90 to-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-800/90 overflow-hidden shadow-2xl">
     <div class="overflow-x-auto">
-      <table class="w-full text-right text-xs sm:text-sm min-w-[1050px]">
+      <table class="w-full text-right text-xs sm:text-sm">
         <thead class="bg-slate-950/70 text-slate-400 font-semibold border-b border-slate-800">
           {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
             <tr>
               {#each headerGroup.headers as header (header.id)}
-                <th class="py-4 px-5 whitespace-nowrap {header.column.id === 'actions' ? 'text-center' : ''}">
+                <th class="py-3.5 px-2.5 sm:px-3 whitespace-nowrap font-bold text-slate-300 {header.column.id === 'actions' ? 'text-center' : ''}">
                   {#if header.column.getCanSort()}
                     <button
                       type="button"
@@ -512,9 +512,9 @@
 
               <tr class="hover:bg-slate-800/40 transition group">
                 <!-- Serial Key -->
-                <td class="py-4 px-5 whitespace-nowrap">
-                  <div class="flex items-center gap-2">
-                    <span class="code-font font-bold text-white tracking-wider select-all whitespace-nowrap bg-slate-950/70 px-2.5 py-1 rounded-xl border border-slate-800/80 shadow-sm">
+                <td class="py-3 px-2.5 sm:px-3 whitespace-nowrap">
+                  <div class="flex items-center gap-1.5">
+                    <span class="code-font font-bold text-white tracking-wider select-all whitespace-nowrap bg-slate-950/70 px-2.5 py-1 rounded-xl border border-slate-800/80 shadow-sm text-xs sm:text-sm">
                       {lic.serial_key}
                     </span>
 
@@ -547,15 +547,15 @@
                 </td>
 
                 <!-- Church Name -->
-                <td class="py-4 px-5 font-semibold text-white max-w-sm">
-                  <div class="flex items-center gap-2">
+                <td class="py-3 px-2.5 sm:px-3 font-semibold text-white">
+                  <div class="flex items-center gap-1.5 flex-nowrap">
                     <span class="text-base shrink-0">⛪</span>
-                    <span class="leading-relaxed font-bold break-words" title={info.churchName}>
+                    <span class="font-bold text-white text-xs sm:text-sm whitespace-nowrap" title={info.churchName}>
                       {info.churchName}
                     </span>
                     {#if churchTotal > 1}
                       <span
-                        class="text-[10px] bg-indigo-950/80 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-800/50 shrink-0 font-medium font-mono"
+                        class="text-[10px] bg-indigo-950/80 text-indigo-300 px-1.5 py-0.5 rounded-full border border-indigo-800/50 shrink-0 font-medium font-mono whitespace-nowrap"
                         title={`يوجد ${churchTotal} تراخيص مسجلة لهذه الكنيسة`}
                       >
                         {churchTotal} مستخدمين
@@ -565,9 +565,9 @@
                 </td>
 
                 <!-- Servant Name, Role & Phone -->
-                <td class="py-4 px-5 text-slate-200 whitespace-nowrap">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-2xl bg-indigo-950/60 border border-indigo-800/50 flex items-center justify-center text-xs text-indigo-300 shrink-0 shadow-sm">
+                <td class="py-3 px-2.5 sm:px-3 text-slate-200 whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-xl bg-indigo-950/60 border border-indigo-800/50 flex items-center justify-center text-xs text-indigo-300 shrink-0 shadow-sm">
                       {#if info.role === 'كاهن'}
                         ✝️
                       {:else if info.role === 'أمين خدمة'}
@@ -603,7 +603,7 @@
                         {/if}
 
                         {#if info.extraNotes}
-                          <span class="text-[11px] text-slate-400 truncate max-w-[160px]" title={info.extraNotes}>
+                          <span class="text-[11px] text-slate-400 truncate max-w-[140px]" title={info.extraNotes}>
                             {info.extraNotes}
                           </span>
                         {/if}
@@ -613,15 +613,15 @@
                 </td>
 
                 <!-- License Services Badges -->
-                <td class="py-4 px-5 max-w-xs">
+                <td class="py-3 px-2.5 sm:px-3">
                   {#if info.services.length === 0}
-                    <span class="text-slate-500 text-xs italic bg-slate-950/40 px-2 py-0.5 rounded-lg border border-slate-800/40">
+                    <span class="text-slate-500 text-xs italic bg-slate-950/40 px-2 py-0.5 rounded-lg border border-slate-800/40 whitespace-nowrap">
                       شامل عام
                     </span>
                   {:else}
-                    <div class="flex flex-wrap gap-1">
+                    <div class="flex flex-wrap gap-1 max-w-[150px]">
                       {#each info.services as serv}
-                        <span class="text-[10px] px-2 py-0.5 rounded-lg bg-indigo-950/80 text-indigo-300 border border-indigo-800/50 font-medium whitespace-nowrap">
+                        <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-indigo-950/80 text-indigo-300 border border-indigo-800/50 font-medium whitespace-nowrap">
                           {serv}
                         </span>
                       {/each}
@@ -630,19 +630,19 @@
                 </td>
 
                 <!-- Status Badge -->
-                <td class="py-4 px-5 whitespace-nowrap">
+                <td class="py-3 px-2.5 sm:px-3 whitespace-nowrap">
                   {#if lic.status === 'active'}
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 shadow-sm shadow-emerald-500/10">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 shadow-sm shadow-emerald-500/10">
                       <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                       مفعّل
                     </span>
                   {:else if lic.status === 'unactivated'}
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/25 shadow-sm shadow-amber-500/10">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/25 shadow-sm shadow-amber-500/10">
                       <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                       غير مفعّل
                     </span>
                   {:else}
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/25">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/25">
                       <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
                       ملغي
                     </span>
@@ -650,38 +650,38 @@
                 </td>
 
                 <!-- HWID / Device Info -->
-                <td class="py-4 px-5 whitespace-nowrap">
+                <td class="py-3 px-2.5 sm:px-3 whitespace-nowrap">
                   {#if lic.hwid}
-                    <div class="space-y-1">
-                      <span class="code-font text-xs bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 text-indigo-300 select-all whitespace-nowrap inline-block">
+                    <div class="space-y-0.5">
+                      <span class="code-font text-[11px] sm:text-xs bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-800 text-indigo-300 select-all whitespace-nowrap inline-block">
                         {lic.hwid}
                       </span>
                       {#if info.deviceInfo}
-                        <div class="text-[10px] text-slate-400 font-sans truncate max-w-[170px]" title={info.deviceInfo}>
+                        <div class="text-[10px] text-slate-400 font-sans truncate max-w-[150px]" title={info.deviceInfo}>
                           {info.deviceInfo}
                         </div>
                       {/if}
                     </div>
                   {:else}
-                    <span class="text-slate-500 text-xs whitespace-nowrap bg-slate-950/40 px-2.5 py-1 rounded-xl border border-slate-800/40">
+                    <span class="text-slate-500 text-xs whitespace-nowrap bg-slate-950/40 px-2 py-0.5 rounded-lg border border-slate-800/40">
                       بانتظار الربط بجهاز
                     </span>
                   {/if}
                 </td>
 
                 <!-- Activation / Creation Date -->
-                <td class="py-4 px-5 text-slate-400 text-xs whitespace-nowrap" dir="ltr">
+                <td class="py-3 px-2.5 sm:px-3 text-slate-400 text-xs whitespace-nowrap" dir="ltr">
                   {formatDate(lic.activated_at || lic.created_at)}
                 </td>
 
                 <!-- Actions: Quick Action Buttons + Bits UI DropdownMenu -->
-                <td class="py-4 px-5 text-center whitespace-nowrap">
-                  <div class="inline-flex items-center gap-1.5">
+                <td class="py-3 px-2.5 sm:px-3 text-center whitespace-nowrap">
+                  <div class="inline-flex items-center gap-1">
                     {#if lic.hwid}
                       <Tooltip.Root delayDuration={150}>
                         <Tooltip.Trigger
                           onclick={() => promptResetHwid(lic)}
-                          class="px-2.5 py-1.5 text-xs rounded-xl bg-indigo-950/60 text-indigo-300 border border-indigo-700/60 hover:bg-indigo-900 transition cursor-pointer whitespace-nowrap shadow-sm flex items-center gap-1"
+                          class="px-2 py-1 text-xs rounded-xl bg-indigo-950/60 text-indigo-300 border border-indigo-700/60 hover:bg-indigo-900 transition cursor-pointer whitespace-nowrap shadow-sm flex items-center gap-1"
                         >
                           <RotateCcw class="w-3 h-3" />
                           <span>فك الجهاز</span>
@@ -702,7 +702,7 @@
                       <Tooltip.Root delayDuration={150}>
                         <Tooltip.Trigger
                           onclick={() => promptRevoke(lic)}
-                          class="px-2.5 py-1.5 text-xs rounded-xl bg-rose-950/50 text-rose-300 border border-rose-800/60 hover:bg-rose-900 transition cursor-pointer whitespace-nowrap flex items-center gap-1"
+                          class="px-2 py-1 text-xs rounded-xl bg-rose-950/50 text-rose-300 border border-rose-800/60 hover:bg-rose-900 transition cursor-pointer whitespace-nowrap flex items-center gap-1"
                         >
                           <Ban class="w-3 h-3" />
                           <span>إلغاء</span>
@@ -721,7 +721,7 @@
                       <Tooltip.Root delayDuration={150}>
                         <Tooltip.Trigger
                           onclick={() => onToggleStatus(lic.id, lic.hwid ? 'active' : 'unactivated')}
-                          class="px-2.5 py-1.5 text-xs rounded-xl bg-emerald-950/50 text-emerald-300 border border-emerald-800/60 hover:bg-emerald-900 transition cursor-pointer whitespace-nowrap flex items-center gap-1"
+                          class="px-2 py-1 text-xs rounded-xl bg-emerald-950/50 text-emerald-300 border border-emerald-800/60 hover:bg-emerald-900 transition cursor-pointer whitespace-nowrap flex items-center gap-1"
                         >
                           <CheckCircle2 class="w-3 h-3" />
                           <span>تفعيل</span>
@@ -741,7 +741,7 @@
                     <!-- Bits UI DropdownMenu for Row More Options -->
                     <DropdownMenu.Root>
                       <DropdownMenu.Trigger
-                        class="p-2 text-slate-400 hover:text-white transition cursor-pointer rounded-xl hover:bg-slate-800 border border-slate-800/80 shadow-sm"
+                        class="p-1.5 text-slate-400 hover:text-white transition cursor-pointer rounded-xl hover:bg-slate-800 border border-slate-800/80 shadow-sm"
                         aria-label="خيارات إضافية"
                       >
                         <MoreHorizontal class="w-4 h-4" />

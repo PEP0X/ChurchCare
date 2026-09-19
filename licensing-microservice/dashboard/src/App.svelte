@@ -140,8 +140,8 @@
   />
 
   {#if isAuthenticated}
-    <main class="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 selection:bg-indigo-500 selection:text-white">
-      <div class="max-w-7xl mx-auto">
+    <main class="min-h-screen bg-slate-950 text-slate-100 p-2 sm:p-4 md:p-5 selection:bg-indigo-500 selection:text-white w-full">
+      <div class="w-full mx-auto px-1 sm:px-2">
         <Navbar
           onOpenNewModal={() => (isModalOpen = true)}
           onExportSheet={handleExportSheet}
