@@ -92,6 +92,8 @@ export interface CaseStudyData {
       phone: string;
       confession_father: string;
       insurance_no: string;
+      status?: HusbandStatus;
+      custom_status?: string;
     };
     address: {
       street: string;
@@ -116,6 +118,8 @@ export interface CaseStudyData {
   page3: {
     family_members: FamilyMember[];
     other_persons: OtherResident[];
+    family_other_members?: any[];
+    other_members?: any[];
     housing_description: string;
     family_members_notes?: string;
     other_members_notes?: string;
@@ -135,6 +139,7 @@ export interface CaseStudyData {
     church_aid: ChurchAidItem[];
     total_church_aid?: number | string;
     church_aid_total_notes?: string;
+    pension?: number | string;
     income: {
       church_aid: number | string;
       medical_aid: number | string;
@@ -142,6 +147,7 @@ export interface CaseStudyData {
       base_salary: number | string;
       side_project: number | string;
       relatives_aid: number | string;
+      pension?: number | string;
       total_income: number | string;
     };
     expenses: {

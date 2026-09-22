@@ -408,7 +408,19 @@ def is_husband_absent_py(husband: dict) -> bool:
     if status and status != "present":
         return True
     name = (husband.get("name") or "").strip().lower()
-    for kw in ["متوفي", "تارك المنزل", "خارج الحظيرة", "مرتد", "منفصل", "مطلق", "سجين"]:
+    for kw in ["متوفي", "المرحوم", "تارك المنزل", "خارج الحظيرة", "مرتد", "منفصل", "مطلق", "سجين"]:
+        if kw in name:
+            return True
+    return False
+
+def is_wife_absent_py(wife: dict) -> bool:
+    if not isinstance(wife, dict):
+        return False
+    status = wife.get("status")
+    if status and status != "present":
+        return True
+    name = (wife.get("name") or "").strip().lower()
+    for kw in ["متوفي", "متوفية", "المرحومة", "تاركة المنزل", "تارك المنزل", "خارج الحظيرة", "مرتدة", "منفصلة", "مطلقة", "سجينة"]:
         if kw in name:
             return True
     return False
@@ -417,26 +429,61 @@ def get_husband_status_label_py(husband: dict) -> str:
     if not isinstance(husband, dict):
         return ""
     st = husband.get("status")
+    if st == "other" and husband.get("custom_status"):
+        return str(husband.get("custom_status")).strip()
+
     labels = {
-        "present": "متواجد (على قيد الحياة)",
         "deceased": "متوفي",
         "abandoned": "تارك المنزل",
         "apostate": "خارج الحظيرة",
         "separated": "منفصل / طلاق",
         "traveler": "مسافر / غائب",
         "prisoner": "سجين / محبوس",
-        "other": husband.get("custom_status") or "أخرى"
     }
     if st in labels:
         return labels[st]
+
     name = (husband.get("name") or "").strip()
-    if "متوفي" in name: return "متوفي"
+    if "متوفي" in name or "المرحوم" in name: return "متوفي"
     if "تارك" in name: return "تارك المنزل"
     if "خارج الحظيرة" in name or "مرتد" in name: return "خارج الحظيرة"
     if "منفصل" in name or "مطلق" in name: return "منفصل / طلاق"
     if "سجين" in name: return "سجين / محبوس"
     if "مسافر" in name: return "مسافر / غائب"
+
+    if st == "present":
+        return "متواجد (على قيد الحياة)"
     return "متواجد (على قيد الحياة)"
+
+def get_wife_status_label_py(wife: dict) -> str:
+    if not isinstance(wife, dict):
+        return ""
+    st = wife.get("status")
+    if st == "other" and wife.get("custom_status"):
+        return str(wife.get("custom_status")).strip()
+
+    labels = {
+        "deceased": "متوفية",
+        "abandoned": "تاركة المنزل",
+        "apostate": "خارج الحظيرة",
+        "separated": "منفصلة / طلاق",
+        "traveler": "مسافرة / غائبة",
+        "prisoner": "سجينة / محبوسة",
+    }
+    if st in labels:
+        return labels[st]
+
+    name = (wife.get("name") or "").strip()
+    if "متوفية" in name or "متوفي" in name or "المرحومة" in name: return "متوفية"
+    if "تارك" in name: return "تاركة المنزل"
+    if "خارج الحظيرة" in name or "مرتد" in name: return "خارج الحظيرة"
+    if "منفصل" in name or "مطلق" in name: return "منفصلة / طلاق"
+    if "سجين" in name: return "سجينة / محبوسة"
+    if "مسافر" in name: return "مسافرة / غائبة"
+
+    if st == "present":
+        return "متواجدة (على قيد الحياة)"
+    return "متواجدة (على قيد الحياة)"
 
 def get_effective_husband_display_name_py(husband: dict) -> str:
     if not isinstance(husband, dict):
@@ -451,6 +498,19 @@ def get_effective_husband_display_name_py(husband: dict) -> str:
         return name
     return f"{name} ({status_label})"
 
+def get_effective_wife_display_name_py(wife: dict) -> str:
+    if not isinstance(wife, dict):
+        return ""
+    name = (wife.get("name") or "").strip()
+    if not is_wife_absent_py(wife):
+        return name
+    status_label = get_wife_status_label_py(wife)
+    if not name:
+        return status_label
+    if status_label in name or "متوفي" in name or "متوفية" in name or "المرحومة" in name:
+        return name
+    return f"{name} ({status_label})"
+
 def get_head_of_household_name_py(data: dict) -> str:
     if not isinstance(data, dict):
         return ""
@@ -461,10 +521,21 @@ def get_head_of_household_name_py(data: dict) -> str:
     wife_name = (wife.get("name") or "").strip()
     husband_name = (husband.get("name") or "").strip()
 
-    if is_husband_absent_py(husband):
-        if wife_name: return wife_name
-        if p6.get("family_head"): return str(p6.get("family_head")).strip()
+    h_absent = is_husband_absent_py(husband)
+    w_absent = is_wife_absent_py(wife)
+
+    # If husband is absent/dead and wife is present -> wife
+    if h_absent and not w_absent and wife_name:
+        return wife_name
+
+    # If wife is dead/absent and husband is alive/present -> husband
+    if w_absent and not h_absent and husband_name:
         return husband_name
+
+    if not h_absent and husband_name:
+        return husband_name
+    if not w_absent and wife_name:
+        return wife_name
 
     if husband_name: return husband_name
     if wife_name: return wife_name
@@ -475,11 +546,18 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
     if not binding:
         return ""
 
-    # Special intelligent handling for husband name and family head
+    # Special intelligent handling for husband/wife name and family head
     if binding == "page2.husband.name":
         p2 = data.get("page2", {}) if isinstance(data, dict) else {}
         h = p2.get("husband", {}) if isinstance(p2, dict) else {}
         formatted = get_effective_husband_display_name_py(h)
+        if formatted:
+            return formatted
+
+    if binding == "page2.wife.name":
+        p2 = data.get("page2", {}) if isinstance(data, dict) else {}
+        w = p2.get("wife", {}) if isinstance(p2, dict) else {}
+        formatted = get_effective_wife_display_name_py(w)
         if formatted:
             return formatted
 
@@ -517,6 +595,9 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
         "page4.church_aid_total": ["page4.total_church_aid", "page4.church_aid.Total"],
         "page4.church_aid_total_notes": ["page4.church_aid.purpose"],
         "page4.church_aid.purpose": ["page4.church_aid_total_notes"],
+        "الدخل الشهري - معاش": ["page4.income.pension", "page4.pension"],
+        "page4.income.pension": ["الدخل الشهري - معاش", "page4.pension"],
+        "page4.pension": ["الدخل الشهري - معاش", "page4.income.pension"],
         "page3.family_members_notes": ["Page3.comment1"],
         "Page3.comment1": ["page3.family_members_notes"],
         "page3.other_members_notes": ["Page3.comment2"],
@@ -598,13 +679,25 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
             if binding == "page6.to_date_month": return m
             if binding == "page6.to_date_year": return y
 
-    # Page 3 family_other_members[1..4] -> page3.other_persons[0..3]
+    # Page 3 family_other_members[1..4] / other_members[1..4] -> page3.other_persons[0..3]
     import re
     m = re.match(r'page3\.(?:family_other_members|other_members)\[(\d+)\]\.(.*)', binding)
     if m:
         idx = int(m.group(1))
         sub_key = m.group(2)
-        other_persons = data.get("page3", {}).get("other_persons", [])
+        p3_obj = data.get("page3", {}) if isinstance(data, dict) else {}
+        fom = p3_obj.get("family_other_members", [])
+        if isinstance(fom, (list, dict)):
+            fom_item = fom[idx] if isinstance(fom, list) and 0 <= idx < len(fom) else fom.get(str(idx)) or fom.get(idx) if isinstance(fom, dict) else None
+            if isinstance(fom_item, dict) and fom_item.get(sub_key) not in (None, ""):
+                return fom_item.get(sub_key)
+        om = p3_obj.get("other_members", [])
+        if isinstance(om, (list, dict)):
+            om_item = om[idx] if isinstance(om, list) and 0 <= idx < len(om) else om.get(str(idx)) or om.get(idx) if isinstance(om, dict) else None
+            if isinstance(om_item, dict) and om_item.get(sub_key) not in (None, ""):
+                return om_item.get(sub_key)
+
+        other_persons = p3_obj.get("other_persons", [])
         for try_idx in [idx - 1, idx]:
             if 0 <= try_idx < len(other_persons):
                 op = other_persons[try_idx]
@@ -612,6 +705,7 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
                 if sub_key in ("national_id", "nid"): return op.get("national_id", "")
                 if sub_key in ("relavent", "kinship"): return op.get("kinship") or op.get("relavent", "")
                 if sub_key in ("Status", "social_status"): return op.get("social_status") or op.get("Status", "")
+                if sub_key in ("sYear", "education_job"): return op.get("education_job") or op.get("sYear", "")
                 if sub_key in ("income",): return op.get("income", "")
                 if sub_key in ("confession_father",): return op.get("confession_father", "")
 
@@ -1010,7 +1104,8 @@ class PDFCareReportEngine:
         draw_arabic_text(page, pymupdf.Point(470, 350), h.get("insurance_no", ""), fontsize=10)
 
         # Wife Column (Left side, approx X=230)
-        draw_arabic_text(page, pymupdf.Point(235, 150), w.get("name", ""), fontsize=10)
+        w_display_name = get_effective_wife_display_name_py(w)
+        draw_arabic_text(page, pymupdf.Point(235, 150), w_display_name, fontsize=10)
         draw_arabic_text(page, pymupdf.Point(230, 176), w.get("nickname", ""), fontsize=10)
         draw_arabic_text(page, pymupdf.Point(225, 203), w.get("national_id", ""), fontsize=10)
         draw_arabic_text(page, pymupdf.Point(235, 236), w.get("job", ""), fontsize=10)

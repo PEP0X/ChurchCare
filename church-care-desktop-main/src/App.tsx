@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { CaseStudyData } from "./types/schema";
+import { CaseStudyData, OtherResident } from "./types/schema";
 import { DocumentLayout } from "./types/layout";
 import { DEFAULT_DOCUMENT_LAYOUT } from "./config/defaultDocumentLayout";
 import { InteractiveDocumentCanvas } from "./components/canvas/InteractiveDocumentCanvas";
@@ -406,7 +406,9 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   const rawGov = rawP2.gov_programs || {};
 
   const page2: CaseStudyData["page2"] = {
+    ...rawP2,
     husband: {
+      ...rawHusband,
       name: String(rawHusband.name || ""),
       nickname: String(rawHusband.nickname || ""),
       national_id: String(rawHusband.national_id || rawHusband.nationalId || ""),
@@ -419,6 +421,7 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
       custom_status: String(rawHusband.custom_status || "")
     },
     wife: {
+      ...rawWife,
       name: String(rawWife.name || ""),
       nickname: String(rawWife.nickname || ""),
       national_id: String(rawWife.national_id || rawWife.nationalId || ""),
@@ -426,9 +429,12 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
       salary: rawWife.salary ?? "",
       phone: String(rawWife.phone || ""),
       confession_father: String(rawWife.confession_father || rawWife.confessionFather || ""),
-      insurance_no: String(rawWife.insurance_no || rawWife.insuranceNo || "")
+      insurance_no: String(rawWife.insurance_no || rawWife.insuranceNo || ""),
+      status: rawWife.status || "present",
+      custom_status: String(rawWife.custom_status || "")
     },
     address: {
+      ...rawAddress,
       street: String(rawAddress.street || ""),
       building_no: String(rawAddress.building_no || rawAddress.buildingNo || ""),
       governorate: String(rawAddress.governorate || ""),
@@ -441,6 +447,7 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
     housing_type: rawP2.housing_type,
     emergency_contacts: Array.isArray(rawP2.emergency_contacts) ? rawP2.emergency_contacts : [],
     gov_programs: {
+      ...rawGov,
       has_ration_card: String(rawGov.has_ration_card ?? rawGov.hasRationCard ?? "نعم"),
       ration_members_count: rawGov.ration_members_count ?? rawGov.rationMembersCount ?? "",
       program_1: String(rawGov.program_1 || rawGov.program1 || "بلا"),
@@ -450,7 +457,61 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
 
   const rawP3 = raw.page3 || raw.Page3 || {};
   const rawMed = rawP3.medical_conditions || {};
+
+  // Lossless 3-way synchronization for Page 3 other members:
+  // Merges other_persons, family_other_members, and other_members seamlessly
+  const rawOtherPersons = Array.isArray(rawP3.other_persons) ? rawP3.other_persons : [];
+  const rawFom = rawP3.family_other_members;
+  const rawOm = rawP3.other_members;
+
+  const normalizedOtherPersons: OtherResident[] = [];
+  const normalizedFom: any[] = [];
+  const normalizedOm: any[] = [];
+
+  for (let idx = 0; idx < 4; idx++) {
+    const rowNum = idx + 1; // 1, 2, 3, 4
+    const op = rawOtherPersons[idx];
+    const fom = Array.isArray(rawFom) ? rawFom[rowNum] || rawFom[idx] : rawFom?.[rowNum] || rawFom?.[idx];
+    const om = Array.isArray(rawOm) ? rawOm[rowNum] || rawOm[idx] : rawOm?.[rowNum] || rawOm?.[idx];
+
+    const name = String(op?.name || fom?.name || om?.name || "");
+    const nid = String(op?.national_id || op?.nationalId || fom?.national_id || fom?.nid || om?.national_id || om?.nid || "");
+    const kinship = String(op?.kinship || fom?.relavent || fom?.kinship || om?.relavent || om?.kinship || "");
+    const status = String(op?.social_status || op?.socialStatus || fom?.Status || fom?.social_status || om?.Status || om?.social_status || "");
+    const eduJob = String(op?.education_job || op?.educationJob || fom?.sYear || fom?.education_job || om?.sYear || om?.education_job || "");
+    const income = op?.income ?? fom?.income ?? om?.income ?? "";
+    const confession = String(op?.confession_father || op?.confessionFather || fom?.confession_father || om?.confession_father || "");
+
+    if (name || nid || kinship || status || eduJob || income || confession || op || fom || om) {
+      normalizedOtherPersons[idx] = {
+        id: String(op?.id || rowNum),
+        name,
+        national_id: nid,
+        kinship,
+        social_status: status,
+        ...(eduJob ? { education_job: eduJob } : {}),
+        ...(income ? { income } : {}),
+        ...(confession ? { confession_father: confession } : {})
+      } as any;
+
+      normalizedFom[rowNum] = {
+        name,
+        national_id: nid,
+        relavent: kinship,
+        Status: status,
+        sYear: eduJob,
+        confession_father: confession
+      };
+
+      normalizedOm[rowNum] = {
+        income
+      };
+    }
+  }
+  const cleanOtherPersons = normalizedOtherPersons.filter(Boolean);
+
   const page3: CaseStudyData["page3"] = {
+    ...rawP3,
     family_members: Array.isArray(rawP3.family_members)
       ? rawP3.family_members.map((m: any, idx: number) => ({
         id: String(m.id || idx + 1),
@@ -462,19 +523,14 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
         confession_father: String(m.confession_father || m.confessionFather || "")
       }))
       : [],
-    other_persons: Array.isArray(rawP3.other_persons)
-      ? rawP3.other_persons.map((o: any, idx: number) => ({
-        id: String(o.id || idx + 1),
-        name: String(o.name || ""),
-        national_id: String(o.national_id || o.nationalId || ""),
-        kinship: String(o.kinship || ""),
-        social_status: String(o.social_status || o.socialStatus || "")
-      }))
-      : [],
+    other_persons: cleanOtherPersons,
+    family_other_members: normalizedFom,
+    other_members: normalizedOm,
     housing_description: String(rawP3.housing_description || ""),
     family_members_notes: String(rawP3.family_members_notes || ""),
     other_members_notes: String(rawP3.other_members_notes || ""),
     medical_conditions: {
+      ...rawMed,
       diseases: String(rawMed.diseases || ""),
       continuous_treatment: String(rawMed.continuous_treatment || ""),
       mental_addiction: String(rawMed.mental_addiction || ""),
@@ -487,7 +543,10 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   const rawP4 = raw.page4 || raw.Page4 || {};
   const rawIncome = rawP4.income || {};
   const rawExpenses = rawP4.expenses || {};
+  const pensionVal = raw["الدخل الشهري - معاش"] ?? rawP4.pension ?? rawIncome.pension ?? "";
+
   let page4: CaseStudyData["page4"] = {
+    ...rawP4,
     church_aid: Array.isArray(rawP4.church_aid)
       ? rawP4.church_aid.map((a: any, idx: number) => ({
         id: String(a.id || idx + 1),
@@ -498,16 +557,20 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
       : [],
     total_church_aid: rawP4.total_church_aid ?? 0,
     church_aid_total_notes: String(rawP4.church_aid_total_notes || ""),
+    pension: pensionVal,
     income: {
+      ...rawIncome,
       church_aid: rawIncome.church_aid ?? "",
       medical_aid: rawIncome.medical_aid ?? "",
       study_aid: rawIncome.study_aid ?? "",
       base_salary: rawIncome.base_salary ?? "",
       side_project: rawIncome.side_project ?? "",
       relatives_aid: rawIncome.relatives_aid ?? "",
+      pension: pensionVal,
       total_income: rawIncome.total_income ?? ""
     },
     expenses: {
+      ...rawExpenses,
       living_basics: rawExpenses.living_basics ?? "",
       utilities: rawExpenses.utilities ?? "",
       phone: rawExpenses.phone ?? "",
@@ -517,11 +580,12 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
       total_expenses: rawExpenses.total_expenses ?? ""
     }
   };
-  page4 = recalculatePage4Totals(page4, raw);
+  page4 = recalculatePage4Totals(page4, { ...raw, ["الدخل الشهري - معاش"]: pensionVal });
 
   const rawP5 = raw.page5 || raw.Page5 || {};
   const rawComm = Array.isArray(rawP5.committee_members) ? rawP5.committee_members : [];
   const page5: CaseStudyData["page5"] = {
+    ...rawP5,
     duration: String(rawP5.duration || ""),
     entry_reason: String(rawP5.entry_reason || ""),
     approved_amount: rawP5.approved_amount ?? "",
@@ -537,6 +601,7 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   const rawP6 = raw.page6 || raw.Page6 || {};
   const rawSigs = Array.isArray(rawP6.signatures) ? rawP6.signatures : [];
   const page6: CaseStudyData["page6"] = {
+    ...rawP6,
     family_head: String(rawP6.family_head || rawP6.head_name || getHeadOfHouseholdName({ page2, page6: rawP6 }) || ""),
     church_records_id: String(rawP6.church_records_id || rawP6.church_id || rawP1.church_study_id || rawP1.churchStudyId || ""),
     cathedral_care_id: String(rawP6.cathedral_care_id || rawP6.care_id || rawP1.cathedral_care_id || rawP1.cathedralCareId || ""),
@@ -596,16 +661,18 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
     : [];
 
   return {
+    ...raw, // Preserves all root-level layout fields like "الدخل الشهري - معاش", "الدخل الشهري - كشك", etc.
     husband_id_image: raw.husband_id_image,
     husband_id_back_image: raw.husband_id_back_image,
     wife_id_image: raw.wife_id_image,
     wife_id_back_image: raw.wife_id_back_image,
-    page1,
-    page2,
-    page3,
-    page4,
-    page5,
-    page6,
+    ["الدخل الشهري - معاش"]: pensionVal,
+    page1: { ...rawP1, ...page1 },
+    page2: { ...rawP2, ...page2 },
+    page3: { ...rawP3, ...page3 },
+    page4: { ...rawP4, ...page4 },
+    page5: { ...rawP5, ...page5 },
+    page6: { ...rawP6, ...page6 },
     extra_pages
   };
 }
@@ -1040,13 +1107,14 @@ export const App: React.FC = () => {
         }
       }
 
-      // Automatically propagate Head of Household to Page 6 if not manually overridden or when husband status changed
-      const husbandStatusChanged = updated.page2?.husband?.status !== undefined &&
-        updated.page2.husband.status !== prev.page2?.husband?.status;
+      // Automatically propagate Head of Household to Page 6 if not manually overridden or when spouse status changed
+      const spouseStatusChanged =
+        (updated.page2?.husband?.status !== undefined && updated.page2.husband.status !== prev.page2?.husband?.status) ||
+        (updated.page2?.wife?.status !== undefined && updated.page2.wife.status !== prev.page2?.wife?.status);
       const head = getHeadOfHouseholdName(next);
       const prevHead = getHeadOfHouseholdName(prev);
 
-      if (head && (husbandStatusChanged || !next.page6?.family_head || next.page6.family_head === prevHead)) {
+      if (head && (spouseStatusChanged || !next.page6?.family_head || next.page6.family_head === prevHead)) {
         next.page6 = {
           ...next.page6,
           family_head: head
@@ -1058,7 +1126,7 @@ export const App: React.FC = () => {
         next.extra_pages = next.extra_pages.map((ep) => {
           if (ep.type === "duplicated_ledger") {
             const currentP6Data = ep.page6Data || {};
-            if (husbandStatusChanged || !currentP6Data.family_head || currentP6Data.family_head === prevHead) {
+            if (spouseStatusChanged || !currentP6Data.family_head || currentP6Data.family_head === prevHead) {
               return {
                 ...ep,
                 page6Data: {
