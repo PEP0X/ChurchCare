@@ -10,7 +10,7 @@ use api::handlers::AppState;
 use api::routes::create_router;
 
 const SUPABASE_URL: &str = "https://pluijiucmbqjwnaoyyhi.supabase.co";
-const SUPABASE_SECRET_KEY: &str = "sb_secret_kEcp8RnS_Y0ns19mkusbng_p0ZPJTrB";
+const SUPABASE_SECRET_KEY: &str = "";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

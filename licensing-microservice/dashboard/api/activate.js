@@ -3,6 +3,33 @@ import { getFirestoreDb } from './_firebase.js';
 
 const MASTER_SECRET = 'zkVv79AOxNrjyFVm/VtKToJJfrY1SnwXCYfjvgYb7jU=';
 
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+
+async function syncToSupabase(data) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/sync_license`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify({
+        p_serial_key: data.serial_key,
+        p_client_name: data.client_name,
+        p_status: data.status || 'active',
+        p_hwid: data.hwid || null,
+        p_notes: data.notes || null,
+        p_activated_at: data.activated_at || null
+      })
+    });
+  } catch (e) {
+    console.error('Supabase sync error (non-fatal):', e);
+  }
+}
+
 function createHmacSignature(serial, hwid, clientName) {
   const message = `${serial}|${hwid}|${clientName}`;
   return crypto.createHmac('sha256', MASTER_SECRET).update(message).digest('hex');
@@ -86,6 +113,15 @@ export default async function handler(req, res) {
       status: 'active',
       activated_at: activatedAt,
       notes: notes
+    });
+
+    await syncToSupabase({
+      serial_key: serial,
+      client_name: clientName,
+      status: 'active',
+      hwid: hwid,
+      notes: notes,
+      activated_at: activatedAt
     });
 
     const signature = createHmacSignature(serial, hwid, clientName);

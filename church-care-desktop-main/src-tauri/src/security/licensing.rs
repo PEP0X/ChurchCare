@@ -8,7 +8,7 @@ use aes_gcm::{
     Aes256Gcm, Nonce
 };
 use obfstr::obfstr;
-use crate::security::hwid::get_hardware_id;
+use crate::security::hwid::{get_hardware_id, persist_hardware_id};
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -186,13 +186,23 @@ pub fn check_local_license() -> LicenseStatus {
     }
 }
 
-/// Queries cloud validation (Vercel/Firestore), then Supabase RPC validate_license, then local microservice
-pub fn query_remote_validation(serial: &str, hwid: &str) -> Result<bool, String> {
+#[derive(Debug, PartialEq)]
+pub enum RemoteValidationResult {
+    Valid(Option<String>),
+    Revoked(String),
+    OfflineOrUncertain(String),
+}
+
+/// Queries cloud validation across Vercel and Supabase.
+/// Resilient against server desync, cold starts, and network packet drops.
+/// A license is considered valid if EITHER server confirms it is active.
+/// It is only considered revoked if all reachable servers authoritatively confirm revocation.
+pub fn query_remote_validation(serial: &str, hwid: &str) -> RemoteValidationResult {
     let client = match reqwest::blocking::Client::builder()
-        .timeout(std::time::Duration::from_secs(4))
+        .timeout(std::time::Duration::from_secs(8))
         .build() {
             Ok(c) => c,
-            Err(e) => return Err(format!("فشل تهيئة الاتصال: {}", e)),
+            Err(e) => return RemoteValidationResult::OfflineOrUncertain(format!("فشل تهيئة الاتصال: {}", e)),
         };
 
     let body = serde_json::json!({
@@ -200,7 +210,10 @@ pub fn query_remote_validation(serial: &str, hwid: &str) -> Result<bool, String>
         "p_hwid": hwid.trim()
     });
 
-    // 1. Primary priority: Cloud Vercel / Firebase Firestore (/api/validate)
+    let mut vercel_result: Option<ServerValidationResponse> = None;
+    let mut supabase_result: Option<ServerValidationResponse> = None;
+
+    // 1. Cloud Vercel / Firebase Firestore (/api/validate)
     let cloud_validate = obfstr!("https://coptic-care.vercel.app/api/validate").to_string();
     if let Ok(res) = client.post(&cloud_validate)
         .header("Content-Type", "application/json")
@@ -209,14 +222,15 @@ pub fn query_remote_validation(serial: &str, hwid: &str) -> Result<bool, String>
     {
         if res.status().is_success() {
             if let Ok(val) = res.json::<ServerValidationResponse>() {
-                if let Some(valid) = val.valid {
-                    return Ok(valid);
+                if val.valid == Some(true) {
+                    return RemoteValidationResult::Valid(val.client_name);
                 }
+                vercel_result = Some(val);
             }
         }
     }
 
-    // 2. Secondary fallback: Supabase RPC validate_license
+    // 2. Supabase RPC validate_license
     let supabase_url = obfstr!("https://pluijiucmbqjwnaoyyhi.supabase.co").to_string();
     let publishable_key = obfstr!("sb_publishable_AXTJg_CXmTcON9dIgDdHYA_QQcOgTBt").to_string();
     let endpoint = format!("{}/rest/v1/rpc/validate_license", supabase_url);
@@ -230,14 +244,15 @@ pub fn query_remote_validation(serial: &str, hwid: &str) -> Result<bool, String>
     {
         if res.status().is_success() {
             if let Ok(val) = res.json::<ServerValidationResponse>() {
-                if let Some(valid) = val.valid {
-                    return Ok(valid);
+                if val.valid == Some(true) {
+                    return RemoteValidationResult::Valid(val.client_name);
                 }
+                supabase_result = Some(val);
             }
         }
     }
 
-    // 3. Third priority: Licensing microservice (http://localhost:4040/api/validate)
+    // 3. Fallback: Local Licensing microservice (if running in diocese / intranet)
     let ms_endpoint = "http://localhost:4040/api/validate";
     let ms_body = serde_json::json!({
         "serial_key": serial.trim(),
@@ -251,19 +266,39 @@ pub fn query_remote_validation(serial: &str, hwid: &str) -> Result<bool, String>
     {
         if res.status().is_success() {
             if let Ok(val) = res.json::<ServerValidationResponse>() {
-                if let Some(valid) = val.valid {
-                    return Ok(valid);
+                if val.valid == Some(true) {
+                    return RemoteValidationResult::Valid(val.client_name);
                 }
             }
         }
     }
 
-    Err("تعذر الاتصال بالخادم (وضع عدم الاتصال)".to_string())
+    // Evaluate responses if neither server returned valid: true
+    match (vercel_result, supabase_result) {
+        // Both servers responded and confirmed false
+        (Some(v), Some(s)) => {
+            let reason_msg = s.message.or(v.message)
+                .unwrap_or_else(|| "تم إلغاء التفعيل أو فك ربط هذا الجهاز من قبل إدارة النظام.".to_string());
+            RemoteValidationResult::Revoked(reason_msg)
+        }
+        // Exactly one responded with explicit revocation (HWID_RESET or LICENSE_REVOKED)
+        (Some(v), None) if v.reason.as_deref() == Some("HWID_RESET") || v.reason.as_deref() == Some("LICENSE_REVOKED") || v.reason.as_deref() == Some("NOT_ACTIVE") => {
+            let msg = v.message.unwrap_or_else(|| "تم إلغاء هذا الترخيص من قبل إدارة النظام.".to_string());
+            RemoteValidationResult::Revoked(msg)
+        }
+        (None, Some(s)) if s.reason.as_deref() == Some("HWID_RESET") || s.reason.as_deref() == Some("LICENSE_REVOKED") || s.reason.as_deref() == Some("NOT_ACTIVE") => {
+            let msg = s.message.unwrap_or_else(|| "تم إلغاء هذا الترخيص من قبل إدارة النظام.".to_string());
+            RemoteValidationResult::Revoked(msg)
+        }
+        // One server was NOT_FOUND while the other timed out/errored, OR both timed out/offline:
+        // Do NOT revoke! The other database or internet might just be temporarily desynced/unreachable.
+        _ => RemoteValidationResult::OfflineOrUncertain("تعذر التأكيد النهائي من جميع الخوادم (الاستمرار في وضع عدم الاتصال المعتمد)".to_string())
+    }
 }
 
 /// Realtime Heartbeat: checks local vault and validates with server.
-/// If server explicitly revokes, unbinds (HWID reset), or deletes the license,
-/// this immediately deletes the local encrypted vault and locks the app.
+/// Offline-first: If server explicitly revokes or unbinds (HWID reset),
+/// this locks the app. Otherwise, local cryptographic validity is honored.
 pub fn check_license_heartbeat() -> LicenseStatus {
     let current_hwid = get_hardware_id();
 
@@ -281,21 +316,19 @@ pub fn check_license_heartbeat() -> LicenseStatus {
         }
     };
 
-    // 2. Query remote server for live validation
+    // 2. Query remote servers for live validation
     match query_remote_validation(&local_data.serial_key, &local_data.hwid) {
-        Ok(true) => {
-            // Server confirms license is active and valid for this HWID
+        RemoteValidationResult::Valid(client_name) => {
             LicenseStatus {
                 is_licensed: true,
-                client_name: Some(local_data.client_name),
+                client_name: client_name.or(Some(local_data.client_name)),
                 serial_key: Some(local_data.serial_key),
                 hwid: current_hwid,
                 message: "الترخيص سارٍ ومفعّل.".to_string(),
             }
         }
-        Ok(false) => {
-            // 🚨 Authoritative Server Revocation: HWID was reset, license deleted, or revoked!
-            // Wipe the local encrypted vault file immediately so it can never be reused.
+        RemoteValidationResult::Revoked(reason_msg) => {
+            // Authoritative Server Revocation: HWID was reset or license revoked by admin
             let lic_path = get_license_file_path();
             if lic_path.exists() {
                 let _ = fs::remove_file(&lic_path);
@@ -306,13 +339,13 @@ pub fn check_license_heartbeat() -> LicenseStatus {
                 client_name: None,
                 serial_key: None,
                 hwid: current_hwid,
-                message: "تم إلغاء التفعيل أو فك ربط هذا الجهاز من قبل إدارة النظام.".to_string(),
+                message: reason_msg,
             }
         }
-        Err(_) => {
-            // 🛡️ Graceful Offline Fallback ("مش رخم لل user"):
-            // Network is unreachable or timed out. Since local cryptographic signature & hardware binding
-            // are 100% valid, allow the user to continue working offline peacefully.
+        RemoteValidationResult::OfflineOrUncertain(_) => {
+            // Graceful Offline Fallback:
+            // Since local cryptographic signature & hardware binding are 100% valid,
+            // allow the user to continue working offline peacefully.
             LicenseStatus {
                 is_licensed: true,
                 client_name: Some(local_data.client_name),
@@ -328,6 +361,7 @@ pub fn check_license_heartbeat() -> LicenseStatus {
 /// Encrypts and saves a valid license to local disk bound to this machine
 fn save_local_license(lic: &LicenseData) -> Result<(), String> {
     let current_hwid = get_hardware_id();
+    persist_hardware_id(&current_hwid);
     let lic_path = get_license_file_path();
     let key = derive_machine_aes_key(&current_hwid);
     let cipher = Aes256Gcm::new_from_slice(&key)
@@ -381,6 +415,8 @@ pub fn activate_license_online(serial: &str) -> Result<LicenseStatus, String> {
         "p_device_name": device_name
     });
 
+    let mut last_error_msg: Option<String> = None;
+
     // 1. Primary priority: Cloud Vercel / Firebase Firestore endpoint
     let cloud_activate = obfstr!("https://coptic-care.vercel.app/api/activate").to_string();
     if let Ok(res) = client.post(&cloud_activate)
@@ -402,6 +438,7 @@ pub fn activate_license_online(serial: &str) -> Result<LicenseStatus, String> {
 
                     if verify_license_signature(&lic_data) {
                         save_local_license(&lic_data)?;
+                        persist_hardware_id(&current_hwid);
                         return Ok(LicenseStatus {
                             is_licensed: true,
                             client_name: Some(lic_data.client_name),
@@ -410,12 +447,8 @@ pub fn activate_license_online(serial: &str) -> Result<LicenseStatus, String> {
                             message: "تم تفعيل البرنامج بنجاح مدى الحياة لهذا الجهاز!".to_string(),
                         });
                     }
-                } else if let Some(code) = rpc_res.error_code.as_deref() {
-                    // Stop on explicit status errors (Revoked or Hardware Mismatch)
-                    if code == "LICENSE_REVOKED" || code == "HARDWARE_MISMATCH" {
-                        let msg = rpc_res.message.unwrap_or_else(|| "فشل التفعيل.".to_string());
-                        return Err(msg);
-                    }
+                } else if let Some(msg) = rpc_res.message {
+                    last_error_msg = Some(msg);
                 }
             }
         }
@@ -431,52 +464,40 @@ pub fn activate_license_online(serial: &str) -> Result<LicenseStatus, String> {
         .header("Authorization", format!("Bearer {}", publishable_key))
         .header("Content-Type", "application/json")
         .json(&body)
-        .send()
-        .map_err(|e| {
-            if e.is_timeout() {
-                "انتهت مهلة الاتصال بالسيرفر. يرجى التحقق من اتصال الإنترنت والمحاولة ثانية.".to_string()
-            } else {
-                format!("تعذر الاتصال بسيرفر التفعيل: {}", e)
+        .send();
+
+    if let Ok(res) = res {
+        if res.status().is_success() {
+            if let Ok(rpc_res) = res.json::<SupabaseRpcResponse>() {
+                if rpc_res.success {
+                    let lic_data = LicenseData {
+                        serial_key: rpc_res.serial_key.unwrap_or(cleaned_serial),
+                        client_name: rpc_res.client_name.unwrap_or_else(|| "العميل".to_string()),
+                        hwid: rpc_res.hwid.unwrap_or_else(|| current_hwid.clone()),
+                        activated_at: rpc_res.activated_at.unwrap_or_else(|| chrono::Utc::now().to_rfc3339()),
+                        license_type: rpc_res.license_type.unwrap_or_else(|| "LIFETIME".to_string()),
+                        signature: rpc_res.signature.ok_or("لم يرسل السيرفر توقيعاً رقمياً معتمداً.")?,
+                    };
+
+                    if verify_license_signature(&lic_data) {
+                        save_local_license(&lic_data)?;
+                        persist_hardware_id(&current_hwid);
+                        return Ok(LicenseStatus {
+                            is_licensed: true,
+                            client_name: Some(lic_data.client_name),
+                            serial_key: Some(lic_data.serial_key),
+                            hwid: current_hwid,
+                            message: "تم تفعيل البرنامج بنجاح مدى الحياة لهذا الجهاز!".to_string(),
+                        });
+                    }
+                } else if let Some(msg) = rpc_res.message {
+                    return Err(msg);
+                }
             }
-        })?;
-
-    if !res.status().is_success() {
-        let error_body = res.text().unwrap_or_default();
-        return Err(format!("فشل طلب التفعيل من السيرفر: {}", error_body));
+        }
     }
 
-    let rpc_res: SupabaseRpcResponse = res.json()
-        .map_err(|e| format!("استجابة غير صالحة من السيرفر: {}", e))?;
-
-    if !rpc_res.success {
-        let msg = rpc_res.message.unwrap_or_else(|| "فشل التفعيل لأسباب غير محددة.".to_string());
-        return Err(msg);
-    }
-
-    let lic_data = LicenseData {
-        serial_key: rpc_res.serial_key.unwrap_or(cleaned_serial),
-        client_name: rpc_res.client_name.unwrap_or_else(|| "العميل".to_string()),
-        hwid: rpc_res.hwid.unwrap_or_else(|| current_hwid.clone()),
-        activated_at: rpc_res.activated_at.unwrap_or_else(|| chrono::Utc::now().to_rfc3339()),
-        license_type: rpc_res.license_type.unwrap_or_else(|| "LIFETIME".to_string()),
-        signature: rpc_res.signature.ok_or("لم يرسل السيرفر توقيعاً رقمياً معتمداً.")?,
-    };
-
-    // Verify signature immediately
-    if !verify_license_signature(&lic_data) {
-        return Err("فشل التحقق من التوقيع الرقمي الصادر من السيرفر (قد يكون الاتصال مخترقاً أو معترضاً).".to_string());
-    }
-
-    // Save locally
-    save_local_license(&lic_data)?;
-
-    Ok(LicenseStatus {
-        is_licensed: true,
-        client_name: Some(lic_data.client_name),
-        serial_key: Some(lic_data.serial_key),
-        hwid: current_hwid,
-        message: "تم تفعيل البرنامج بنجاح مدى الحياة لهذا الجهاز!".to_string(),
-    })
+    Err(last_error_msg.unwrap_or_else(|| "فشل التفعيل. يرجى التأكد من صحة السيريال واتصال الإنترنت والمحاولة مرة أخرى.".to_string()))
 }
 
 #[cfg(test)]

@@ -804,9 +804,17 @@ export const App: React.FC = () => {
 
           // Trigger asynchronous realtime validation once in background
           invoke<{ is_licensed: boolean; client_name: string | null; message: string }>("check_license_heartbeat")
-            .then((heartbeatStatus) => {
+            .then(async (heartbeatStatus) => {
               if (!heartbeatStatus.is_licensed && isLicensedRef.current) {
-                handleServerRevocation(heartbeatStatus.message);
+                try {
+                  await new Promise((r) => setTimeout(r, 4000));
+                  const recheck = await invoke<{ is_licensed: boolean; client_name: string | null; message: string }>("check_license_heartbeat");
+                  if (!recheck.is_licensed && isLicensedRef.current) {
+                    handleServerRevocation(recheck.message);
+                  }
+                } catch {
+                  // Ignore transient network errors
+                }
               }
             })
             .catch(() => { });
@@ -824,8 +832,8 @@ export const App: React.FC = () => {
         setShowActivationModal(true);
       });
 
-    // 2. Realtime Background Heartbeat (every 15 seconds)
-    // Synchronizes with Supabase & Microservice cleanly in the background
+    // 2. Realtime Background Heartbeat (every 10 minutes - enterprise desktop standard)
+    // Synchronizes with Cloud Firestore cleanly without disrupting the user
     const heartbeatInterval = setInterval(() => {
       if (!isLicensedRef.current || isTransitioningRef.current || isCheckingHeartbeatRef.current) {
         return;
@@ -833,18 +841,26 @@ export const App: React.FC = () => {
       isCheckingHeartbeatRef.current = true;
 
       invoke<{ is_licensed: boolean; client_name: string | null; message: string }>("check_license_heartbeat")
-        .then((heartbeatStatus) => {
+        .then(async (heartbeatStatus) => {
           if (!heartbeatStatus.is_licensed && isLicensedRef.current) {
-            handleServerRevocation(heartbeatStatus.message);
+            try {
+              await new Promise((r) => setTimeout(r, 5000));
+              const recheck = await invoke<{ is_licensed: boolean; client_name: string | null; message: string }>("check_license_heartbeat");
+              if (!recheck.is_licensed && isLicensedRef.current) {
+                handleServerRevocation(recheck.message);
+              }
+            } catch {
+              // Ignore transient network errors
+            }
           }
         })
         .catch((err) => {
-          console.error("Heartbeat error:", err);
+          console.debug("Background heartbeat skipped:", err);
         })
         .finally(() => {
           isCheckingHeartbeatRef.current = false;
         });
-    }, 15000);
+    }, 10 * 60 * 1000);
 
     return () => {
       clearInterval(heartbeatInterval);

@@ -367,7 +367,7 @@
         </span>
         <div class="flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>مباشر Supabase</span>
+          <span>مباشر Cloud Firestore</span>
         </div>
       </div>
     </div>

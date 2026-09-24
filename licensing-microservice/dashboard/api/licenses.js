@@ -10,6 +10,50 @@ function generateSerialNumber() {
   return 'CCARE-' + seg1 + '-' + seg2 + '-' + seg3;
 }
 
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+
+async function syncToSupabase(action, data) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  try {
+    let rpcName = '';
+    let body = {};
+    if (action === 'create' || action === 'sync') {
+      rpcName = 'sync_license';
+      body = {
+        p_serial_key: data.serial_key,
+        p_client_name: data.client_name,
+        p_status: data.status || 'unactivated',
+        p_hwid: data.hwid || null,
+        p_notes: data.notes || null,
+        p_activated_at: data.activated_at || null
+      };
+    } else if (action === 'reset') {
+      rpcName = 'admin_reset_license';
+      body = { p_serial_key: data.serial_key };
+    } else if (action === 'status') {
+      rpcName = 'admin_set_status';
+      body = { p_serial_key: data.serial_key, p_status: data.status };
+    } else if (action === 'delete') {
+      rpcName = 'admin_delete_license';
+      body = { p_serial_key: data.serial_key };
+    }
+    if (rpcName) {
+      await fetch(`${SUPABASE_URL}/rest/v1/rpc/${rpcName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        body: JSON.stringify(body)
+      });
+    }
+  } catch (e) {
+    console.error('Supabase sync error (non-fatal):', e);
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -47,7 +91,12 @@ export default async function handler(req, res) {
         if (body.action === 'reset') {
           if (!body.id) return res.status(400).json({ error: 'Missing license ID' });
           const docRef = col.doc(body.id);
+          const doc = await docRef.get();
+          const docData = doc.data() || {};
           await docRef.update({ hwid: null, status: 'unactivated' });
+          if (docData.serial_key) {
+            await syncToSupabase('reset', { serial_key: docData.serial_key });
+          }
           const updated = await docRef.get();
           return res.status(200).json({ id: updated.id, ...updated.data() });
         }
@@ -55,7 +104,12 @@ export default async function handler(req, res) {
         if (body.action === 'status') {
           if (!body.id) return res.status(400).json({ error: 'Missing license ID' });
           const docRef = col.doc(body.id);
+          const doc = await docRef.get();
+          const docData = doc.data() || {};
           await docRef.update({ status: body.status });
+          if (docData.serial_key) {
+            await syncToSupabase('status', { serial_key: docData.serial_key, status: body.status });
+          }
           const updated = await docRef.get();
           return res.status(200).json({ id: updated.id, ...updated.data() });
         }
@@ -71,12 +125,20 @@ export default async function handler(req, res) {
           created_at: new Date().toISOString()
         };
         const docRef = await col.add(docData);
+        await syncToSupabase('create', docData);
         return res.status(200).json({ id: docRef.id, ...docData });
       }
 
       if (req.method === 'DELETE') {
         const id = req.query.id || (req.body && req.body.id);
         if (!id) return res.status(400).json({ error: 'Missing license ID' });
+        const doc = await col.doc(id).get();
+        if (doc.exists) {
+          const docData = doc.data() || {};
+          if (docData.serial_key) {
+            await syncToSupabase('delete', { serial_key: docData.serial_key });
+          }
+        }
         await col.doc(id).delete();
         return res.status(200).json({ success: true });
       }
