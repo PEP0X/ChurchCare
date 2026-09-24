@@ -375,7 +375,7 @@ dependencies = [
 
 [[package]]
 name = "church-care-app"
-version = "1.2.4"
+version = "1.3.0"
 dependencies = [
  "aes-gcm",
  "base64 0.22.1",
