@@ -134,22 +134,29 @@ RESHAPER_CONFIG = {
 }
 reshaper = arabic_reshaper.ArabicReshaper(configuration=RESHAPER_CONFIG)
 
+from functools import lru_cache
+
+@lru_cache(maxsize=4096)
+def _cached_shape_arabic(text: str) -> str:
+    try:
+        reshaped = reshaper.reshape(text)
+        return get_display(reshaped)
+    except Exception as e:
+        sys.stderr.write(f"[arabic_shaper] Error reshaping '{text}': {e}\n")
+        return text
+
 def shape_arabic(text: Any) -> str:
     """
     Shapes Arabic glyphs and applies the Unicode BiDi algorithm
     to prevent disconnected or reversed characters.
+    Optimized with LRU memoization for high-speed batch text rendering.
     """
     if text is None:
         return ""
     str_val = str(text).strip()
     if not str_val:
         return ""
-    try:
-        reshaped = reshaper.reshape(str_val)
-        return get_display(reshaped)
-    except Exception as e:
-        sys.stderr.write(f"[arabic_shaper] Error reshaping '{str_val}': {e}\n")
-        return str_val
+    return _cached_shape_arabic(str_val)
 
 # Load font objects for measuring text length
 font_regular = None
@@ -723,6 +730,37 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
                 pass
         return f"{tot:.0f}" if tot > 0 else ""
 
+    # Page 4 Income Lines Fallbacks
+    if binding in ("page4.income.base_salary",):
+        explicit_val = data.get("page4", {}).get("income", {}).get("base_salary")
+        if explicit_val not in (None, ""):
+            return str(explicit_val)
+        h_sal = float(str(data.get("page2", {}).get("husband", {}).get("salary") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+        return f"{h_sal:.0f}" if h_sal > 0 else ""
+
+    if binding in ("page4.income.side_project",):
+        explicit_val = data.get("page4", {}).get("income", {}).get("side_project")
+        if explicit_val not in (None, ""):
+            return str(explicit_val)
+        p_val = float(str(data.get("الدخل الشهري - معاش") or data.get("page4", {}).get("pension") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+        proj_keys = [
+            "الدخل الشهري - فرشة", "الدخل الشهري - كشك", "الدخل الشهري - محل",
+            "الدخل الشهري - تجارة", "الدخل الشهري - تروسيكل", "الدخل الشهري - أنابيب",
+            "الدخل الشهري - مكنة خياطة", "الدخل الشهري - ثلاجة", "الدخل الشهري - طيور"
+        ]
+        proj_tot = sum(float(str(data.get(pk) or 0).replace("ج.م", "").replace(",", "").strip() or 0) for pk in proj_keys)
+        comb = proj_tot + p_val
+        return f"{comb:.0f}" if comb > 0 else ""
+
+    if binding in ("page4.income.relatives_aid",):
+        explicit_val = data.get("page4", {}).get("income", {}).get("relatives_aid")
+        if explicit_val not in (None, ""):
+            return str(explicit_val)
+        w_sal = float(str(data.get("page2", {}).get("wife", {}).get("salary") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+        r_val = float(str(data.get("الدخل الشهري - مساعدات احد الافراد") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+        comb = w_sal + r_val
+        return f"{comb:.0f}" if comb > 0 else ""
+
     # Page 4 Total Income
     if binding in ("page4.income.total_income",):
         explicit_val = data.get("page4", {}).get("income", {}).get("total_income")
@@ -732,7 +770,25 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
         tot = 0.0
         for k in ("church_aid", "medical_aid", "study_aid", "base_salary", "side_project", "relatives_aid"):
             try:
-                val_str = str(inc.get(k, 0)).replace("ج.م", "").replace(",", "").strip()
+                raw_k_val = inc.get(k)
+                if raw_k_val in (None, "", 0, "0"):
+                    if k == "base_salary":
+                        h_sal = float(str(data.get("page2", {}).get("husband", {}).get("salary") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+                        raw_k_val = h_sal if h_sal > 0 else ""
+                    elif k == "side_project":
+                        p_val = float(str(data.get("الدخل الشهري - معاش") or data.get("page4", {}).get("pension") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+                        proj_keys = [
+                            "الدخل الشهري - فرشة", "الدخل الشهري - كشك", "الدخل الشهري - محل",
+                            "الدخل الشهري - تجارة", "الدخل الشهري - تروسيكل", "الدخل الشهري - أنابيب",
+                            "الدخل الشهري - مكنة خياطة", "الدخل الشهري - ثلاجة", "الدخل الشهري - طيور"
+                        ]
+                        proj_tot = sum(float(str(data.get(pk) or 0).replace("ج.م", "").replace(",", "").strip() or 0) for pk in proj_keys)
+                        raw_k_val = (proj_tot + p_val) if (proj_tot + p_val) > 0 else ""
+                    elif k == "relatives_aid":
+                        w_sal = float(str(data.get("page2", {}).get("wife", {}).get("salary") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+                        r_val = float(str(data.get("الدخل الشهري - مساعدات احد الافراد") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+                        raw_k_val = w_sal + r_val if (w_sal + r_val) > 0 else ""
+                val_str = str(raw_k_val or 0).replace("ج.م", "").replace(",", "").strip()
                 tot += float(val_str)
             except (ValueError, TypeError):
                 pass

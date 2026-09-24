@@ -4,7 +4,15 @@ import { parseEgyptianNationalId } from '../../hooks/useNationalId';
 import { DocumentLayout, FieldConfig } from '../../types/layout';
 import { DEFAULT_DOCUMENT_LAYOUT } from '../../config/defaultDocumentLayout';
 import { getTemplatePageImage } from '../../utils/templateImages';
-import { recalculatePage4Totals, calculatePage2Salaries } from '../../utils/page4Calculations';
+import {
+  recalculatePage4Totals,
+  calculatePage2Salaries,
+  calculateHusbandSalary,
+  calculateWifeSalary,
+  calculateMiddleTablePension,
+  calculateMiddleTableRelativesAid,
+  calculateMiddleTableProjectsSum
+} from '../../utils/page4Calculations';
 import {
   Upload,
   Edit3,
@@ -300,6 +308,8 @@ function setValueByPath(obj: any, path: string, value: any): any {
 
 let measureCanvas: HTMLCanvasElement | null = null;
 let measureCtx: CanvasRenderingContext2D | null = null;
+const textMeasureCache = new Map<string, number>();
+const MAX_MEASURE_CACHE = 3000;
 
 function measureTextWidth(
   text: string,
@@ -308,6 +318,10 @@ function measureTextWidth(
   isMono: boolean = false
 ): number {
   if (!text) return 0;
+  const cacheKey = `${text}_${fontSize}_${isBold ? 1 : 0}_${isMono ? 1 : 0}`;
+  const cached = textMeasureCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
   if (!measureCanvas) {
     measureCanvas = document.createElement('canvas');
     measureCtx = measureCanvas.getContext('2d');
@@ -319,7 +333,19 @@ function measureTextWidth(
     ? 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
     : '"IBM Plex Sans Arabic", -apple-system, BlinkMacSystemFont, sans-serif';
   measureCtx.font = `${weight} ${fontSize}px ${fontFam}`;
-  return measureCtx.measureText(text).width;
+  const width = measureCtx.measureText(text).width;
+
+  if (textMeasureCache.size >= MAX_MEASURE_CACHE) {
+    // Evict oldest 800 entries to prevent memory leaks
+    const iter = textMeasureCache.keys();
+    for (let i = 0; i < 800; i++) {
+      const nextKey = iter.next().value;
+      if (nextKey) textMeasureCache.delete(nextKey);
+      else break;
+    }
+  }
+  textMeasureCache.set(cacheKey, width);
+  return width;
 }
 
 function calculatePixelPerfectFontSize(
@@ -368,13 +394,14 @@ function calculatePixelPerfectFontSize(
   return Math.round(finalSize * 10) / 10;
 }
 
-const AutoFitTextInput: React.FC<{
+interface AutoFitTextInputProps {
   id?: string;
   title?: string;
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
   type?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
   maxLength?: number;
   readOnly?: boolean;
   className?: string;
@@ -384,13 +411,16 @@ const AutoFitTextInput: React.FC<{
   boxHeightPct: number;
   isBold?: boolean;
   isMono?: boolean;
-}> = ({
+}
+
+const AutoFitTextInput = React.memo<AutoFitTextInputProps>(({
   id,
   title,
   value,
   onChange,
   placeholder,
   type = 'text',
+  inputMode,
   maxLength,
   readOnly = false,
   className,
@@ -439,6 +469,7 @@ const AutoFitTextInput: React.FC<{
       title={title}
       ref={inputRef}
       type={type}
+      inputMode={inputMode}
       readOnly={readOnly}
       maxLength={maxLength}
       placeholder={placeholder}
@@ -455,13 +486,13 @@ const AutoFitTextInput: React.FC<{
       }}
     />
   );
-};
+});
 
 // =========================================================================
 // AUTO-FIT TEXTAREA
 // Starts at comfortable paragraph size and smoothly steps down as lines expand
 // =========================================================================
-const AutoFitTextarea: React.FC<{
+interface AutoFitTextareaProps {
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
@@ -470,7 +501,9 @@ const AutoFitTextarea: React.FC<{
   fontSizePreference?: number | 'auto';
   boxWidthPct: number;
   boxHeightPct: number;
-}> = ({
+}
+
+const AutoFitTextarea = React.memo<AutoFitTextareaProps>(({
   value,
   onChange,
   placeholder,
@@ -531,7 +564,7 @@ const AutoFitTextarea: React.FC<{
       }}
     />
   );
-};
+});
 
 export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps> = ({
   page,
@@ -612,6 +645,50 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
       }
     }
 
+    // 2. Propagate Head of Household to Page 6 when spouse info changes
+    if (
+      binding.startsWith('page2.husband') ||
+      binding.startsWith('page2.wife')
+    ) {
+      const computedHead = getHeadOfHouseholdName(updated);
+      if (computedHead && updated.page6) {
+        updated = {
+          ...updated,
+          page6: {
+            ...updated.page6,
+            family_head: computedHead
+          }
+        };
+      }
+    }
+
+    // 3. Assemble Date strings for Page 1 and Page 6
+    if (binding === 'page1.day' || binding === 'page1.month' || binding === 'page1.year') {
+      const d = updated.page1?.day || '';
+      const m = updated.page1?.month || '';
+      const y = updated.page1?.year || '';
+      if (d || m || y) {
+        updated = setValueByPath(updated, 'page1.study_date', `${y}-${m}-${d}`);
+      }
+    }
+    if (binding.startsWith('page6.from_date_')) {
+      const d = updated.page6?.from_date_day || '';
+      const m = updated.page6?.from_date_month || '';
+      const y = updated.page6?.from_date_year || '';
+      if (d || m || y) {
+        updated = setValueByPath(updated, 'page6.from_date', `${y}-${m}-${d}`);
+      }
+    }
+    if (binding.startsWith('page6.to_date_')) {
+      const d = updated.page6?.to_date_day || '';
+      const m = updated.page6?.to_date_month || '';
+      const y = updated.page6?.to_date_year || '';
+      if (d || m || y) {
+        updated = setValueByPath(updated, 'page6.to_date', `${y}-${m}-${d}`);
+      }
+    }
+
+    // 4. Financial Calculations for Page 4
     const isPage4Related =
       binding.startsWith('page4') ||
       binding.startsWith('الدخل الشهري') ||
@@ -620,7 +697,7 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
     if (isPage4Related && updated.page4) {
       updated = {
         ...updated,
-        page4: recalculatePage4Totals(updated.page4, updated)
+        page4: recalculatePage4Totals(updated.page4, updated, binding)
       };
     }
     onChange(updated);
@@ -1707,15 +1784,30 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
           const isWifeName = field.binding === 'page2.wife.name';
           const isWifeDeceasedOrAbsent = isWifeName && isWifeAbsent(data.page2?.wife);
           const isBaseSalary = field.binding === 'page4.income.base_salary';
-          const page2Salaries = isBaseSalary ? calculatePage2Salaries(data) : 0;
+          const isSideProject = field.binding === 'page4.income.side_project';
+          const isRelativesAid = field.binding === 'page4.income.relatives_aid';
+          const husbandSalary = calculateHusbandSalary(data);
+          const wifeSalary = calculateWifeSalary(data);
+          const pensionVal = calculateMiddleTablePension(data);
+          const relativesAid = calculateMiddleTableRelativesAid(data);
+          const microProjectsSum = calculateMiddleTableProjectsSum(data);
+          const husbandAbsent = isHusbandAbsent(data.page2?.husband);
+
+          const baseTotal = husbandAbsent && husbandSalary === 0 ? 0 : husbandSalary;
+          const projectsAndPensionTotal = microProjectsSum + pensionVal;
+          const relativesTotal = wifeSalary + relativesAid;
 
           const effectivePlaceholder =
             isHusbandDeceasedOrAbsent && !rawStr
               ? `(الزوج ${getHusbandStatusLabel(data.page2?.husband)})`
               : isWifeDeceasedOrAbsent && !rawStr
               ? `(الزوجة ${getWifeStatusLabel(data.page2?.wife)})`
-              : isBaseSalary && !rawStr && page2Salaries > 0
-              ? `مجموع ص2: ${page2Salaries}`
+              : isBaseSalary && !rawStr && baseTotal > 0
+              ? `مرتب الزوج: ${husbandSalary}`
+              : isSideProject && !rawStr && projectsAndPensionTotal > 0
+              ? (microProjectsSum > 0 && pensionVal > 0 ? `مشروعات (${microProjectsSum}) + معاش (${pensionVal})` : pensionVal > 0 ? `معاش: ${pensionVal}` : `∑ المشروعات: ${microProjectsSum}`)
+              : isRelativesAid && !rawStr && relativesTotal > 0
+              ? (wifeSalary > 0 && relativesAid > 0 ? `مرتب الزوجة (${wifeSalary}) + أقارب (${relativesAid})` : wifeSalary > 0 ? `مرتب الزوجة: ${wifeSalary}` : `أقارب: ${relativesAid}`)
               : (field.placeholder || '');
 
           return (
@@ -1745,7 +1837,8 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                     ? `حالة الزوجة: ${getWifeStatusLabel(data.page2?.wife)}`
                     : undefined
                 }
-                type={isPage4Total ? 'text' : (field.type === 'number' && !isNationalId ? 'number' : 'text')}
+                type="text"
+                inputMode={field.type === 'number' || isNationalId || isPage4TableNumber ? 'numeric' : undefined}
                 readOnly={isPage4Total}
                 maxLength={isNationalId ? 14 : undefined}
                 placeholder={effectivePlaceholder}

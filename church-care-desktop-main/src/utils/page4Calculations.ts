@@ -1,4 +1,5 @@
 import { CaseStudyData } from "../types/schema";
+import { isHusbandAbsent } from "./caseStudyUtils";
 
 /**
  * Parses numeric inputs safely, supporting:
@@ -35,7 +36,7 @@ export function formatCurrencyValue(num: number): string {
 }
 
 /**
- * Field bindings for Middle Table (مصادر الدخل الأساسية / الإضافية) project items
+ * Field bindings for Middle Table (مصادر الدخل الأساسية / الإضافية) micro-project items
  */
 export const MIDDLE_TABLE_PROJECT_BINDINGS = [
   "الدخل الشهري - فرشة",
@@ -45,7 +46,6 @@ export const MIDDLE_TABLE_PROJECT_BINDINGS = [
   "الدخل الشهري - كشك",
   "الدخل الشهري - محل",
   "الدخل الشهري - تجارة",
-  "الدخل الشهري - معاش",
   "الدخل الشهري - مكنة خياطة وتطريز",
   "الدخل الشهري - ثلاجة مشروبات",
   "الدخل الشهري - تربية طيور"
@@ -62,6 +62,18 @@ export function calculateMiddleTableProjectsSum(rootData: any): number {
 }
 
 /**
+ * Retrieves the pension amount from the Middle Table of Page 4
+ */
+export function calculateMiddleTablePension(rootData: any): number {
+  if (!rootData) return 0;
+  return parseNumericValue(
+    rootData["الدخل الشهري - معاش"] ??
+    rootData?.page4?.pension ??
+    rootData?.page4?.income?.pension
+  );
+}
+
+/**
  * Retrieves the relatives aid amount from the Middle Table of Page 4
  */
 export function calculateMiddleTableRelativesAid(rootData: any): number {
@@ -70,13 +82,27 @@ export function calculateMiddleTableRelativesAid(rootData: any): number {
 }
 
 /**
+ * Calculates husband salary from Page 2
+ */
+export function calculateHusbandSalary(rootData: any): number {
+  if (!rootData) return 0;
+  return parseNumericValue(rootData?.page2?.husband?.salary);
+}
+
+/**
+ * Calculates wife salary from Page 2
+ */
+export function calculateWifeSalary(rootData: any): number {
+  if (!rootData) return 0;
+  return parseNumericValue(rootData?.page2?.wife?.salary);
+}
+
+/**
  * Calculates the combined base salary from Page 2 (Husband + Wife)
  */
 export function calculatePage2Salaries(rootData: any): number {
   if (!rootData) return 0;
-  const husbandSalary = parseNumericValue(rootData?.page2?.husband?.salary);
-  const wifeSalary = parseNumericValue(rootData?.page2?.wife?.salary);
-  return husbandSalary + wifeSalary;
+  return calculateHusbandSalary(rootData) + calculateWifeSalary(rootData);
 }
 
 export interface BudgetBalanceInfo {
@@ -156,15 +182,22 @@ export function calculateBudgetBalance(p4?: CaseStudyData["page4"] | null): Budg
 /**
  * Automatically recalculates all three tables on Page 4:
  * 1. Church Aid Total (`page4.total_church_aid`) and syncs to `page4.income.church_aid`
- * 2. Point 1: Aggregates middle table projects into `page4.income.side_project`
- * 3. Point 1: Aggregates middle table relatives aid into `page4.income.relatives_aid`
- * 4. Point 2: Auto-syncs Page 2 salaries (Husband + Wife) into `page4.income.base_salary`
- * 5. Total Monthly Income (`page4.income.total_income`)
- * 6. Total Monthly Expenses (`page4.expenses.total_expenses`)
+ * 2. Husband salary -> `page4.income.base_salary` (المرتب الأساسي)
+ *    (or Wife salary if husband is deceased/absent)
+ * 3. Wife salary + Middle table micro-projects -> `page4.income.side_project` (المصدر الإضافي الأول)
+ * 4. Middle table relatives aid + pension -> `page4.income.relatives_aid` (المصدر الإضافي الثاني)
+ * 5. Instant zeroing/clearing when any source field is erased (prevents stuck leftover digits like "2")
+ * 6. Total Monthly Income (`page4.income.total_income`)
+ * 7. Total Monthly Expenses (`page4.expenses.total_expenses`)
+ *
+ * @param p4 Current Page 4 data
+ * @param rootData Optional root case study data for cross-page values
+ * @param triggeredBinding Optional field binding that triggered the calculation (allows manual override on Page 4)
  */
 export function recalculatePage4Totals(
   p4: CaseStudyData["page4"],
-  rootData?: Partial<CaseStudyData>
+  rootData?: Partial<CaseStudyData>,
+  triggeredBinding?: string
 ): CaseStudyData["page4"] {
   if (!p4) return p4;
 
@@ -193,31 +226,69 @@ export function recalculatePage4Totals(
     return acc + parseNumericValue(item?.value);
   }, 0);
 
-  // Sync to church_aid in income table
-  if (totalChurchAidNum > 0 || !currentIncome.church_aid) {
+  // Sync to church_aid in income table (unless user is currently editing church_aid directly)
+  if (triggeredBinding !== "page4.income.church_aid") {
     currentIncome.church_aid = totalChurchAidNum > 0 ? String(totalChurchAidNum) : "";
   }
 
-  // 2. Point 1: Auto-aggregate Middle Table Projects into side_project
+  // 2. Cross-Page Salary and Middle Table Synchronization
   if (rootData) {
-    const projectsSum = calculateMiddleTableProjectsSum(rootData);
-    if (projectsSum > 0) {
-      currentIncome.side_project = String(projectsSum);
-    }
-
+    const husbandSalary = calculateHusbandSalary(rootData);
+    const wifeSalary = calculateWifeSalary(rootData);
+    const pensionVal = calculateMiddleTablePension(rootData);
     const relativesAid = calculateMiddleTableRelativesAid(rootData);
-    if (relativesAid > 0) {
-      currentIncome.relatives_aid = String(relativesAid);
+    const microProjectsSum = calculateMiddleTableProjectsSum(rootData);
+    const husbandAbsent = isHusbandAbsent(rootData?.page2?.husband);
+
+    // 1) المرتب الأساسي (base_salary):
+    // مرتب الزوج
+    const primarySalary = husbandAbsent && husbandSalary === 0 ? 0 : husbandSalary;
+
+    if (triggeredBinding !== "page4.income.base_salary") {
+      const hasBaseSources = Boolean(rootData?.page2?.husband && "salary" in rootData.page2.husband);
+
+      if (primarySalary > 0) {
+        currentIncome.base_salary = String(primarySalary);
+      } else if (hasBaseSources) {
+        currentIncome.base_salary = "";
+      }
     }
 
-    // 3. Point 2: Auto-sync Page 2 salaries into base_salary
-    const page2Salaries = calculatePage2Salaries(rootData);
-    if (page2Salaries > 0 && (!currentIncome.base_salary || parseNumericValue(currentIncome.base_salary) === 0)) {
-      currentIncome.base_salary = String(page2Salaries);
+    // 2) المصدر الإضافي الأول (side_project):
+    // مشروعات الجدول الأوسط + المعاش ("المعاش يتضاف في المصدر الاضافي الاول")
+    if (triggeredBinding !== "page4.income.side_project") {
+      const combinedProjectsAndPension = microProjectsSum + pensionVal;
+      const hasSideSources =
+        MIDDLE_TABLE_PROJECT_BINDINGS.some((key) => key in rootData) ||
+        "الدخل الشهري - معاش" in rootData ||
+        Boolean(rootData?.page4?.pension) ||
+        Boolean(rootData?.page4?.income?.pension);
+
+      if (combinedProjectsAndPension > 0) {
+        currentIncome.side_project = String(combinedProjectsAndPension);
+      } else if (hasSideSources) {
+        currentIncome.side_project = "";
+      }
+    }
+
+    // 3) المصدر الإضافي الثاني (relatives_aid):
+    // مرتب الزوجة + مساعدات أحد الأفراد
+    if (triggeredBinding !== "page4.income.relatives_aid") {
+      const combinedRelatives = wifeSalary + relativesAid;
+
+      const hasRelativesSource =
+        Boolean(rootData?.page2?.wife && "salary" in rootData.page2.wife) ||
+        "الدخل الشهري - مساعدات احد الافراد" in rootData;
+
+      if (combinedRelatives > 0) {
+        currentIncome.relatives_aid = String(combinedRelatives);
+      } else if (hasRelativesSource) {
+        currentIncome.relatives_aid = "";
+      }
     }
   }
 
-  // 4. Table 2: Total Monthly Income
+  // 3. Table 2: Total Monthly Income
   const incChurch = parseNumericValue(currentIncome.church_aid || totalChurchAidNum);
   const incMedical = parseNumericValue(currentIncome.medical_aid);
   const incStudy = parseNumericValue(currentIncome.study_aid);
@@ -228,7 +299,7 @@ export function recalculatePage4Totals(
   const totalIncomeNum = incChurch + incMedical + incStudy + incSalary + incProject + incRelatives;
   currentIncome.total_income = totalIncomeNum > 0 ? formatCurrencyValue(totalIncomeNum) : "";
 
-  // 5. Table 3: Total Monthly Expenses
+  // 4. Table 3: Total Monthly Expenses
   const expLiving = parseNumericValue(currentExpenses.living_basics);
   const expUtilities = parseNumericValue(currentExpenses.utilities);
   const expPhone = parseNumericValue(currentExpenses.phone);

@@ -94,6 +94,9 @@ const BINDING_ALIASES: Record<string, string[]> = {
   "page4.church_aid_total": ["page4.total_church_aid", "page4.church_aid.Total"],
   "page4.church_aid_total_notes": ["page4.church_aid.purpose"],
   "page4.church_aid.purpose": ["page4.church_aid_total_notes"],
+  "الدخل الشهري - معاش": ["page4.income.pension", "page4.pension"],
+  "page4.income.pension": ["الدخل الشهري - معاش", "page4.pension"],
+  "page4.pension": ["الدخل الشهري - معاش", "page4.income.pension"],
   "page3.family_members_notes": ["Page3.comment1"],
   "Page3.comment1": ["page3.family_members_notes"],
   "page3.other_members_notes": ["Page3.comment2"],
@@ -580,7 +583,7 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
       total_expenses: rawExpenses.total_expenses ?? ""
     }
   };
-  page4 = recalculatePage4Totals(page4, { ...raw, ["الدخل الشهري - معاش"]: pensionVal });
+  page4 = recalculatePage4Totals(page4, { ...raw, page2, ["الدخل الشهري - معاش"]: pensionVal });
 
   const rawP5 = raw.page5 || raw.Page5 || {};
   const rawComm = Array.isArray(rawP5.committee_members) ? rawP5.committee_members : [];
@@ -1076,6 +1079,17 @@ export const App: React.FC = () => {
       );
       if (hasPage4RelatedChanges && next.page4) {
         next.page4 = recalculatePage4Totals(next.page4, next);
+      }
+
+      // Automatically propagate Head of Household to Page 6 when Page 2 data changes
+      if (updated.page2) {
+        const computedHead = getHeadOfHouseholdName(next);
+        if (computedHead && next.page6) {
+          next.page6 = {
+            ...next.page6,
+            family_head: computedHead
+          };
+        }
       }
 
       // Automatically mirror/propagate Page 1 IDs into Page 6 (سجل الصرف) and duplicate ledgers

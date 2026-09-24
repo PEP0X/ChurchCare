@@ -5,6 +5,9 @@ import {
   recalculatePage4Totals,
   calculateBudgetBalance,
   calculatePage2Salaries,
+  calculateHusbandSalary,
+  calculateWifeSalary,
+  calculateMiddleTablePension,
   calculateMiddleTableProjectsSum,
   calculateMiddleTableRelativesAid,
   formatCurrencyValue
@@ -17,10 +20,17 @@ interface Page4FormProps {
 
 export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
   const p4 = data.page4;
+  const husbandSalary = calculateHusbandSalary(data);
+  const wifeSalary = calculateWifeSalary(data);
+  const pensionVal = calculateMiddleTablePension(data);
   const page2Salaries = calculatePage2Salaries(data);
   const projectsSum = calculateMiddleTableProjectsSum(data);
   const relativesAid = calculateMiddleTableRelativesAid(data);
   const budgetInfo = calculateBudgetBalance(p4);
+
+  const combinedBase = husbandSalary;
+  const combinedSide = projectsSum + pensionVal;
+  const combinedRelatives = wifeSalary + relativesAid;
 
   const addAid = () => {
     if (p4.church_aid.length >= 8) return;
@@ -216,15 +226,15 @@ export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
             </div>
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-slate-300">المرتب الأساسي:</span>
-                {page2Salaries > 0 && (
+                <span className="text-slate-300">المرتب الأساسي (مرتب الزوج):</span>
+                {husbandSalary > 0 && (
                   <button
                     type="button"
-                    onClick={() => updateIncome("base_salary", String(page2Salaries))}
+                    onClick={() => updateIncome("base_salary", String(husbandSalary))}
                     className="text-[10px] text-amber-400 hover:text-amber-300 text-right cursor-pointer"
-                    title="استيراد مجموع مرتبات الزوج والزوجة من صفحة 2"
+                    title="استيراد مرتب الزوج"
                   >
-                    ⚡ استخدام مرتبات ص2 ({page2Salaries} ج.م)
+                    ⚡ استخدام مرتب الزوج ({husbandSalary} ج.م)
                   </button>
                 )}
               </div>
@@ -232,16 +242,31 @@ export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
                 type="text"
                 value={p4.income.base_salary}
                 onChange={(e) => updateIncome("base_salary", e.target.value)}
-                placeholder={page2Salaries > 0 ? String(page2Salaries) : ""}
+                placeholder={husbandSalary > 0 ? String(husbandSalary) : ""}
                 className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
               />
             </div>
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-slate-300">المصدر الإضافي (المشروع):</span>
+                <span className="text-slate-300">المصدر الإضافي الأول (المشروعات + المعاش):</span>
+                {combinedSide > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => updateIncome("side_project", String(combinedSide))}
+                    className="text-[10px] text-amber-400 hover:text-amber-300 text-right cursor-pointer"
+                    title="استيراد المعاش والمشروعات"
+                  >
+                    ⚡ المشروعات والمعاش ({combinedSide} ج.م)
+                  </button>
+                )}
                 {projectsSum > 0 && (
                   <span className="text-[10px] text-emerald-400 text-right font-medium">
                     ∑ المشروعات: {projectsSum} ج.م
+                  </span>
+                )}
+                {pensionVal > 0 && (
+                  <span className="text-[10px] text-amber-300 text-right font-medium">
+                    المعاش: {pensionVal} ج.م
                   </span>
                 )}
               </div>
@@ -249,13 +274,23 @@ export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
                 type="text"
                 value={p4.income.side_project}
                 onChange={(e) => updateIncome("side_project", e.target.value)}
-                placeholder={projectsSum > 0 ? String(projectsSum) : ""}
+                placeholder={combinedSide > 0 ? String(combinedSide) : ""}
                 className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
               />
             </div>
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-slate-300">المصدر الإضافي (أحد الأقارب):</span>
+                <span className="text-slate-300">المصدر الإضافي الثاني (مرتب الزوجة + أحد الأقارب):</span>
+                {combinedRelatives > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => updateIncome("relatives_aid", String(combinedRelatives))}
+                    className="text-[10px] text-amber-400 hover:text-amber-300 text-right cursor-pointer"
+                    title="استيراد مرتب الزوجة ومساعدات الأقارب"
+                  >
+                    ⚡ مرتب الزوجة والأقارب ({combinedRelatives} ج.م)
+                  </button>
+                )}
                 {relativesAid > 0 && (
                   <span className="text-[10px] text-emerald-400 text-right font-medium">
                     مساعدات الأفراد: {relativesAid} ج.م
@@ -266,7 +301,7 @@ export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
                 type="text"
                 value={p4.income.relatives_aid}
                 onChange={(e) => updateIncome("relatives_aid", e.target.value)}
-                placeholder={relativesAid > 0 ? String(relativesAid) : ""}
+                placeholder={combinedRelatives > 0 ? String(combinedRelatives) : ""}
                 className="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-left font-mono"
               />
             </div>
