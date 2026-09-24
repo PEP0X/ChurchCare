@@ -3,12 +3,22 @@ import { CaseStudyData, OtherResident } from "./types/schema";
 import { DocumentLayout } from "./types/layout";
 import { DEFAULT_DOCUMENT_LAYOUT } from "./config/defaultDocumentLayout";
 import { InteractiveDocumentCanvas } from "./components/canvas/InteractiveDocumentCanvas";
-import { VisualCoordinateStudio } from "./components/studio/VisualCoordinateStudio";
-import { ImageCropperModal } from "./components/studio/ImageCropperModal";
+const VisualCoordinateStudio = React.lazy(() =>
+  import("./components/studio/VisualCoordinateStudio").then((m) => ({ default: m.VisualCoordinateStudio }))
+);
+const ImageCropperModal = React.lazy(() =>
+  import("./components/studio/ImageCropperModal").then((m) => ({ default: m.ImageCropperModal }))
+);
 import { invoke } from "@tauri-apps/api/core";
-import { ActivationModal } from "./components/ActivationModal";
-import { AboutModal } from "./components/AboutModal";
-import { UpdateNotificationModal } from "./components/UpdateNotificationModal";
+const ActivationModal = React.lazy(() =>
+  import("./components/ActivationModal").then((m) => ({ default: m.ActivationModal }))
+);
+const AboutModal = React.lazy(() =>
+  import("./components/AboutModal").then((m) => ({ default: m.AboutModal }))
+);
+const UpdateNotificationModal = React.lazy(() =>
+  import("./components/UpdateNotificationModal").then((m) => ({ default: m.UpdateNotificationModal }))
+);
 import { checkForAppUpdates, UpdateCheckResult } from "./services/updaterService";
 import { useSidecar } from "./hooks/useSidecar";
 import { parseEgyptianNationalId } from "./hooks/useNationalId";
@@ -1921,12 +1931,21 @@ export const App: React.FC = () => {
   // If in Visual Studio mode, render the Drag-and-Drop Studio directly
   if (appMode === "studio") {
     return (
-      <VisualCoordinateStudio
-        layout={layout}
-        onSaveLayout={handleSaveLayout}
-        onCloseStudio={() => setAppMode("form")}
-        currentPage={activePage}
-      />
+      <React.Suspense
+        fallback={
+          <div className="h-screen w-screen bg-slate-950 flex flex-col items-center justify-center text-amber-400 gap-3 font-medium">
+            <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            <span>جاري تحميل استوديو الإحداثيات...</span>
+          </div>
+        }
+      >
+        <VisualCoordinateStudio
+          layout={layout}
+          onSaveLayout={handleSaveLayout}
+          onCloseStudio={() => setAppMode("form")}
+          currentPage={activePage}
+        />
+      </React.Suspense>
     );
   }
 
@@ -1938,20 +1957,22 @@ export const App: React.FC = () => {
     >
       {/* If currently transitioning to lock, render the ActivationModal overlay on top smoothly */}
       {isTransitioningToLock && (
-        <ActivationModal
-          isOpen={true}
-          reason={licenseReason}
-          onActivated={(clientName) => {
-            setIsLicensed(true);
-            isLicensedRef.current = true;
-            isTransitioningRef.current = false;
-            setLicensedClientName(clientName);
-            setLicenseReason(null);
-            setIsTransitioningToLock(false);
-            setShowActivationModal(false);
-            showToast(`تم تفعيل البرنامج بنجاح (${clientName})!`, "success");
-          }}
-        />
+        <React.Suspense fallback={null}>
+          <ActivationModal
+            isOpen={true}
+            reason={licenseReason}
+            onActivated={(clientName) => {
+              setIsLicensed(true);
+              isLicensedRef.current = true;
+              isTransitioningRef.current = false;
+              setLicensedClientName(clientName);
+              setLicenseReason(null);
+              setIsTransitioningToLock(false);
+              setShowActivationModal(false);
+              showToast(`تم تفعيل البرنامج بنجاح (${clientName})!`, "success");
+            }}
+          />
+        </React.Suspense>
       )}
       <input
         type="file"
@@ -2647,57 +2668,61 @@ export const App: React.FC = () => {
       {/* ==================================================================== */}
       {/* 3. DYNAMIC CROPPER MODAL (Cards & Certificates)                      */}
       {/* ==================================================================== */}
-      <ImageCropperModal
-        isOpen={cropperModal.isOpen}
-        title={cropperModal.title}
-        initialImage={cropperModal.image}
-        defaultMode={cropperModal.defaultMode}
-        onClose={() => setCropperModal({ isOpen: false, binding: "", title: "", image: undefined, defaultMode: "id_card" })}
-        onSave={(croppedBase64) => {
-          if (cropperModal.binding) {
-            const updated = setValueByPath(data, cropperModal.binding, croppedBase64);
-            setData(updated);
-            safeSaveToLocalStorage(updated);
-            const isCert = cropperModal.defaultMode === "certificate" || cropperModal.binding.includes("birth_cert");
-            showToast(isCert ? "تم حفظ واقتصاص صورة شهادة الميلاد بنجاح!" : "تم حفظ واقتصاص صورة البطاقة بنجاح!");
-          }
-          setCropperModal({ isOpen: false, binding: "", title: "", image: undefined, defaultMode: "id_card" });
-        }}
-      />
+      <React.Suspense fallback={null}>
+        {cropperModal.isOpen && (
+          <ImageCropperModal
+            isOpen={cropperModal.isOpen}
+            title={cropperModal.title}
+            initialImage={cropperModal.image}
+            defaultMode={cropperModal.defaultMode}
+            onClose={() => setCropperModal({ isOpen: false, binding: "", title: "", image: undefined, defaultMode: "id_card" })}
+            onSave={(croppedBase64) => {
+              if (cropperModal.binding) {
+                const updated = setValueByPath(data, cropperModal.binding, croppedBase64);
+                setData(updated);
+                safeSaveToLocalStorage(updated);
+                const isCert = cropperModal.defaultMode === "certificate" || cropperModal.binding.includes("birth_cert");
+                showToast(isCert ? "تم حفظ واقتصاص صورة شهادة الميلاد بنجاح!" : "تم حفظ واقتصاص صورة البطاقة بنجاح!");
+              }
+              setCropperModal({ isOpen: false, binding: "", title: "", image: undefined, defaultMode: "id_card" });
+            }}
+          />
+        )}
 
-      {/* ==================================================================== */}
-      {/* 4. ABOUT & LICENSE MODAL                                             */}
-      {/* ==================================================================== */}
-      <AboutModal
-        isOpen={showAboutModal}
-        onClose={() => setShowAboutModal(false)}
-        clientName={licensedClientName}
-        onOpenActivation={() => setShowActivationModal(true)}
-        onOpenUpdateModal={(info) => setActiveUpdateInfo(info)}
-      />
+        {/* 4. ABOUT & LICENSE MODAL */}
+        {showAboutModal && (
+          <AboutModal
+            isOpen={showAboutModal}
+            onClose={() => setShowAboutModal(false)}
+            clientName={licensedClientName}
+            onOpenActivation={() => setShowActivationModal(true)}
+            onOpenUpdateModal={(info) => setActiveUpdateInfo(info)}
+          />
+        )}
 
-      {/* 5. IN-APP AUTO-UPDATE NOTIFICATION MODAL */}
-      {activeUpdateInfo && (
-        <UpdateNotificationModal
-          updateInfo={activeUpdateInfo}
-          onClose={() => setActiveUpdateInfo(null)}
-        />
-      )}
+        {/* 5. IN-APP AUTO-UPDATE NOTIFICATION MODAL */}
+        {activeUpdateInfo && (
+          <UpdateNotificationModal
+            updateInfo={activeUpdateInfo}
+            onClose={() => setActiveUpdateInfo(null)}
+          />
+        )}
 
-      {/* Re-activation overlay if requested by user while licensed */}
-      {showActivationModal && isLicensed && (
-        <ActivationModal
-          isOpen={true}
-          reason={licenseReason}
-          onActivated={(clientName) => {
-            setIsLicensed(true);
-            isLicensedRef.current = true;
-            setLicensedClientName(clientName);
-            setShowActivationModal(false);
-            showToast(`تم تحديث ترخيص البرنامج بنجاح (${clientName})!`, "success");
-          }}
-        />
-      )}
+        {/* Re-activation overlay if requested by user while licensed */}
+        {showActivationModal && isLicensed && (
+          <ActivationModal
+            isOpen={true}
+            reason={licenseReason}
+            onActivated={(clientName) => {
+              setIsLicensed(true);
+              isLicensedRef.current = true;
+              setLicensedClientName(clientName);
+              setShowActivationModal(false);
+              showToast(`تم تحديث ترخيص البرنامج بنجاح (${clientName})!`, "success");
+            }}
+          />
+        )}
+      </React.Suspense>
     </div>
   );
 };

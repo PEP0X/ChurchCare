@@ -1,9 +1,9 @@
-import page1 from '../assets/templates/page1.jpg';
-import page2 from '../assets/templates/page2.jpg';
-import page3 from '../assets/templates/page3.jpg';
-import page4 from '../assets/templates/page4.jpg';
-import page5 from '../assets/templates/page5.jpg';
-import page6 from '../assets/templates/page6.jpg';
+import page1 from '../assets/templates/page1.webp';
+import page2 from '../assets/templates/page2.webp';
+import page3 from '../assets/templates/page3.webp';
+import page4 from '../assets/templates/page4.webp';
+import page5 from '../assets/templates/page5.webp';
+import page6 from '../assets/templates/page6.webp';
 
 export const TEMPLATE_IMAGES: Record<number, string> = {
   1: page1,
