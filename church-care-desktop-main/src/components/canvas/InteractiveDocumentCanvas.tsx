@@ -583,6 +583,37 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
   const [husbandMenuOpen, setHusbandMenuOpen] = React.useState<boolean>(false);
   const [wifeMenuOpen, setWifeMenuOpen] = React.useState<boolean>(false);
 
+  // Pre-calculate cross-page summary values once per canvas render to avoid 80+ redundant calls per keystroke
+  const pageCtx = React.useMemo(() => {
+    const husbandSalary = calculateHusbandSalary(data);
+    const wifeSalary = calculateWifeSalary(data);
+    const pensionVal = calculateMiddleTablePension(data);
+    const relativesAid = calculateMiddleTableRelativesAid(data);
+    const microProjectsSum = calculateMiddleTableProjectsSum(data);
+    const husbandAbsent = isHusbandAbsent(data.page2?.husband);
+    const wifeAbsent = isWifeAbsent(data.page2?.wife);
+    const baseTotal = husbandAbsent && husbandSalary === 0 ? 0 : husbandSalary;
+    const projectsAndPensionTotal = microProjectsSum + pensionVal;
+    const relativesTotal = wifeSalary + relativesAid;
+    const husbandStatusLabel = getHusbandStatusLabel(data.page2?.husband);
+    const wifeStatusLabel = getWifeStatusLabel(data.page2?.wife);
+
+    return {
+      husbandSalary,
+      wifeSalary,
+      pensionVal,
+      relativesAid,
+      microProjectsSum,
+      husbandAbsent,
+      wifeAbsent,
+      baseTotal,
+      projectsAndPensionTotal,
+      relativesTotal,
+      husbandStatusLabel,
+      wifeStatusLabel,
+    };
+  }, [data]);
+
   // Automatically scroll into view and focus highlighted erroneous field
   React.useEffect(() => {
     if (highlightedFieldId) {
@@ -1780,28 +1811,30 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             : '';
 
           const isHusbandName = field.binding === 'page2.husband.name';
-          const isHusbandDeceasedOrAbsent = isHusbandName && isHusbandAbsent(data.page2?.husband);
+          const isHusbandDeceasedOrAbsent = isHusbandName && pageCtx.husbandAbsent;
           const isWifeName = field.binding === 'page2.wife.name';
-          const isWifeDeceasedOrAbsent = isWifeName && isWifeAbsent(data.page2?.wife);
+          const isWifeDeceasedOrAbsent = isWifeName && pageCtx.wifeAbsent;
           const isBaseSalary = field.binding === 'page4.income.base_salary';
           const isSideProject = field.binding === 'page4.income.side_project';
           const isRelativesAid = field.binding === 'page4.income.relatives_aid';
-          const husbandSalary = calculateHusbandSalary(data);
-          const wifeSalary = calculateWifeSalary(data);
-          const pensionVal = calculateMiddleTablePension(data);
-          const relativesAid = calculateMiddleTableRelativesAid(data);
-          const microProjectsSum = calculateMiddleTableProjectsSum(data);
-          const husbandAbsent = isHusbandAbsent(data.page2?.husband);
-
-          const baseTotal = husbandAbsent && husbandSalary === 0 ? 0 : husbandSalary;
-          const projectsAndPensionTotal = microProjectsSum + pensionVal;
-          const relativesTotal = wifeSalary + relativesAid;
+          const {
+            husbandSalary,
+            wifeSalary,
+            pensionVal,
+            relativesAid,
+            microProjectsSum,
+            baseTotal,
+            projectsAndPensionTotal,
+            relativesTotal,
+            husbandStatusLabel,
+            wifeStatusLabel,
+          } = pageCtx;
 
           const effectivePlaceholder =
             isHusbandDeceasedOrAbsent && !rawStr
-              ? `(الزوج ${getHusbandStatusLabel(data.page2?.husband)})`
+              ? `(الزوج ${husbandStatusLabel})`
               : isWifeDeceasedOrAbsent && !rawStr
-              ? `(الزوجة ${getWifeStatusLabel(data.page2?.wife)})`
+              ? `(الزوجة ${wifeStatusLabel})`
               : isBaseSalary && !rawStr && baseTotal > 0
               ? `مرتب الزوج: ${husbandSalary}`
               : isSideProject && !rawStr && projectsAndPensionTotal > 0
@@ -1832,9 +1865,9 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                     : isPage4Total
                     ? `∑ ${field.label} (محسوب تلقائياً من عناصر الجدول)`
                     : isHusbandName && isHusbandDeceasedOrAbsent
-                    ? `حالة الزوج: ${getHusbandStatusLabel(data.page2?.husband)} — الزوجة هي رب الأسرة`
+                    ? `حالة الزوج: ${husbandStatusLabel} — الزوجة هي رب الأسرة`
                     : isWifeName && isWifeDeceasedOrAbsent
-                    ? `حالة الزوجة: ${getWifeStatusLabel(data.page2?.wife)}`
+                    ? `حالة الزوجة: ${wifeStatusLabel}`
                     : undefined
                 }
                 type="text"

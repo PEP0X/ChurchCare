@@ -929,6 +929,7 @@ export const App: React.FC = () => {
   const dataRef = useRef<CaseStudyData>(data);
   const currentFilePathRef = useRef<string | null>(currentFilePath);
   const isInitialMount = useRef<boolean>(true);
+  const lastSavedJsonRef = useRef<string>("");
 
   useEffect(() => {
     dataRef.current = data;
@@ -950,16 +951,22 @@ export const App: React.FC = () => {
           }
           const sanitized = sanitizeAndMergeCaseData(saved);
           setData(sanitized);
+          try {
+            lastSavedJsonRef.current = JSON.stringify(sanitized);
+          } catch {}
         }
       })
       .catch((e) => console.warn("Failed to load IndexedDB session:", e));
   }, []);
 
-  // 🔄 Continuous AutoSave Effect: debounced (600ms) syncs changes to IndexedDB & localStorage
+  // 🔄 Continuous AutoSave Effect: debounced (800ms) syncs changes to IndexedDB & localStorage
   // Protects user work in case of sudden unexpected app exit or crash ("في حالة البرنامج قفل مره واحدة")
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
+      try {
+        lastSavedJsonRef.current = JSON.stringify(data);
+      } catch {}
       return;
     }
 
@@ -968,11 +975,19 @@ export const App: React.FC = () => {
       return;
     }
 
-    setSaveStatus("جارٍ الحفظ التلقائي...");
+    setHasUnsavedChanges(true);
 
     const timer = setTimeout(async () => {
       try {
+        const currentJson = JSON.stringify(data);
+        if (currentJson === lastSavedJsonRef.current) {
+          setHasUnsavedChanges(false);
+          return;
+        }
+
+        setSaveStatus("جارٍ الحفظ التلقائي...");
         safeSaveToLocalStorage(data);
+        lastSavedJsonRef.current = currentJson;
 
         // If an active file is open on disk, auto-save changes into it directly
         const isTauri =
@@ -997,7 +1012,7 @@ export const App: React.FC = () => {
         console.error("AutoSave error:", err);
         setSaveStatus("تعذر الحفظ التلقائي");
       }
-    }, 600);
+    }, 800);
 
     return () => clearTimeout(timer);
   }, [data]);
