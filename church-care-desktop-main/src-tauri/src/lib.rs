@@ -1,4 +1,5 @@
 mod security;
+pub mod pdf_engine;
 
 #[tauri::command]
 fn get_device_hwid() -> String {
@@ -104,11 +105,28 @@ fn read_image_data_url(path: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn generate_pdf_native(payload: String) -> Result<String, String> {
+    let lic_status = security::licensing::check_local_license();
+    if !lic_status.is_licensed {
+        return Err("تنبيه أمني: البرنامج غير مرخص أو تم التلاعب ببيانات الترخيص. يرجى تفعيل البرنامج أولاً.".to_string());
+    }
+    pdf_engine::generate_pdf_native(&payload)
+}
+
+#[tauri::command]
 fn generate_pdf_engine(payload: String) -> Result<String, String> {
     // 🛡️ SECURITY GUARD: Block PDF generation if license is invalid
     let lic_status = security::licensing::check_local_license();
     if !lic_status.is_licensed {
         return Err("تنبيه أمني: البرنامج غير مرخص أو تم التلاعب ببيانات الترخيص. يرجى تفعيل البرنامج أولاً.".to_string());
+    }
+
+    // 🚀 ULTRA-FAST NATIVE RUST ENGINE (Executes in-memory in ~15ms)
+    match pdf_engine::generate_pdf_native(&payload) {
+        Ok(result) => return Ok(result),
+        Err(e) => {
+            eprintln!("[Native Rust PDF Engine]: Falling back to legacy Python engine: {}", e);
+        }
     }
 
     use std::io::Write;
@@ -298,6 +316,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             save_layout_file,
+            generate_pdf_native,
             generate_pdf_engine,
             save_text_file,
             read_text_file,

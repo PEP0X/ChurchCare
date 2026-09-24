@@ -25,6 +25,11 @@ hex = "0.4"
 aes-gcm = "0.10"
 obfstr = "0.4"
 chrono = { version = "0.4", features = ["serde"] }
+lopdf = "0.34"
+unicode-bidi = "0.3"
+rustybuzz = "0.18"
+ttf-parser = "0.25"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
 
 [profile.release]
 opt-level = 3
