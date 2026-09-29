@@ -22,7 +22,7 @@ const UpdateNotificationModal = React.lazy(() =>
 import { checkForAppUpdates, UpdateCheckResult } from "./services/updaterService";
 import { useSidecar } from "./hooks/useSidecar";
 import { parseEgyptianNationalId } from "./hooks/useNationalId";
-import { recalculatePage4Totals } from "./utils/page4Calculations";
+import { recalculatePage4Totals, MIDDLE_TABLE_PROJECT_BINDINGS } from "./utils/page4Calculations";
 import { saveSessionToIndexedDB, loadSessionFromIndexedDB, clearSessionFromIndexedDB } from "./utils/sessionStorage";
 import {
   FileDown,
@@ -477,6 +477,20 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   const rawFom = rawP3.family_other_members;
   const rawOm = rawP3.other_members;
 
+  const isOneBased = (src: any) => {
+    if (!src) return false;
+    if (Array.isArray(src)) {
+      return src[0] == null && (src[1] != null || src[2] != null);
+    }
+    if (typeof src === "object") {
+      return ("1" in src || 1 in src) && !("0" in src || 0 in src);
+    }
+    return false;
+  };
+
+  const isFom1 = isOneBased(rawFom);
+  const isOm1 = isOneBased(rawOm);
+
   const normalizedOtherPersons: OtherResident[] = [];
   const normalizedFom: any[] = [];
   const normalizedOm: any[] = [];
@@ -484,18 +498,31 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
   for (let idx = 0; idx < 4; idx++) {
     const rowNum = idx + 1; // 1, 2, 3, 4
     const op = rawOtherPersons[idx];
-    const fom = Array.isArray(rawFom) ? rawFom[rowNum] || rawFom[idx] : rawFom?.[rowNum] || rawFom?.[idx];
-    const om = Array.isArray(rawOm) ? rawOm[rowNum] || rawOm[idx] : rawOm?.[rowNum] || rawOm?.[idx];
+    const fom = isFom1
+      ? (Array.isArray(rawFom) ? rawFom[rowNum] : rawFom?.[rowNum] ?? rawFom?.[String(rowNum)])
+      : (Array.isArray(rawFom) ? rawFom[idx] : rawFom?.[idx] ?? rawFom?.[String(idx)]);
+    const om = isOm1
+      ? (Array.isArray(rawOm) ? rawOm[rowNum] : rawOm?.[rowNum] ?? rawOm?.[String(rowNum)])
+      : (Array.isArray(rawOm) ? rawOm[idx] : rawOm?.[idx] ?? rawOm?.[String(idx)]);
 
-    const name = String(op?.name || fom?.name || om?.name || "");
-    const nid = String(op?.national_id || op?.nationalId || fom?.national_id || fom?.nid || om?.national_id || om?.nid || "");
-    const kinship = String(op?.kinship || fom?.relavent || fom?.kinship || om?.relavent || om?.kinship || "");
-    const status = String(op?.social_status || op?.socialStatus || fom?.Status || fom?.social_status || om?.Status || om?.social_status || "");
-    const eduJob = String(op?.education_job || op?.educationJob || fom?.sYear || fom?.education_job || om?.sYear || om?.education_job || "");
+    const name = String(op?.name || fom?.name || om?.name || "").trim();
+    const nid = String(op?.national_id || op?.nationalId || fom?.national_id || fom?.nid || om?.national_id || om?.nid || "").trim();
+    const kinship = String(op?.kinship || fom?.relavent || fom?.kinship || om?.relavent || om?.kinship || "").trim();
+    const status = String(op?.social_status || op?.socialStatus || fom?.Status || fom?.social_status || om?.Status || om?.social_status || "").trim();
+    const eduJob = String(op?.education_job || op?.educationJob || fom?.sYear || fom?.education_job || om?.sYear || om?.education_job || "").trim();
     const income = op?.income ?? fom?.income ?? om?.income ?? "";
-    const confession = String(op?.confession_father || op?.confessionFather || fom?.confession_father || om?.confession_father || "");
+    const confession = String(op?.confession_father || op?.confessionFather || fom?.confession_father || om?.confession_father || "").trim();
 
-    if (name || nid || kinship || status || eduJob || income || confession || op || fom || om) {
+    const hasData = Boolean(name || nid || kinship || status || eduJob || (income !== "" && income !== null && income !== undefined) || confession);
+
+    // Automated deduplication: if this row has identical name AND nid to the previous row, it's a ghost duplicate
+    const prevRow = normalizedOtherPersons.filter(Boolean).slice(-1)[0];
+    const isDuplicateOfPrev = prevRow && hasData && (
+      (nid && prevRow.national_id && nid === prevRow.national_id) ||
+      (name && prevRow.name && name === prevRow.name && (!nid || nid === prevRow.national_id))
+    );
+
+    if (hasData && !isDuplicateOfPrev) {
       normalizedOtherPersons[idx] = {
         id: String(op?.id || rowNum),
         name,
@@ -593,7 +620,19 @@ function sanitizeAndMergeCaseData(raw: any): CaseStudyData {
       total_expenses: rawExpenses.total_expenses ?? ""
     }
   };
-  page4 = recalculatePage4Totals(page4, { ...raw, page2, ["الدخل الشهري - معاش"]: pensionVal });
+
+  // Sanitize any Middle Table project bindings in raw if they contain text like "لا يوجد"
+  const sanitizedRaw = { ...raw };
+  for (const pKey of MIDDLE_TABLE_PROJECT_BINDINGS) {
+    if (sanitizedRaw[pKey] !== undefined && sanitizedRaw[pKey] !== null) {
+      const pStr = String(sanitizedRaw[pKey]).trim();
+      if (pStr && !/[\d٠-٩]/.test(pStr)) {
+        sanitizedRaw[pKey] = "";
+      }
+    }
+  }
+
+  page4 = recalculatePage4Totals(page4, { ...sanitizedRaw, page2, page3, ["الدخل الشهري - معاش"]: pensionVal });
 
   const rawP5 = raw.page5 || raw.Page5 || {};
   const rawComm = Array.isArray(rawP5.committee_members) ? rawP5.committee_members : [];

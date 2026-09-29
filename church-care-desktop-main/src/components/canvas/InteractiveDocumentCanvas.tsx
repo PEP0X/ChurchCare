@@ -11,7 +11,8 @@ import {
   calculateWifeSalary,
   calculateMiddleTablePension,
   calculateMiddleTableRelativesAid,
-  calculateMiddleTableProjectsSum
+  calculateMiddleTableProjectsSum,
+  calculateFamilyMembersIncome
 } from '../../utils/page4Calculations';
 import {
   Upload,
@@ -208,17 +209,20 @@ function getValueByPath(obj: any, path: string): any {
     if (om && om[subKey] !== undefined && om[subKey] !== '') return om[subKey];
 
     const otherPersons = obj?.page3?.other_persons || [];
-    for (const tryIdx of [idx - 1, idx]) {
-      if (tryIdx >= 0 && tryIdx < otherPersons.length) {
-        const item = otherPersons[tryIdx];
-        if (subKey === 'name') return item.name || '';
-        if (subKey === 'national_id' || subKey === 'nid') return item.national_id || '';
-        if (subKey === 'relavent' || subKey === 'kinship') return item.kinship || item.relavent || '';
-        if (subKey === 'Status' || subKey === 'social_status') return item.social_status || item.Status || '';
-        if (subKey === 'sYear' || subKey === 'education_job') return item.education_job || item.sYear || '';
-        if (subKey === 'income') return item.income || '';
-        if (subKey === 'confession_father') return item.confession_father || '';
-      }
+    const item = (Array.isArray(otherPersons) && idx - 1 >= 0 && idx - 1 < otherPersons.length)
+      ? otherPersons[idx - 1]
+      : Array.isArray(otherPersons)
+      ? otherPersons.find((p: any) => String(p?.id) === String(idx))
+      : undefined;
+
+    if (item) {
+      if (subKey === 'name') return item.name || '';
+      if (subKey === 'national_id' || subKey === 'nid') return item.national_id || '';
+      if (subKey === 'relavent' || subKey === 'kinship') return item.kinship || item.relavent || '';
+      if (subKey === 'Status' || subKey === 'social_status') return item.social_status || item.Status || '';
+      if (subKey === 'sYear' || subKey === 'education_job') return item.education_job || item.sYear || '';
+      if (subKey === 'income') return item.income || '';
+      if (subKey === 'confession_father') return item.confession_father || '';
     }
   }
 
@@ -411,6 +415,8 @@ interface AutoFitTextInputProps {
   boxHeightPct: number;
   isBold?: boolean;
   isMono?: boolean;
+  isNumeric?: boolean;
+  isDigitsOnly?: boolean;
 }
 
 const AutoFitTextInput = React.memo<AutoFitTextInputProps>(({
@@ -429,9 +435,81 @@ const AutoFitTextInput = React.memo<AutoFitTextInputProps>(({
   boxWidthPct,
   boxHeightPct,
   isBold = false,
-  isMono = false
+  isMono = false,
+  isNumeric = false,
+  isDigitsOnly = false
 }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const sanitizeValue = React.useCallback((raw: string): string => {
+    if (!raw) return '';
+    // Normalize Eastern Arabic numerals (٠-٩) to Western (0-9)
+    const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    let s = raw;
+    for (let i = 0; i < 10; i++) {
+      s = s.split(arabicDigits[i]).join(String(i));
+    }
+    if (isDigitsOnly) {
+      return s.replace(/[^\d]/g, '');
+    }
+    if (isNumeric) {
+      s = s.replace(/[^\d.]/g, '');
+      const parts = s.split('.');
+      if (parts.length > 2) {
+        s = parts[0] + '.' + parts.slice(1).join('');
+      }
+      return s;
+    }
+    return raw;
+  }, [isDigitsOnly, isNumeric]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (readOnly) return;
+    if (isDigitsOnly || isNumeric) {
+      // Allow navigation and shortcut keys
+      if (
+        e.key === 'Backspace' ||
+        e.key === 'Delete' ||
+        e.key === 'Tab' ||
+        e.key === 'Escape' ||
+        e.key === 'Enter' ||
+        e.key === 'ArrowLeft' ||
+        e.key === 'ArrowRight' ||
+        e.key === 'ArrowUp' ||
+        e.key === 'ArrowDown' ||
+        e.key === 'Home' ||
+        e.key === 'End' ||
+        e.ctrlKey ||
+        e.metaKey
+      ) {
+        return;
+      }
+      const isDigit = /^[0-9٠-٩]$/.test(e.key);
+      const isDot = isNumeric && (e.key === '.' || e.key === '٫') && !(value || '').includes('.');
+      if (!isDigit && !isDot) {
+        e.preventDefault();
+      }
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (isDigitsOnly || isNumeric) {
+      e.preventDefault();
+      const pasted = e.clipboardData.getData('text');
+      const sanitized = sanitizeValue(pasted);
+      const target = e.currentTarget;
+      const start = target.selectionStart || 0;
+      const end = target.selectionEnd || 0;
+      const currentVal = value || '';
+      const nextVal = currentVal.substring(0, start) + sanitized + currentVal.substring(end);
+      onChange(sanitizeValue(nextVal));
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    onChange(isDigitsOnly || isNumeric ? sanitizeValue(raw) : raw);
+  };
 
   // Exact pixel dimensions on 820x1160 standard document canvas
   const boxWidthPx = (boxWidthPct / 100) * 820;
@@ -474,7 +552,9 @@ const AutoFitTextInput = React.memo<AutoFitTextInputProps>(({
       maxLength={maxLength}
       placeholder={placeholder}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+      onPaste={handlePaste}
       className={`${className || ''} transition-[font-size,border-color,background-color] duration-150 ease-out`}
       style={{
         ...style,
@@ -590,10 +670,11 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
     const pensionVal = calculateMiddleTablePension(data);
     const relativesAid = calculateMiddleTableRelativesAid(data);
     const microProjectsSum = calculateMiddleTableProjectsSum(data);
+    const familyMembersIncome = calculateFamilyMembersIncome(data);
     const husbandAbsent = isHusbandAbsent(data.page2?.husband);
     const wifeAbsent = isWifeAbsent(data.page2?.wife);
     const baseTotal = husbandAbsent && husbandSalary === 0 ? 0 : husbandSalary;
-    const projectsAndPensionTotal = microProjectsSum + pensionVal;
+    const projectsAndPensionTotal = microProjectsSum + pensionVal + familyMembersIncome;
     const relativesTotal = wifeSalary + relativesAid;
     const husbandStatusLabel = getHusbandStatusLabel(data.page2?.husband);
     const wifeStatusLabel = getWifeStatusLabel(data.page2?.wife);
@@ -604,6 +685,7 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
       pensionVal,
       relativesAid,
       microProjectsSum,
+      familyMembersIncome,
       husbandAbsent,
       wifeAbsent,
       baseTotal,
@@ -723,7 +805,11 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
     const isPage4Related =
       binding.startsWith('page4') ||
       binding.startsWith('الدخل الشهري') ||
-      binding.includes('salary');
+      binding.includes('salary') ||
+      binding.includes('family_members') ||
+      binding.includes('other_persons') ||
+      binding.includes('family_other_members') ||
+      binding.includes('other_members');
 
     if (isPage4Related && updated.page4) {
       updated = {
@@ -972,6 +1058,7 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                     onChange={(newVal) => handleLedgerFieldChange(field.binding, newVal)}
                     boxWidthPct={rect.width}
                     boxHeightPct={rect.height}
+                    isNumeric={field.type === 'number' || field.binding.endsWith('.amount')}
                     isBold={Boolean(style.isBold)}
                     isMono={Boolean(style.isMono)}
                     fontSizePreference={style.fontSize}
@@ -1823,12 +1910,21 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             pensionVal,
             relativesAid,
             microProjectsSum,
+            familyMembersIncome,
             baseTotal,
             projectsAndPensionTotal,
             relativesTotal,
             husbandStatusLabel,
             wifeStatusLabel,
           } = pageCtx;
+
+          const isNumericField = !isNationalId && !isPage4Total && (
+            field.type === 'number' ||
+            isPage4TableNumber ||
+            field.binding.startsWith('الدخل الشهري') ||
+            field.binding.endsWith('.income') ||
+            field.binding.endsWith('.salary')
+          );
 
           const effectivePlaceholder =
             isHusbandDeceasedOrAbsent && !rawStr
@@ -1838,7 +1934,11 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
               : isBaseSalary && !rawStr && baseTotal > 0
               ? `مرتب الزوج: ${husbandSalary}`
               : isSideProject && !rawStr && projectsAndPensionTotal > 0
-              ? (microProjectsSum > 0 && pensionVal > 0 ? `مشروعات (${microProjectsSum}) + معاش (${pensionVal})` : pensionVal > 0 ? `معاش: ${pensionVal}` : `∑ المشروعات: ${microProjectsSum}`)
+              ? [
+                  microProjectsSum > 0 ? `مشروعات (${microProjectsSum})` : '',
+                  pensionVal > 0 ? `معاش (${pensionVal})` : '',
+                  familyMembersIncome > 0 ? `دخل الأسرة (${familyMembersIncome})` : ''
+                ].filter(Boolean).join(' + ')
               : isRelativesAid && !rawStr && relativesTotal > 0
               ? (wifeSalary > 0 && relativesAid > 0 ? `مرتب الزوجة (${wifeSalary}) + أقارب (${relativesAid})` : wifeSalary > 0 ? `مرتب الزوجة: ${wifeSalary}` : `أقارب: ${relativesAid}`)
               : (field.placeholder || '');
@@ -1871,7 +1971,9 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
                     : undefined
                 }
                 type="text"
-                inputMode={field.type === 'number' || isNationalId || isPage4TableNumber ? 'numeric' : undefined}
+                inputMode={isNationalId || isNumericField ? 'numeric' : undefined}
+                isNumeric={isNumericField}
+                isDigitsOnly={isNationalId}
                 readOnly={isPage4Total}
                 maxLength={isNationalId ? 14 : undefined}
                 placeholder={effectivePlaceholder}

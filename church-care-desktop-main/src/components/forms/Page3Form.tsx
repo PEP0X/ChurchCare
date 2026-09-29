@@ -1,6 +1,7 @@
 import React from "react";
 import { CaseStudyData, FamilyMember, OtherResident } from "../../types/schema";
 import { Users, Plus, Trash2, HeartPulse, Home } from "lucide-react";
+import { recalculatePage4Totals } from "../../utils/page4Calculations";
 
 interface Page3FormProps {
   data: CaseStudyData;
@@ -31,19 +32,28 @@ export const Page3Form: React.FC<Page3FormProps> = ({ data, onChange }) => {
 
   const updateFamilyMember = (index: number, field: keyof FamilyMember, val: any) => {
     const updated = [...p3.family_members];
-    updated[index] = { ...updated[index], [field]: val };
-    onChange({
-      page3: { ...p3, family_members: updated }
-    });
+    const finalVal = field === "income" ? String(val || "").replace(/[^\d.٠-٩]/g, "") : val;
+    updated[index] = { ...updated[index], [field]: finalVal };
+    const updatedP3 = { ...p3, family_members: updated };
+    if (field === "income" && data.page4) {
+      const nextData = { ...data, page3: updatedP3 };
+      const updatedP4 = recalculatePage4Totals(data.page4, nextData);
+      onChange({ page3: updatedP3, page4: updatedP4 });
+    } else {
+      onChange({ page3: updatedP3 });
+    }
   };
 
   const removeFamilyMember = (index: number) => {
-    onChange({
-      page3: {
-        ...p3,
-        family_members: p3.family_members.filter((_, i) => i !== index)
-      }
-    });
+    const updatedMembers = p3.family_members.filter((_, i) => i !== index);
+    const updatedP3 = { ...p3, family_members: updatedMembers };
+    if (data.page4) {
+      const nextData = { ...data, page3: updatedP3 };
+      const updatedP4 = recalculatePage4Totals(data.page4, nextData);
+      onChange({ page3: updatedP3, page4: updatedP4 });
+    } else {
+      onChange({ page3: updatedP3 });
+    }
   };
 
   const updateMed = (field: string, val: string) => {

@@ -55,7 +55,12 @@ fn parse_numeric(val: Option<&Value>) -> f64 {
     match val {
         Some(Value::Number(n)) => n.as_f64().unwrap_or(0.0),
         Some(Value::String(s)) => {
-            let clean = s.replace("ج.م", "").replace(',', "").trim().to_string();
+            let mut clean = s.replace("ج.م", "").replace(',', "").trim().to_string();
+            let arabic_digits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+            for (i, d) in arabic_digits.iter().enumerate() {
+                clean = clean.replace(d, &i.to_string());
+            }
+            clean = clean.chars().filter(|c| c.is_ascii_digit() || *c == '.' || *c == '-').collect();
             clean.parse::<f64>().unwrap_or(0.0)
         }
         _ => 0.0,
@@ -217,22 +222,56 @@ pub fn resolve_field_value(data: &Value, binding: &str, field_id: &str) -> Strin
                 .or_else(|| get_nested_value(data, "page4.income.pension"))
                 .or_else(|| get_nested_value(data, "page4.pension")),
         );
-        let project_keys = [
-            "الدخل الشهري - فرشة",
-            "الدخل الشهري - كشك",
-            "الدخل الشهري - محل",
-            "الدخل الشهري - تجارة",
-            "الدخل الشهري - تروسيكل",
-            "الدخل الشهري - أنابيب",
-            "الدخل الشهري - مكنة خياطة",
-            "الدخل الشهري - ثلاجة",
-            "الدخل الشهري - طيور",
+        let project_groups: &[&[&str]] = &[
+            &["الدخل الشهري - فرشة"],
+            &["الدخل الشهري - كشك"],
+            &["الدخل الشهري - محل"],
+            &["الدخل الشهري - تجارة"],
+            &["الدخل الشهري - تروسيكل"],
+            &[
+                "الدخل الشهري - انابيب بوتوجاز",
+                "الدخل الشهري - انابيب بوتجاز",
+                "الدخل الشهري - أنابيب بوتوجاز",
+                "الدخل الشهري - أنابيب بوتجاز",
+                "الدخل الشهري - أنابيب",
+                "الدخل الشهري - انابيب",
+            ],
+            &["الدخل الشهري - تاكسي"],
+            &["الدخل الشهري - مكنة خياطة وتطريز", "الدخل الشهري - مكنة خياطة"],
+            &["الدخل الشهري - ثلاجة مشروبات", "الدخل الشهري - ثلاجة"],
+            &["الدخل الشهري - تربية طيور", "الدخل الشهري - طيور"],
         ];
         let mut proj_sum = 0.0;
-        for k in project_keys {
-            proj_sum += parse_numeric(data.get(k));
+        for group in project_groups {
+            for k in *group {
+                if let Some(val) = data.get(*k) {
+                    let num = parse_numeric(Some(val));
+                    if num > 0.0 {
+                        proj_sum += num;
+                        break;
+                    }
+                }
+            }
         }
-        let total = proj_sum + p_val;
+
+        let mut family_income = 0.0;
+        if let Some(members) = get_nested_value(data, "page3.family_members").and_then(|v| v.as_array()) {
+            for m in members {
+                family_income += parse_numeric(m.get("income"));
+            }
+        }
+        if let Some(others) = get_nested_value(data, "page3.other_persons").and_then(|v| v.as_array()) {
+            for op in others {
+                family_income += parse_numeric(op.get("income"));
+            }
+        }
+        if let Some(others) = get_nested_value(data, "page3.other_members").and_then(|v| v.as_array()) {
+            for om in others {
+                family_income += parse_numeric(om.get("income"));
+            }
+        }
+
+        let total = proj_sum + p_val + family_income;
         if total > 0.0 {
             return format!("{:.0}", total);
         }
@@ -240,7 +279,10 @@ pub fn resolve_field_value(data: &Value, binding: &str, field_id: &str) -> Strin
 
     if binding == "page4.income.relatives_aid" {
         let w_sal = parse_numeric(get_nested_value(data, "page2.wife.salary"));
-        let r_val = parse_numeric(data.get("الدخل الشهري - مساعدات احد الافراد"));
+        let r_val = parse_numeric(
+            data.get("الدخل الشهري - مساعدات احد الافراد")
+                .or_else(|| data.get("الدخل الشهري - مساعدات أحد الأفراد")),
+        );
         let total = w_sal + r_val;
         if total > 0.0 {
             return format!("{:.0}", total);

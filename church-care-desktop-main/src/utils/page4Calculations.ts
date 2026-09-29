@@ -42,13 +42,21 @@ export const MIDDLE_TABLE_PROJECT_BINDINGS = [
   "الدخل الشهري - فرشة",
   "الدخل الشهري - تروسيكل",
   "الدخل الشهري - انابيب بوتوجاز",
+  "الدخل الشهري - انابيب بوتجاز",
+  "الدخل الشهري - أنابيب بوتوجاز",
+  "الدخل الشهري - أنابيب بوتجاز",
+  "الدخل الشهري - أنابيب",
+  "الدخل الشهري - انابيب",
   "الدخل الشهري - تاكسي",
   "الدخل الشهري - كشك",
   "الدخل الشهري - محل",
   "الدخل الشهري - تجارة",
   "الدخل الشهري - مكنة خياطة وتطريز",
+  "الدخل الشهري - مكنة خياطة",
   "الدخل الشهري - ثلاجة مشروبات",
-  "الدخل الشهري - تربية طيور"
+  "الدخل الشهري - ثلاجة",
+  "الدخل الشهري - تربية طيور",
+  "الدخل الشهري - طيور"
 ];
 
 /**
@@ -56,9 +64,59 @@ export const MIDDLE_TABLE_PROJECT_BINDINGS = [
  */
 export function calculateMiddleTableProjectsSum(rootData: any): number {
   if (!rootData) return 0;
-  return MIDDLE_TABLE_PROJECT_BINDINGS.reduce((sum, key) => {
-    return sum + parseNumericValue(rootData[key]);
+  const projectGroups = [
+    ["الدخل الشهري - فرشة"],
+    ["الدخل الشهري - تروسيكل"],
+    [
+      "الدخل الشهري - انابيب بوتوجاز",
+      "الدخل الشهري - انابيب بوتجاز",
+      "الدخل الشهري - أنابيب بوتوجاز",
+      "الدخل الشهري - أنابيب بوتجاز",
+      "الدخل الشهري - أنابيب",
+      "الدخل الشهري - انابيب"
+    ],
+    ["الدخل الشهري - تاكسي"],
+    ["الدخل الشهري - كشك"],
+    ["الدخل الشهري - محل"],
+    ["الدخل الشهري - تجارة"],
+    ["الدخل الشهري - مكنة خياطة وتطريز", "الدخل الشهري - مكنة خياطة"],
+    ["الدخل الشهري - ثلاجة مشروبات", "الدخل الشهري - ثلاجة"],
+    ["الدخل الشهري - تربية طيور", "الدخل الشهري - طيور"]
+  ];
+  return projectGroups.reduce((sum, group) => {
+    for (const key of group) {
+      if (rootData[key] !== undefined && rootData[key] !== null && rootData[key] !== "") {
+        return sum + parseNumericValue(rootData[key]);
+      }
+    }
+    return sum;
   }, 0);
+}
+
+/**
+ * Calculates the total income/disability pensions of family members and other residents from Page 3
+ */
+export function calculateFamilyMembersIncome(rootData: any): number {
+  if (!rootData) return 0;
+  const p3 = rootData.page3;
+  if (!p3) return 0;
+  let total = 0;
+  if (Array.isArray(p3.family_members)) {
+    for (const m of p3.family_members) {
+      total += parseNumericValue(m?.income);
+    }
+  }
+  if (Array.isArray(p3.other_persons)) {
+    for (const op of p3.other_persons) {
+      total += parseNumericValue(op?.income);
+    }
+  }
+  if (Array.isArray(p3.other_members)) {
+    for (const om of p3.other_members) {
+      total += parseNumericValue(om?.income);
+    }
+  }
+  return total;
 }
 
 /**
@@ -78,7 +136,10 @@ export function calculateMiddleTablePension(rootData: any): number {
  */
 export function calculateMiddleTableRelativesAid(rootData: any): number {
   if (!rootData) return 0;
-  return parseNumericValue(rootData["الدخل الشهري - مساعدات احد الافراد"]);
+  return parseNumericValue(
+    rootData["الدخل الشهري - مساعدات احد الافراد"] ??
+    rootData["الدخل الشهري - مساعدات أحد الأفراد"]
+  );
 }
 
 /**
@@ -255,14 +316,16 @@ export function recalculatePage4Totals(
     }
 
     // 2) المصدر الإضافي الأول (side_project):
-    // مشروعات الجدول الأوسط + المعاش ("المعاش يتضاف في المصدر الاضافي الاول")
+    // مشروعات الجدول الأوسط + المعاش + دخل/معاشات أفراد الأسرة (معاشات المعاقين)
     if (triggeredBinding !== "page4.income.side_project") {
-      const combinedProjectsAndPension = microProjectsSum + pensionVal;
+      const familyIncome = calculateFamilyMembersIncome(rootData);
+      const combinedProjectsAndPension = microProjectsSum + pensionVal + familyIncome;
       const hasSideSources =
         MIDDLE_TABLE_PROJECT_BINDINGS.some((key) => key in rootData) ||
         "الدخل الشهري - معاش" in rootData ||
         Boolean(rootData?.page4?.pension) ||
-        Boolean(rootData?.page4?.income?.pension);
+        Boolean(rootData?.page4?.income?.pension) ||
+        familyIncome > 0;
 
       if (combinedProjectsAndPension > 0) {
         currentIncome.side_project = String(combinedProjectsAndPension);
@@ -278,7 +341,8 @@ export function recalculatePage4Totals(
 
       const hasRelativesSource =
         Boolean(rootData?.page2?.wife && "salary" in rootData.page2.wife) ||
-        "الدخل الشهري - مساعدات احد الافراد" in rootData;
+        "الدخل الشهري - مساعدات احد الافراد" in rootData ||
+        "الدخل الشهري - مساعدات أحد الأفراد" in rootData;
 
       if (combinedRelatives > 0) {
         currentIncome.relatives_aid = String(combinedRelatives);

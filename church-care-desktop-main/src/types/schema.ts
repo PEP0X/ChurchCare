@@ -14,6 +14,9 @@ export interface OtherResident {
   national_id: string;
   kinship: string;
   social_status: string;
+  education_job?: string;
+  income?: string | number;
+  confession_father?: string;
 }
 
 export interface ChurchAidItem {

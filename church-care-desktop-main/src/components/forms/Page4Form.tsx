@@ -10,6 +10,7 @@ import {
   calculateMiddleTablePension,
   calculateMiddleTableProjectsSum,
   calculateMiddleTableRelativesAid,
+  calculateFamilyMembersIncome,
   formatCurrencyValue
 } from "../../utils/page4Calculations";
 
@@ -26,10 +27,11 @@ export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
   const page2Salaries = calculatePage2Salaries(data);
   const projectsSum = calculateMiddleTableProjectsSum(data);
   const relativesAid = calculateMiddleTableRelativesAid(data);
+  const familyMembersIncome = calculateFamilyMembersIncome(data);
   const budgetInfo = calculateBudgetBalance(p4);
 
   const combinedBase = husbandSalary;
-  const combinedSide = projectsSum + pensionVal;
+  const combinedSide = projectsSum + pensionVal + familyMembersIncome;
   const combinedRelatives = wifeSalary + relativesAid;
 
   const addAid = () => {
@@ -74,11 +76,22 @@ export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
     onChange({ page4: updatedP4 });
   };
 
+  const sanitizeNumericInput = (val: any) => {
+    if (typeof val !== "string") return val;
+    const arabicDigits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+    let s = val;
+    for (let i = 0; i < 10; i++) {
+      s = s.split(arabicDigits[i]).join(String(i));
+    }
+    return s.replace(/[^\d.]/g, "");
+  };
+
   const updateIncome = (field: string, val: any) => {
+    const cleanVal = sanitizeNumericInput(val);
     const updatedP4 = recalculatePage4Totals(
       {
         ...p4,
-        income: { ...p4.income, [field]: val }
+        income: { ...p4.income, [field]: cleanVal }
       },
       data
     );
@@ -86,10 +99,11 @@ export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
   };
 
   const updateExpense = (field: string, val: any) => {
+    const cleanVal = sanitizeNumericInput(val);
     const updatedP4 = recalculatePage4Totals(
       {
         ...p4,
-        expenses: { ...p4.expenses, [field]: val }
+        expenses: { ...p4.expenses, [field]: cleanVal }
       },
       data
     );
@@ -254,9 +268,9 @@ export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
                     type="button"
                     onClick={() => updateIncome("side_project", String(combinedSide))}
                     className="text-[10px] text-amber-400 hover:text-amber-300 text-right cursor-pointer"
-                    title="استيراد المعاش والمشروعات"
+                    title="استيراد مشروعات الجدول الأوسط والمعاش ودخل أفراد الأسرة"
                   >
-                    ⚡ المشروعات والمعاش ({combinedSide} ج.م)
+                    ⚡ المشروعات ودخل الأسرة والمعاش ({combinedSide} ج.م)
                   </button>
                 )}
                 {projectsSum > 0 && (
@@ -267,6 +281,11 @@ export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
                 {pensionVal > 0 && (
                   <span className="text-[10px] text-amber-300 text-right font-medium">
                     المعاش: {pensionVal} ج.م
+                  </span>
+                )}
+                {familyMembersIncome > 0 && (
+                  <span className="text-[10px] text-sky-300 text-right font-medium">
+                    دخل أفراد الأسرة: {familyMembersIncome} ج.م
                   </span>
                 )}
               </div>

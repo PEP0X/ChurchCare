@@ -549,6 +549,30 @@ def get_head_of_household_name_py(data: dict) -> str:
     if p6.get("family_head"): return str(p6.get("family_head")).strip()
     return ""
 
+def safe_float(val: Any, default: float = 0.0) -> float:
+    if val is None or val == "":
+        return default
+    if isinstance(val, (int, float)):
+        import math
+        return float(val) if not math.isnan(val) else default
+    s = str(val).strip()
+    if not s:
+        return default
+    # Convert Eastern Arabic digits ٠-٩ to Western 0-9
+    arabic_digits = "٠١٢٣٤٥٦٧٨٩"
+    for i, ad in enumerate(arabic_digits):
+        s = s.replace(ad, str(i))
+    # Remove currency text, commas, spaces
+    s = s.replace("ج.م", "").replace(",", "").strip()
+    import re
+    match = re.search(r'[-+]?\d+(?:\.\d+)?', s)
+    if match:
+        try:
+            return float(match.group(0))
+        except (ValueError, TypeError):
+            return default
+    return default
+
 def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") -> Any:
     if not binding:
         return ""
@@ -705,16 +729,23 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
                 return om_item.get(sub_key)
 
         other_persons = p3_obj.get("other_persons", [])
-        for try_idx in [idx - 1, idx]:
-            if 0 <= try_idx < len(other_persons):
-                op = other_persons[try_idx]
-                if sub_key in ("name",): return op.get("name", "")
-                if sub_key in ("national_id", "nid"): return op.get("national_id", "")
-                if sub_key in ("relavent", "kinship"): return op.get("kinship") or op.get("relavent", "")
-                if sub_key in ("Status", "social_status"): return op.get("social_status") or op.get("Status", "")
-                if sub_key in ("sYear", "education_job"): return op.get("education_job") or op.get("sYear", "")
-                if sub_key in ("income",): return op.get("income", "")
-                if sub_key in ("confession_father",): return op.get("confession_father", "")
+        target_idx = idx - 1
+        op = None
+        if isinstance(other_persons, list) and 0 <= target_idx < len(other_persons):
+            op = other_persons[target_idx]
+        elif isinstance(other_persons, list):
+            for candidate in other_persons:
+                if isinstance(candidate, dict) and str(candidate.get("id")) == str(idx):
+                    op = candidate
+                    break
+        if isinstance(op, dict):
+            if sub_key in ("name",): return op.get("name", "")
+            if sub_key in ("national_id", "nid"): return op.get("national_id", "")
+            if sub_key in ("relavent", "kinship"): return op.get("kinship") or op.get("relavent", "")
+            if sub_key in ("Status", "social_status"): return op.get("social_status") or op.get("Status", "")
+            if sub_key in ("sYear", "education_job"): return op.get("education_job") or op.get("sYear", "")
+            if sub_key in ("income",): return op.get("income", "")
+            if sub_key in ("confession_father",): return op.get("confession_father", "")
 
     # Page 4 Total Church Aid
     if binding in ("page4.church_aid.Total", "page4.church_aid_total", "page4.total_church_aid"):
@@ -724,10 +755,8 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
         aid_list = data.get("page4", {}).get("church_aid", [])
         tot = 0.0
         for item in aid_list:
-            try:
-                tot += float(item.get("value", 0))
-            except (ValueError, TypeError):
-                pass
+            if isinstance(item, dict):
+                tot += safe_float(item.get("value", 0))
         return f"{tot:.0f}" if tot > 0 else ""
 
     # Page 4 Income Lines Fallbacks
@@ -735,29 +764,54 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
         explicit_val = data.get("page4", {}).get("income", {}).get("base_salary")
         if explicit_val not in (None, ""):
             return str(explicit_val)
-        h_sal = float(str(data.get("page2", {}).get("husband", {}).get("salary") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+        h_sal = safe_float(data.get("page2", {}).get("husband", {}).get("salary"))
         return f"{h_sal:.0f}" if h_sal > 0 else ""
 
     if binding in ("page4.income.side_project",):
         explicit_val = data.get("page4", {}).get("income", {}).get("side_project")
         if explicit_val not in (None, ""):
             return str(explicit_val)
-        p_val = float(str(data.get("الدخل الشهري - معاش") or data.get("page4", {}).get("pension") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
-        proj_keys = [
-            "الدخل الشهري - فرشة", "الدخل الشهري - كشك", "الدخل الشهري - محل",
-            "الدخل الشهري - تجارة", "الدخل الشهري - تروسيكل", "الدخل الشهري - أنابيب",
-            "الدخل الشهري - مكنة خياطة", "الدخل الشهري - ثلاجة", "الدخل الشهري - طيور"
+        p_val = safe_float(data.get("الدخل الشهري - معاش") or data.get("page4", {}).get("pension"))
+        proj_groups = [
+            ["الدخل الشهري - فرشة"],
+            ["الدخل الشهري - كشك"],
+            ["الدخل الشهري - محل"],
+            ["الدخل الشهري - تجارة"],
+            ["الدخل الشهري - تروسيكل"],
+            ["الدخل الشهري - انابيب بوتوجاز", "الدخل الشهري - أنابيب"],
+            ["الدخل الشهري - تاكسي"],
+            ["الدخل الشهري - مكنة خياطة وتطريز", "الدخل الشهري - مكنة خياطة"],
+            ["الدخل الشهري - ثلاجة مشروبات", "الدخل الشهري - ثلاجة"],
+            ["الدخل الشهري - تربية طيور", "الدخل الشهري - طيور"],
         ]
-        proj_tot = sum(float(str(data.get(pk) or 0).replace("ج.م", "").replace(",", "").strip() or 0) for pk in proj_keys)
-        comb = proj_tot + p_val
+        proj_tot = 0.0
+        for grp in proj_groups:
+            for k in grp:
+                if k in data and data.get(k) not in (None, ""):
+                    proj_tot += safe_float(data.get(k))
+                    break
+
+        fam_inc = 0.0
+        p3_obj = data.get("page3", {}) if isinstance(data, dict) else {}
+        for m in p3_obj.get("family_members", []):
+            if isinstance(m, dict):
+                fam_inc += safe_float(m.get("income"))
+        for op in p3_obj.get("other_persons", []):
+            if isinstance(op, dict):
+                fam_inc += safe_float(op.get("income"))
+        for om in p3_obj.get("other_members", []):
+            if isinstance(om, dict):
+                fam_inc += safe_float(om.get("income"))
+
+        comb = proj_tot + p_val + fam_inc
         return f"{comb:.0f}" if comb > 0 else ""
 
     if binding in ("page4.income.relatives_aid",):
         explicit_val = data.get("page4", {}).get("income", {}).get("relatives_aid")
         if explicit_val not in (None, ""):
             return str(explicit_val)
-        w_sal = float(str(data.get("page2", {}).get("wife", {}).get("salary") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
-        r_val = float(str(data.get("الدخل الشهري - مساعدات احد الافراد") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+        w_sal = safe_float(data.get("page2", {}).get("wife", {}).get("salary"))
+        r_val = safe_float(data.get("الدخل الشهري - مساعدات احد الافراد") or data.get("الدخل الشهري - مساعدات أحد الأفراد"))
         comb = w_sal + r_val
         return f"{comb:.0f}" if comb > 0 else ""
 
@@ -773,24 +827,54 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
                 raw_k_val = inc.get(k)
                 if raw_k_val in (None, "", 0, "0"):
                     if k == "base_salary":
-                        h_sal = float(str(data.get("page2", {}).get("husband", {}).get("salary") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
+                        h_sal = safe_float(data.get("page2", {}).get("husband", {}).get("salary"))
                         raw_k_val = h_sal if h_sal > 0 else ""
                     elif k == "side_project":
-                        p_val = float(str(data.get("الدخل الشهري - معاش") or data.get("page4", {}).get("pension") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
-                        proj_keys = [
-                            "الدخل الشهري - فرشة", "الدخل الشهري - كشك", "الدخل الشهري - محل",
-                            "الدخل الشهري - تجارة", "الدخل الشهري - تروسيكل", "الدخل الشهري - أنابيب",
-                            "الدخل الشهري - مكنة خياطة", "الدخل الشهري - ثلاجة", "الدخل الشهري - طيور"
+                        p_val = safe_float(data.get("الدخل الشهري - معاش") or data.get("page4", {}).get("pension"))
+                        proj_groups = [
+                            ["الدخل الشهري - فرشة"],
+                            ["الدخل الشهري - كشك"],
+                            ["الدخل الشهري - محل"],
+                            ["الدخل الشهري - تجارة"],
+                            ["الدخل الشهري - تروسيكل"],
+                            [
+                                "الدخل الشهري - انابيب بوتوجاز",
+                                "الدخل الشهري - انابيب بوتجاز",
+                                "الدخل الشهري - أنابيب بوتوجاز",
+                                "الدخل الشهري - أنابيب بوتجاز",
+                                "الدخل الشهري - أنابيب",
+                                "الدخل الشهري - انابيب"
+                            ],
+                            ["الدخل الشهري - تاكسي"],
+                            ["الدخل الشهري - مكنة خياطة وتطريز", "الدخل الشهري - مكنة خياطة"],
+                            ["الدخل الشهري - ثلاجة مشروبات", "الدخل الشهري - ثلاجة"],
+                            ["الدخل الشهري - تربية طيور", "الدخل الشهري - طيور"],
                         ]
-                        proj_tot = sum(float(str(data.get(pk) or 0).replace("ج.م", "").replace(",", "").strip() or 0) for pk in proj_keys)
-                        raw_k_val = (proj_tot + p_val) if (proj_tot + p_val) > 0 else ""
+                        proj_tot = 0.0
+                        for grp in proj_groups:
+                            for pk in grp:
+                                if pk in data and data.get(pk) not in (None, ""):
+                                    proj_tot += safe_float(data.get(pk))
+                                    break
+                        fam_inc = 0.0
+                        p3_obj = data.get("page3", {}) if isinstance(data, dict) else {}
+                        for m in p3_obj.get("family_members", []):
+                            if isinstance(m, dict):
+                                fam_inc += safe_float(m.get("income"))
+                        for op in p3_obj.get("other_persons", []):
+                            if isinstance(op, dict):
+                                fam_inc += safe_float(op.get("income"))
+                        for om in p3_obj.get("other_members", []):
+                            if isinstance(om, dict):
+                                fam_inc += safe_float(om.get("income"))
+
+                        raw_k_val = (proj_tot + p_val + fam_inc) if (proj_tot + p_val + fam_inc) > 0 else ""
                     elif k == "relatives_aid":
-                        w_sal = float(str(data.get("page2", {}).get("wife", {}).get("salary") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
-                        r_val = float(str(data.get("الدخل الشهري - مساعدات احد الافراد") or 0).replace("ج.م", "").replace(",", "").strip() or 0)
-                        raw_k_val = w_sal + r_val if (w_sal + r_val) > 0 else ""
-                val_str = str(raw_k_val or 0).replace("ج.م", "").replace(",", "").strip()
-                tot += float(val_str)
-            except (ValueError, TypeError):
+                        w_sal = safe_float(data.get("page2", {}).get("wife", {}).get("salary"))
+                        r_val = safe_float(data.get("الدخل الشهري - مساعدات احد الافراد") or data.get("الدخل الشهري - مساعدات أحد الأفراد"))
+                        raw_k_val = (w_sal + r_val) if (w_sal + r_val) > 0 else ""
+                tot += safe_float(raw_k_val)
+            except Exception:
                 pass
         return f"{tot:.0f} ج.م" if tot > 0 else ""
 
@@ -803,9 +887,8 @@ def resolve_field_value(data: Dict[str, Any], binding: str, field_id: str = "") 
         tot = 0.0
         for k in ("living_basics", "utilities", "phone", "rent", "medical", "education"):
             try:
-                val_str = str(exp.get(k, 0)).replace("ج.م", "").replace(",", "").strip()
-                tot += float(val_str)
-            except (ValueError, TypeError):
+                tot += safe_float(exp.get(k, 0))
+            except Exception:
                 pass
         return f"{tot:.0f} ج.م" if tot > 0 else ""
 
@@ -1242,10 +1325,7 @@ class PDFCareReportEngine:
             y = start_y + (idx * row_step)
             draw_arabic_text(page, pymupdf.Point(440, y), item.get("church_name", ""), fontsize=9)
             val = item.get("value", 0)
-            try:
-                total_aid += float(val)
-            except (ValueError, TypeError):
-                pass
+            total_aid += safe_float(val)
             draw_arabic_text(page, pymupdf.Point(270, y), str(val), fontsize=11, fontname="IBMPlexBold")
             draw_arabic_text(page, pymupdf.Point(150, y), item.get("purpose", ""), fontsize=10)
 

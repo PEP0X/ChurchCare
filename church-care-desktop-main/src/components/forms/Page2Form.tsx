@@ -21,6 +21,7 @@ import {
   getHeadOfHouseholdName,
   HUSBAND_STATUS_LABELS
 } from "../../utils/caseStudyUtils";
+import { recalculatePage4Totals } from "../../utils/page4Calculations";
 
 interface Page2FormProps {
   data: CaseStudyData;
@@ -56,7 +57,8 @@ export const Page2Form: React.FC<Page2FormProps> = ({ data, onChange }) => {
   const husbandStatusLabel = getHusbandStatusLabel(p2.husband);
 
   const updateHusband = (field: string, val: any) => {
-    const newHusband = { ...p2.husband, [field]: val };
+    const finalVal = field === "salary" ? String(val || "").replace(/[^\d.٠-٩]/g, "") : val;
+    const newHusband = { ...p2.husband, [field]: finalVal };
     const updates: Partial<CaseStudyData> = {
       page2: {
         ...p2,
@@ -85,11 +87,18 @@ export const Page2Form: React.FC<Page2FormProps> = ({ data, onChange }) => {
         };
       }
     }
+
+    if (data.page4 && (field === "salary" || field === "status")) {
+      const synthetic = { ...data, page2: { ...p2, husband: newHusband } };
+      updates.page4 = recalculatePage4Totals(data.page4, synthetic, `page2.husband.${field}`);
+    }
+
     onChange(updates);
   };
 
   const updateWife = (field: string, val: any) => {
-    const newWife = { ...p2.wife, [field]: val };
+    const finalVal = field === "salary" ? String(val || "").replace(/[^\d.٠-٩]/g, "") : val;
+    const newWife = { ...p2.wife, [field]: finalVal };
     const updates: Partial<CaseStudyData> = {
       page2: {
         ...p2,
@@ -120,6 +129,12 @@ export const Page2Form: React.FC<Page2FormProps> = ({ data, onChange }) => {
         }
       }
     }
+
+    if (data.page4 && field === "salary") {
+      const synthetic = { ...data, page2: { ...p2, wife: newWife } };
+      updates.page4 = recalculatePage4Totals(data.page4, synthetic, `page2.wife.${field}`);
+    }
+
     onChange(updates);
   };
 
