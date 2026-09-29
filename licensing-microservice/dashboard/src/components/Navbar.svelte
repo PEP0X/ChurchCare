@@ -1,14 +1,18 @@
 <script lang="ts">
-  import { Tooltip, Separator } from 'bits-ui';
+  import { Tooltip } from 'bits-ui';
   import {
     Shield,
     Plus,
     FileSpreadsheet,
     RefreshCw,
-    Lock
+    Lock,
+    ArrowRight,
+    TableProperties
   } from '@lucide/svelte';
 
   let {
+    currentView = 'list',
+    onNavigate,
     onOpenNewModal,
     onExportSheet,
     onRefresh,
@@ -16,6 +20,8 @@
     isLoading = false,
     totalCount = 0
   }: {
+    currentView?: 'list' | 'create';
+    onNavigate?: (view: 'list' | 'create') => void;
     onOpenNewModal: () => void;
     onExportSheet?: () => void;
     onRefresh: () => void;
@@ -23,17 +29,31 @@
     isLoading?: boolean;
     totalCount?: number;
   } = $props();
+
+  function handleAddClick() {
+    if (onNavigate) {
+      onNavigate('create');
+    } else {
+      onOpenNewModal();
+    }
+  }
+
+  function handleBackClick() {
+    if (onNavigate) {
+      onNavigate('list');
+    }
+  }
 </script>
 
 <Tooltip.Provider>
-  <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-8 border-b border-slate-800/80 gap-5">
+  <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-7 border-b border-slate-800/80 gap-5">
     <div class="flex items-center gap-3.5">
-      <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-500 flex items-center justify-center text-white text-2xl shadow-xl shadow-indigo-500/25 border border-indigo-400/30">
+      <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-500 flex items-center justify-center text-white text-2xl shadow-xl shadow-indigo-500/25 border border-indigo-400/30 shrink-0">
         <Shield class="w-7 h-7" />
       </div>
       <div>
         <div class="flex items-center gap-2.5 flex-wrap">
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
             ChurchCare Licensing Service
           </h1>
           <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm shadow-emerald-500/10">
@@ -53,15 +73,30 @@
     </div>
 
     <div class="flex items-center gap-2.5 flex-wrap">
-      <!-- Generate New Serial Button -->
-      <button
-        type="button"
-        onclick={onOpenNewModal}
-        class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold px-4 sm:px-5 py-2.5 rounded-2xl shadow-lg shadow-indigo-600/30 transition cursor-pointer text-xs sm:text-sm transform hover:-translate-y-0.5"
-      >
-        <Plus class="w-4 h-4" />
-        <span>توليد سيريال جديد</span>
-      </button>
+      <!-- Navigation Tabs: List vs Create Fullpage -->
+      <div class="flex items-center gap-1 bg-slate-900/90 p-1 rounded-2xl border border-slate-800 shadow-sm">
+        <button
+          type="button"
+          onclick={handleBackClick}
+          class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5 {currentView === 'list'
+            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+            : 'text-slate-400 hover:text-slate-200'}"
+        >
+          <TableProperties class="w-4 h-4" />
+          <span>سجل التراخيص</span>
+        </button>
+
+        <button
+          type="button"
+          onclick={handleAddClick}
+          class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5 {currentView === 'create'
+            ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30'
+            : 'text-slate-300 hover:text-white hover:bg-slate-800/70'}"
+        >
+          <Plus class="w-4 h-4" />
+          <span>إصدار ترخيص جديد</span>
+        </button>
+      </div>
 
       <!-- Export to Sheet (CSV) Button with Bits UI Tooltip -->
       {#if onExportSheet}

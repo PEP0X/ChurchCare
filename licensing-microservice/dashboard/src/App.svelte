@@ -6,7 +6,7 @@
   import Navbar from './components/Navbar.svelte';
   import StatsCards from './components/StatsCards.svelte';
   import LicenseTable from './components/LicenseTable.svelte';
-  import NewLicenseModal from './components/NewLicenseModal.svelte';
+  import NewLicensePage from './components/NewLicensePage.svelte';
   import AdminPinModal from './components/AdminPinModal.svelte';
 
   const queryClient = new QueryClient({
@@ -20,7 +20,7 @@
   });
 
   let isAuthenticated = $state<boolean>(false);
-  let isModalOpen = $state<boolean>(false);
+  let currentView = $state<'list' | 'create'>('list');
   let isSubmitting = $state<boolean>(false);
   let toastMsg = $state<string | null>(null);
 
@@ -76,6 +76,7 @@
       await queryClient.invalidateQueries({ queryKey: ['licenses'] });
       const servicesCountText = services && services.length > 0 ? ` [${services.length} خدمات]` : '';
       showToast(`✨ تم توليد السيريال بنجاح لكنيسة "${churchName}" (${userName})${servicesCountText}`);
+      currentView = 'list';
     } finally {
       isSubmitting = false;
     }
@@ -140,10 +141,12 @@
   />
 
   {#if isAuthenticated}
-    <main class="min-h-screen bg-slate-950 text-slate-100 p-2 sm:p-4 md:p-5 selection:bg-indigo-500 selection:text-white w-full">
-      <div class="w-full mx-auto px-1 sm:px-2">
+    <main class="min-h-screen bg-slate-950 text-slate-100 p-2 sm:p-4 md:p-6 selection:bg-indigo-500 selection:text-white w-full">
+      <div class="w-full max-w-7xl mx-auto px-1 sm:px-2">
         <Navbar
-          onOpenNewModal={() => (isModalOpen = true)}
+          {currentView}
+          onNavigate={(view) => (currentView = view)}
+          onOpenNewModal={() => (currentView = 'create')}
           onExportSheet={handleExportSheet}
           onRefresh={handleRefresh}
           onLogout={handleLogout}
@@ -151,23 +154,28 @@
           totalCount={licenses.length}
         />
 
-        <StatsCards {licenses} />
+        {#if currentView === 'create'}
+          <div class="mt-6">
+            <NewLicensePage
+              onBack={() => (currentView = 'list')}
+              onSubmit={handleCreate}
+              {isSubmitting}
+              churches={availableChurches}
+            />
+          </div>
+        {:else}
+          <div class="mt-6 space-y-6">
+            <StatsCards {licenses} />
 
-        <LicenseTable
-          {licenses}
-          onResetHwid={handleResetHwid}
-          onToggleStatus={handleToggleStatus}
-          onDelete={handleDelete}
-          {isLoading}
-        />
-
-        <NewLicenseModal
-          isOpen={isModalOpen}
-          onClose={() => (isModalOpen = false)}
-          onSubmit={handleCreate}
-          {isSubmitting}
-          churches={availableChurches}
-        />
+            <LicenseTable
+              {licenses}
+              onResetHwid={handleResetHwid}
+              onToggleStatus={handleToggleStatus}
+              onDelete={handleDelete}
+              {isLoading}
+            />
+          </div>
+        {/if}
 
         {#if toastMsg}
           <div class="fixed bottom-6 left-6 z-50 bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 text-white font-semibold text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-2xl animate-in slide-in-from-bottom duration-200 border border-indigo-400/40 flex items-center gap-2">
