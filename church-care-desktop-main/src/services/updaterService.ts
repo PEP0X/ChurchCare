@@ -35,7 +35,7 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
   if (!isTauriEnv()) {
     return {
       available: false,
-      currentVersion: "1.3.2",
+      currentVersion: "1.3.3",
       error: "ميزة التحديث التلقائي متاحة فقط في تطبيق سطح المكتب."
     };
   }
@@ -57,7 +57,7 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
 
     return {
       available: false,
-      currentVersion: update?.currentVersion || "1.3.2"
+      currentVersion: update?.currentVersion || "1.3.3"
     };
   } catch (err: any) {
     console.warn("Auto-update check failed:", err);

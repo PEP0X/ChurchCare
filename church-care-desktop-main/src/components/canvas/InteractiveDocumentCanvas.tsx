@@ -291,6 +291,15 @@ function setValueByPath(obj: any, path: string, value: any): any {
     newObj = setDeepValueImmutable(newObj, ['page4', 'pension'], 0, value);
   }
 
+  // Ensure church_aid item has an id
+  const aidMatch = path.match(/page4\.church_aid\[(\d+)\]/);
+  if (aidMatch) {
+    const aidIdx = parseInt(aidMatch[1], 10);
+    if (!newObj?.page4?.church_aid?.[aidIdx]?.id) {
+      newObj = setDeepValueImmutable(newObj, ['page4', 'church_aid', String(aidIdx), 'id'], 0, String(aidIdx + 1));
+    }
+  }
+
   // Synchronize aliases so forms and canvas stay in lockstep
   const alts = BINDING_ALIASES[path];
   if (alts) {
@@ -1859,16 +1868,29 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             field.id === 'p4_church_aid_total';
           const isPage4Total = isPage4IncomeTotal || isPage4ExpenseTotal || isPage4AidTotal;
 
+          const isChurchAidText =
+            field.binding.endsWith('.church_name') ||
+            field.binding.endsWith('.purpose') ||
+            field.binding === 'page4.church_aid_total_notes' ||
+            field.id.endsWith('_church') ||
+            field.id.endsWith('_purpose') ||
+            field.id === 'p4_church_aid_total_notes';
+
+          const isChurchAidValue =
+            field.binding.endsWith('.value') ||
+            (field.id.startsWith('p4_aid_') && field.id.endsWith('_value'));
+
           const isPage4TableNumber =
             field.page === 4 &&
-            (field.binding.startsWith('page4.income.') ||
+            !isChurchAidText &&
+            (isChurchAidValue ||
+             field.binding.startsWith('page4.income.') ||
              field.binding.startsWith('page4.expenses.') ||
-             field.binding.startsWith('page4.church_aid[') ||
              field.id.startsWith('p4_inc_') ||
              field.id.startsWith('p4_exp_') ||
-             field.id.startsWith('p4_aid_') ||
              field.id.startsWith('number_') ||
-             field.id.startsWith('p4_number_'));
+             field.id.startsWith('p4_number_') ||
+             field.type === 'number');
 
           const rawStr = String(val || '');
           const hasVal = rawStr.trim().length > 0;
@@ -1891,6 +1913,8 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             borderStyles = 'border-2 border-amber-500 bg-amber-50/95 text-slate-900 font-bold shadow-sm cursor-default';
           } else if (isPage4TableNumber) {
             borderStyles = 'border border-slate-300/90 bg-white/95 hover:bg-white focus:bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-950 font-bold shadow-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
+          } else if (isChurchAidText) {
+            borderStyles = 'border border-slate-300/80 bg-white/80 hover:bg-white focus:bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-950 font-medium shadow-xs';
           }
 
           const highlightStyles = isHighlighted
@@ -1918,9 +1942,10 @@ export const InteractiveDocumentCanvas: React.FC<InteractiveDocumentCanvasProps>
             wifeStatusLabel,
           } = pageCtx;
 
-          const isNumericField = !isNationalId && !isPage4Total && (
+          const isNumericField = !isNationalId && !isPage4Total && !isChurchAidText && (
             field.type === 'number' ||
             isPage4TableNumber ||
+            isChurchAidValue ||
             field.binding.startsWith('الدخل الشهري') ||
             field.binding.endsWith('.income') ||
             field.binding.endsWith('.salary')

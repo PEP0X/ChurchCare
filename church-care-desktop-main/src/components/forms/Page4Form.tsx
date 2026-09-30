@@ -162,8 +162,11 @@ export const Page4Form: React.FC<Page4FormProps> = ({ data, onChange }) => {
                     <input
                       type="number"
                       placeholder="0"
-                      value={a.value}
-                      onChange={(e) => updateAid(idx, "value", parseFloat(e.target.value) || 0)}
+                      value={a.value === 0 ? "" : a.value}
+                      onChange={(e) => {
+                        const clean = sanitizeNumericInput(e.target.value);
+                        updateAid(idx, "value", clean === "" ? 0 : parseFloat(clean) || 0);
+                      }}
                       className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white font-mono"
                     />
                   </td>
